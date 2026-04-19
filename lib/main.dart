@@ -1,23 +1,23 @@
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'pages/homepage_client.dart';
+import 'pages/main_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.immersiveSticky,
-  );
-
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Trima Jadi',
       debugShowCheckedModeBanner: false,
-      home: HomepageClient(),
+      theme: ThemeData(
+        primarySwatch: Colors.blueGrey,
+        useMaterial3: true,
+      ),
+      home: const MainScreen(),
     );
   }
 }

@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import '../widgets/category_item.dart';
 import '../widgets/service_item.dart';
 import '../widgets/box.dart';
-import '../widgets/custom_bottom_navbar.dart';
 
 class HomepageClient extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: CustomBottomNavbar(),
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(12),
@@ -45,7 +43,6 @@ class HomepageClient extends StatelessWidget {
 
               sectionTitle("Kategori Populer"),
 
-              // FIX: pakai horizontal scroll
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -61,7 +58,7 @@ class HomepageClient extends StatelessWidget {
 
               SizedBox(height: 10),
 
-              Box(height: 120), // banner lebih tinggi sesuai gambar
+              Box(height: 120), 
 
               SizedBox(height: 15),
 
