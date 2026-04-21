@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/category_item.dart';
 import '../widgets/service_item.dart';
 import '../widgets/box.dart';
+import '../models/user_model.dart';
 
 class HomepageClient extends StatelessWidget {
   @override
@@ -16,9 +17,9 @@ class HomepageClient extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Halo, Tria",
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text("Halo, ${UserData.name}", 
+                  style: 
+                    TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   Icon(Icons.notifications_none)
                 ],
               ),
