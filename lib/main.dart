@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'pages/onboarding_page.dart';
 import 'pages/main_screen.dart';
 
-void main() => runApp(const MyApp());
+void main() { 
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
+
+  runApp(const MyApp());}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

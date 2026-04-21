@@ -14,12 +14,12 @@ class OnboardingPage extends StatelessWidget {
         children: [
           ClipRRect(
             borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.circular(50),
-              bottomRight: Radius.circular(50),
+              bottomLeft: Radius.elliptical(250, 100),
+              bottomRight: Radius.elliptical(250, 100),
             ),
             child: Image.asset(
-              "../../assets/images/onboarding.png",
-              height: 250,
+              "assets/images/onboarding.png",
+              height: 400,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
