@@ -48,7 +48,7 @@ class _MainScreenState extends State<MainScreen> {
     return BottomNavigationBarItem(
       icon: Container(
         padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(color: isSelected ? const Color(0xFF1E3A5F) : Colors.transparent, shape: BoxShape.circle),
+        decoration: BoxDecoration(color: isSelected ? const Color(0xFFE68C3A) : Colors.transparent, shape: BoxShape.circle),
         child: Icon(isSelected ? selected : unselected, color: isSelected ? Colors.white : Colors.grey, size: 26),
       ),
       label: '',
