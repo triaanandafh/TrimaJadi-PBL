@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/category_item.dart';
 import '../widgets/service_item.dart';
 import '../widgets/box.dart';
+import '../models/user_model.dart';
 
 class HomepageClient extends StatelessWidget {
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'homepage_client.dart'; 
+import '../models/user_model.dart';
+import 'homepage_client.dart';
+import 'homepage_seller.dart';
 import 'profile_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -10,58 +12,87 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; 
-
-  final List<Widget> _pages = [
-    HomepageClient(),
-    const Center(child: Text("Halaman Tugas")),
-    const Center(child: Text("Halaman Cari")),
-    const Center(child: Text("Halaman Chat")),
-    const ProfilePage(),
-  ];
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _pages[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        showSelectedLabels: false, 
-        showUnselectedLabels: false,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+    final List<Widget> pages = [
+      UserData.role == "Seller" ? HomepageSeller() : HomepageClient(),
+      Center(child: Text("Halaman Order")),
+      Center(child: Text("Halaman Action")),
+      Center(child: Text("Halaman Chat")),
+      ProfilePage(),
+    ];
 
-        items: [
-          _buildNavBarItem(Icons.home_outlined, Icons.home, 0),
-          _buildNavBarItem(Icons.assignment_outlined, Icons.assignment, 1),
-          _buildNavBarItem(Icons.search, Icons.search, 2),
-          _buildNavBarItem(Icons.chat_bubble_outline, Icons.chat_bubble, 3),
-          _buildNavBarItem(Icons.person_outline, Icons.person, 4),
-        ],
+    bool isSeller = UserData.role == "Seller";
+
+    return Scaffold(
+      body: pages[_currentIndex], 
+      
+      bottomNavigationBar: Container(
+        height: 85,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
+            _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
+            
+            _buildCenterItem(isSeller), 
+            
+            _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
+            _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
+          ],
+        ),
       ),
     );
   }
 
-  BottomNavigationBarItem _buildNavBarItem(IconData unselectedIcon, IconData selectedIcon, int index) {
+  Widget _buildNavItem(IconData unselected, IconData selected, String label, int index) {
     bool isSelected = _currentIndex == index;
-    return BottomNavigationBarItem(
-      icon: Container(
-        padding: const EdgeInsets.all(10), 
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E3A5F) : Colors.transparent, 
+    Color color = isSelected ? const Color(0xFFE68C3A) : Colors.grey;
+
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = index),
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: 60,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(isSelected ? selected : unselected, color: color, size: 26),
+            const SizedBox(height: 4),
+            Text(label, style: TextStyle(color: color, fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCenterItem(bool isSeller) {
+    return GestureDetector(
+      onTap: () => setState(() => _currentIndex = 2),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: const BoxDecoration(
+          color: Color(0xFFE68C3A),
           shape: BoxShape.circle,
         ),
         child: Icon(
-          isSelected ? selectedIcon : unselectedIcon,
-          color: isSelected ? Colors.white : Colors.grey, 
-          size: 26,
+          isSeller ? Icons.work_outline : Icons.search,
+          color: Colors.white,
+          size: 28,
         ),
       ),
-      label: '',
     );
   }
 }

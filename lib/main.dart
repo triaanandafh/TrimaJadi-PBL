@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'pages/onboarding_page.dart';
 import 'pages/main_screen.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() { 
+  WidgetsFlutterBinding.ensureInitialized();
+
+  SystemChrome.setEnabledSystemUIMode(
+    SystemUiMode.immersiveSticky,
+  );
+
+  runApp(const MyApp());}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Trima Jadi',
+    return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blueGrey,
-        useMaterial3: true,
-      ),
-      home: const MainScreen(),
+      home: OnboardingPage(),
     );
   }
 }
