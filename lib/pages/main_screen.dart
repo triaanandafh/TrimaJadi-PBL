@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'homepage_client.dart'; 
+import '../models/user_model.dart';
+import 'homepage_client.dart';
+import 'homepage_seller.dart';
 import 'profile_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -10,14 +12,14 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; 
+  int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    HomepageClient(),
-    const Center(child: Text("Halaman Tugas")),
-    const Center(child: Text("Halaman Cari")),
-    const Center(child: Text("Halaman Chat")),
-    const ProfilePage(),
+    UserData.role == "Seller" ? HomepageSeller() : HomepageClient(), 
+    Center(child: Text("Halaman Tugas")),
+    Center(child: Text("Halaman Cari")),
+    Center(child: Text("Halaman Chat")),
+    ProfilePage(),
   ];
 
   @override
@@ -27,14 +29,9 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
-        showSelectedLabels: false, 
+        showSelectedLabels: false,
         showUnselectedLabels: false,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-
+        onTap: (index) => setState(() => _currentIndex = index),
         items: [
           _buildNavBarItem(Icons.home_outlined, Icons.home, 0),
           _buildNavBarItem(Icons.assignment_outlined, Icons.assignment, 1),
@@ -46,20 +43,13 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  BottomNavigationBarItem _buildNavBarItem(IconData unselectedIcon, IconData selectedIcon, int index) {
+  BottomNavigationBarItem _buildNavBarItem(IconData unselected, IconData selected, int index) {
     bool isSelected = _currentIndex == index;
     return BottomNavigationBarItem(
       icon: Container(
-        padding: const EdgeInsets.all(10), 
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF1E3A5F) : Colors.transparent, 
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          isSelected ? selectedIcon : unselectedIcon,
-          color: isSelected ? Colors.white : Colors.grey, 
-          size: 26,
-        ),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(color: isSelected ? const Color(0xFF1E3A5F) : Colors.transparent, shape: BoxShape.circle),
+        child: Icon(isSelected ? selected : unselected, color: isSelected ? Colors.white : Colors.grey, size: 26),
       ),
       label: '',
     );
