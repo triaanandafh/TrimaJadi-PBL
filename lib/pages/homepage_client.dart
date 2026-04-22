@@ -46,7 +46,7 @@ class HomepageClient extends StatelessWidget {
                                   ),
                                   SizedBox(width: 10),
                                   Text(
-                                    'Hello, Tria!👋',
+                                    'Hello, Tria👋',
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 18,
