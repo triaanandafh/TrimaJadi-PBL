@@ -3,6 +3,7 @@ import '../widgets/category_item.dart';
 import '../widgets/service_item.dart';
 import '../widgets/box.dart';
 import '../models/user_model.dart';
+import '../pages/searching_page.dart';
 
 class HomepageClient extends StatelessWidget {
 
@@ -87,6 +88,11 @@ class HomepageClient extends StatelessWidget {
                       ],
                     ),
                       child: TextField(
+                        readOnly: true,
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => SearchingClient
+                          ()));
+                        },
                         decoration: InputDecoration(
                           hintText: 'Search for services...',
                           prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
@@ -110,7 +116,7 @@ class HomepageClient extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  sectionTitle("Kategori Layanan"),
+                  sectionTitle(context, "Kategori Layanan"),
                   const SizedBox(height: 15),
                   Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -156,7 +162,7 @@ class HomepageClient extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  sectionTitle("Layanan Populer"),
+                  sectionTitle(context, "Layanan Populer"),
                   const SizedBox(height: 15),
 
                   SingleChildScrollView(
@@ -179,7 +185,7 @@ class HomepageClient extends StatelessWidget {
       ),
     );
   }
-  Widget sectionTitle(String title) {
+  Widget sectionTitle(BuildContext context, String title) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -187,9 +193,16 @@ class HomepageClient extends StatelessWidget {
           title,
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
+        InkWell(
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => SearchingClient()));
+        
+          },
+          child:
         Text(
           "Lihat Semua",
           style: TextStyle(fontSize: 13, color: Colors.blueGrey),
+        ),
         ),
       ],
     );
