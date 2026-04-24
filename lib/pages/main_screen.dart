@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import 'homepage_client.dart';
 import 'homepage_seller.dart';
 import 'profile_page.dart';
+import 'searching_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -17,9 +18,11 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      UserData.role == "Seller" ? HomepageSeller() : HomepageClient(),
+      UserData.role == "Seller" ? HomepageSeller() : HomepageClient(
+        onTapSearch: () => setState(() => _currentIndex = 2),
+      ),
       Center(child: Text("Halaman Order")),
-      Center(child: Text("Halaman Action")),
+      UserData.role == "Seller" ? const Center(child: Text("Post Jasa")) : SearchingClient(),
       Center(child: Text("Halaman Chat")),
       ProfilePage(),
     ];

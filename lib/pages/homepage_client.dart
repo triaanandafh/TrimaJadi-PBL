@@ -6,7 +6,8 @@ import '../models/user_model.dart';
 import '../pages/searching_page.dart';
 
 class HomepageClient extends StatelessWidget {
-
+final VoidCallback onTapSearch;
+const HomepageClient({super.key, required this.onTapSearch});
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,10 +90,7 @@ class HomepageClient extends StatelessWidget {
                     ),
                       child: TextField(
                         readOnly: true,
-                        onTap: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => SearchingClient
-                          ()));
-                        },
+                        onTap: onTapSearch,
                         decoration: InputDecoration(
                           hintText: 'Search for services...',
                           prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
@@ -194,10 +192,7 @@ class HomepageClient extends StatelessWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         InkWell(
-          onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => SearchingClient()));
-        
-          },
+          onTap: onTapSearch,
           child:
         Text(
           "Lihat Semua",
