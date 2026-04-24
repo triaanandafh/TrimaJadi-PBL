@@ -30,46 +30,46 @@ const HomepageClient({super.key, required this.onTapSearch});
                   ),
                   child: SafeArea(
                     child: Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
-                              Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: Colors.white24,
-                                    child: Icon(Icons.person, color: Colors.white, size: 20),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text(
-                                    'Hello, Tria👋',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: Colors.white24,
+                                      child: Icon(Icons.person, color: Colors.white, size: 20),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              shape: BoxShape.circle,
+                                    SizedBox(width: 10),
+                                    Text(
+                                      'Hello, Tria👋',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
-                            child: const Icon(Icons.notifications, color: Colors.orange, size: 24)
-                          ),
-                        ],
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.notifications, color: Colors.orange, size: 24),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
                     ),
                   ),
                 ),
@@ -84,7 +84,7 @@ const HomepageClient({super.key, required this.onTapSearch});
                         BoxShadow(
                           color: Colors.black.withOpacity(0.1),
                           blurRadius: 10,
-                          offset: Offset(0, 5),
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
@@ -105,7 +105,7 @@ const HomepageClient({super.key, required this.onTapSearch});
                       ),
                     ),
                   ),
-                
+                ),
               ],
             ),
             const SizedBox(height: 45),
@@ -117,23 +117,24 @@ const HomepageClient({super.key, required this.onTapSearch});
                   sectionTitle(context, "Kategori Layanan"),
                   const SizedBox(height: 15),
                   Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        CategoryItem(icon: Icons.palette, label: 'Desain', bgColor: Colors.orange[50]!, iconColor: Colors.orange[700]!),
-                        CategoryItem(icon: Icons.code, label: 'Web & Prog', bgColor: Colors.blue[50]!, iconColor: Colors.blue[700]!),
-                        CategoryItem(icon: Icons.school, label: 'Edukasi', bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
-                        CategoryItem(icon: Icons.music_note, label: 'Visual Audio', bgColor: Colors.purple[50]!, iconColor: Colors.purple[700]!),
-                        CategoryItem(icon: Icons.edit, label: 'Penulisan', bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
-                      ],
-                    ),
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      CategoryItem(label: 'Desain', icon: Icons.palette, bgColor: Colors.orange[50]!, iconColor: Colors.orange[700]!),
+                      CategoryItem(label: 'Web & Prog', icon: Icons.code, bgColor: Colors.blue[50]!, iconColor: Colors.blue[700]!),
+                      CategoryItem(label: 'Edukasi', icon: Icons.school, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
+                      CategoryItem(label: 'Visual Audio', icon: Icons.music_note, bgColor: Colors.purple[50]!, iconColor: Colors.purple[700]!),
+                      CategoryItem(label: 'Penulisan', icon: Icons.edit, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
+                    ],
+                  ),
                   const SizedBox(height: 30),
-
+                  
+                  // Promo Card
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Container(
                       height: 140,
                       width: double.infinity,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Color.fromARGB(255, 17, 155, 224),
                         image: DecorationImage(
                           image: AssetImage('assets/images/promo.jpg'),
@@ -148,29 +149,32 @@ const HomepageClient({super.key, required this.onTapSearch});
                           children: const [
                             Text(
                               'Creative solutions for your home',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                             ),
-                        
                             SizedBox(height: 10),
-                            Text('Dapatkan diskon hingga 30% untuk layanan tertentu.'),
+                            Text(
+                              'Dapatkan diskon hingga 30% untuk layanan tertentu.',
+                              style: TextStyle(color: Colors.white),
+                              textAlign: TextAlign.center,
+                            ),
                           ],
                         ),
-
-                      )
+                      ),
                     ),
                   ),
                   const SizedBox(height: 30),
                   sectionTitle(context, "Layanan Populer"),
                   const SizedBox(height: 15),
 
+                  // Horizontal Service Cards
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
-                    physics: BouncingScrollPhysics(),
+                    physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        ServiceCard("Desain Poster", "assets/images/Desain logo minimalis.webp"),
-                        ServiceCard("Desain Poster", "assets/images/poster.jpg"),
-                        ServiceCard("Desain Poster", "assets/images/poster.jpg"),
+                        ServiceCard("Desain Logo", "assets/images/desain_logo.png"),
+                        ServiceCard("Desain Logo Profesional", "assets/images/logo_profesional.png"),
+                        ServiceCard("Desain Web", "assets/images/desain_web.png"),
                       ],
                     ),
                   ),
@@ -189,7 +193,7 @@ const HomepageClient({super.key, required this.onTapSearch});
       children: [
         Text(
           title,
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         InkWell(
           onTap: onTapSearch,
@@ -215,46 +219,62 @@ const HomepageClient({super.key, required this.onTapSearch});
           ),
           child: Icon(icon, color: iconColor, size: 28),
         ),
-        SizedBox(height: 5),
-        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.blueGrey[800]), textAlign: TextAlign.center),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.blueGrey[800]),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }
-
 }
 
-
+// Perbaikan Utama pada Fungsi ServiceCard
 Widget ServiceCard(String title, String imgPath) {
-    return Container(
-      width: 155,
-      margin: EdgeInsets.only(right: 15),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Placeholder Gambar
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
-            ),
-            child: Center(child: Icon(Icons.image, color: Colors.grey[400])),
+  return Container(
+    width: 155,
+    margin: const EdgeInsets.only(right: 15),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(15),
+      border: Border.all(color: Colors.grey[200]!),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Menampilkan Gambar dari Assets
+        Container(
+          height: 100,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
           ),
-          Padding(
-            padding: EdgeInsets.all(12),
-            child: Text(
-              title, 
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+          child: ClipRRect(
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+            child: Image.asset(
+              imgPath,
+              fit: BoxFit.cover, // Gambar akan memenuhi area tanpa merusak aspek rasio
+              errorBuilder: (context, error, stackTrace) {
+                // Widget cadangan jika file gambar tidak ditemukan
+                return const Center(
+                  child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
+                );
+              },
             ),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    ),
+  );
+}
