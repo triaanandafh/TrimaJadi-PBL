@@ -1,96 +1,97 @@
 import 'package:flutter/material.dart';
 
 class HomepageClient extends StatelessWidget {
+  final VoidCallback onTapSearch;
+
+  const HomepageClient({super.key, required this.onTapSearch});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF4F2EF), 
       body: SingleChildScrollView(
         child: Column(
           children: [
+            // Header & Search Bar
             Stack(
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 120,
+                  height: 150,
                   width: double.infinity,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF1A43BF),
+                    color: Color(0xFF1A43BF), 
                     borderRadius: BorderRadius.only(
                       bottomLeft: Radius.circular(40),
                       bottomRight: Radius.circular(40),
                     ),
                   ),
                   child: SafeArea(
-                    child: Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      radius: 18,
-                                      backgroundColor: Colors.white24,
-                                      child: Icon(Icons.person, color: Colors.white, size: 20),
-                                    ),
-                                    SizedBox(width: 10),
-                                    Text(
-                                      'Hello, Tria👋',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: const [
+                              CircleAvatar(
+                                radius: 22,
+                                backgroundColor: Colors.white24,
+                                child: Icon(Icons.person, color: Colors.white, size: 24),
                               ),
-                              child: const Icon(Icons.notifications, color: Colors.orange, size: 24),
+                              SizedBox(width: 12),
+                              Text(
+                                'Halo, Tria!',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
                             ),
-                          ],
-                        ),
+                            child: const Icon(Icons.notifications_none, color: Color(0xFFE68C3A), size: 26),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
+                // Search Bar Box
                 Positioned(
                   bottom: -25,
-                  left: 20,
-                  right: 20,
-                  child: Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search',
-                        prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 20),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(30),
-                          borderSide: BorderSide.none,
+                  left: 25,
+                  right: 25,
+                  child: GestureDetector(
+                    onTap: onTapSearch, 
+                    child: Container(
+                      height: 50,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          children: const [
+                            Icon(Icons.search, color: Colors.grey),
+                            SizedBox(width: 10),
+                            Text("Cari layanan...", style: TextStyle(color: Colors.grey, fontSize: 15)),
+                          ],
                         ),
                       ),
                     ),
@@ -98,27 +99,34 @@ class HomepageClient extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 45),
+            const SizedBox(height: 50),
+
+            // Bagian Kategori
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 15),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  sectionTitle("Kategori Layanan"),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CategoryItem(label: 'Desain', icon: Icons.palette, bgColor: Colors.orange[50]!, iconColor: Colors.orange[700]!),
-                      CategoryItem(label: 'Web & Pemrograman', icon: Icons.code, bgColor: Colors.blue[50]!, iconColor: Colors.blue[700]!),
-                      CategoryItem(label: 'Edukasi', icon: Icons.school, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
-                      CategoryItem(label: 'Visual Audio', icon: Icons.music_note, bgColor: Colors.purple[50]!, iconColor: Colors.purple[700]!),
-                      CategoryItem(label: 'Penulisan', icon: Icons.translate, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
+                  _buildSectionTitle("Kategori Populer"),
+                  const SizedBox(height: 20),
                   
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildCategoryItem('Desain', Icons.palette_outlined, const Color(0xFFE3F2FD), Colors.blue.shade700),
+                        _buildCategoryItem('Web & Pemrograman', Icons.code, const Color(0xFFFFF3E0), const Color(0xFFE68C3A)),
+                        _buildCategoryItem('Edukasi', Icons.school_outlined, const Color(0xFFF3E5F5), Colors.purple.shade700),
+                        _buildCategoryItem('Visual & Audio', Icons.music_note_outlined, const Color(0xFFE0F2F1), Colors.teal.shade700),
+                        _buildCategoryItem('Penulisan', Icons.translate, const Color(0xFFE8F5E9), Colors.green.shade700),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 35),
+                  
+                  // Promo Card (Hanya Gambar)
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Container(
@@ -132,19 +140,20 @@ class HomepageClient extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 30),
-                  sectionTitle("Layanan Populer"),
+                  
+                  const SizedBox(height: 35),
+                  _buildSectionTitle("Layanan Populer"),
                   const SizedBox(height: 15),
 
-                  // Horizontal Service Cards
+                  // List Layanan Populer
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
                     child: Row(
                       children: [
-                        ServiceCard("Desain Logo", "assets/images/desain_logo.png"),
-                        ServiceCard("Desain Logo Profesional", "assets/images/logo_profesional.png"),
-                        ServiceCard("Desain Web", "assets/images/desain_web.png"),
+                        _buildServiceCard("Desain Poster", "assets/images/desain_logo.png"),
+                        _buildServiceCard("Edukasi", "assets/images/logo_profesional.png"),
+                        _buildServiceCard("Desain Web", "assets/images/desain_web.png"),
                       ],
                     ),
                   ),
@@ -158,103 +167,91 @@ class HomepageClient extends StatelessWidget {
     );
   }
 
-  Widget sectionTitle(String title) {
+  Widget _buildSectionTitle(String title) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF213E60)),
         ),
         const Text(
           "Lihat Semua",
-          style: TextStyle(fontSize: 13, color: Colors.blueGrey),
+          style: TextStyle(fontSize: 13, color: Color(0xFF94B6EF), fontWeight: FontWeight.w600),
         ),
       ],
     );
   }
 
-Widget CategoryItem({required String label, required IconData icon, required Color bgColor, required Color iconColor}) {
-  return SizedBox(
-    width: 75, // Lebar tetap agar teks bisa membungkus ke bawah
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      // Memastikan semua isi kolom mulai dari atas
-      mainAxisAlignment: MainAxisAlignment.start, 
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: BoxDecoration(
-            color: bgColor,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: iconColor, size: 28),
-        ),
-        const SizedBox(height: 8),
-        // GUNAKAN SIZEDBOX DENGAN TINGGI TETAP DI SINI
-        SizedBox(
-          height: 32, // Tinggi cukup untuk 2 baris teks (atur sesuai kebutuhan)
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
-              color: Colors.blueGrey[800],
+  // Widget Category dengan label Penulisan & Wrap Text
+  Widget _buildCategoryItem(String label, IconData icon, Color bgColor, Color iconColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: SizedBox(
+        width: 75, 
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: bgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 28),
             ),
-            maxLines: 2,
-            softWrap: true,
-          ),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 35, 
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87),
+                maxLines: 2,
+                softWrap: true,
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
-}
-}
+      ),
+    );
+  }
 
-Widget ServiceCard(String title, String imgPath) {
-  return Container(
-    width: 155,
-    margin: const EdgeInsets.only(right: 15),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(15),
-      border: Border.all(color: Colors.grey[200]!),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          height: 100,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-          ),
-          child: ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            child: Image.asset(
-              imgPath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return const Center(
-                  child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
-                );
-              },
+  Widget _buildServiceCard(String title, String imgPath) {
+    return Container(
+      width: 160,
+      margin: const EdgeInsets.only(right: 15),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 100,
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              image: DecorationImage(
+                image: AssetImage(imgPath),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Text(
+              title,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

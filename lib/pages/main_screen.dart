@@ -17,15 +17,21 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Cek role user
     bool isSeller = UserData.role == "Seller";
 
-    // Daftar halaman
     final List<Widget> pages = [
-      isSeller ? const HomeSellerPage() : HomepageClient(), 
+      isSeller 
+        ? const HomeSellerPage() 
+        : HomepageClient(
+            onTapSearch: () {
+              setState(() {
+                _currentIndex = 2; 
+              });
+            },
+          ), 
+      
       const Center(child: Text("Order")),
       
-      // Halaman untuk tombol tengah
       isSeller 
           ? const Center() 
           : const CariLayananPage(), 
@@ -39,7 +45,6 @@ class _MainScreenState extends State<MainScreen> {
         index: _currentIndex,
         children: pages,
       ),
-      
       bottomNavigationBar: Container(
         height: 85,
         decoration: BoxDecoration(
@@ -48,7 +53,7 @@ class _MainScreenState extends State<MainScreen> {
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, -5), // Shadow tipis di bagian atas navbar
+              offset: const Offset(0, -5), 
             ),
           ],
         ),
@@ -57,10 +62,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
             _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
-            
-            // Tombol Tengah (Briefcase untuk Talent / Search untuk Client)
             _buildCenterItem(isSeller), 
-            
             _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
             _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
           ],
@@ -71,8 +73,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData unselected, IconData selected, String label, int index) {
     bool isSelected = _currentIndex == index;
-    Color activeColor = const Color(0xFFE68C3A); // Orange sesuai desain
-    Color inactiveColor = const Color(0xFF9E9E9E); // Abu-abu ikon tidak aktif
+    Color activeColor = const Color(0xFFE68C3A);
+    Color inactiveColor = const Color(0xFF9E9E9E);
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -104,7 +106,6 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildCenterItem(bool isSeller) {
     bool isSelected = _currentIndex == 2;
-    
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
@@ -122,7 +123,6 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         child: Icon(
-          // Ikon tas (business_center) untuk Talent sesuai gambar
           isSeller ? Icons.business_center : Icons.search,
           color: Colors.white,
           size: 28,
