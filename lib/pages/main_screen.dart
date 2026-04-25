@@ -3,6 +3,8 @@ import '../models/user_model.dart';
 import 'homepage_client.dart';
 import 'homepage_seller.dart';
 import 'profile_page.dart';
+import 'searching_page.dart';
+import 'order_page.dart';
 import 'cari_layanan.dart'; 
 
 class MainScreen extends StatefulWidget {

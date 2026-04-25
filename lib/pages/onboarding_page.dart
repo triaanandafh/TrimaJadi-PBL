@@ -51,8 +51,16 @@ class OnboardingPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(25),
                 ),
               ),
-              onPressed: () {},
-              child: const Text("Mulai sebagai Seller"),
+              onPressed: () {
+                UserData.name = "User";
+                UserData.role = "Talent";
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MainScreen()),
+                );
+              },
+              child: const Text("Mulai sebagai Talent"),
             ),
           ),
           const SizedBox(height: 15),
