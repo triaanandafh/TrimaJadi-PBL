@@ -9,14 +9,15 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(backgroundColor: Colors.white, elevation: 0, title: const Text('Profil', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-      body: Column(
+      body: ListView(
         children: [
+          const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
                 CircleAvatar(radius: 35, backgroundColor: Colors.grey[300], child: const Icon(Icons.person, size: 40, color: Colors.white)),
-                const SizedBox(width: 15),
+                const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -29,11 +30,43 @@ class ProfilePage extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(),
-          const ListTile(leading: Icon(Icons.person_outline), title: Text("Edit Profil"), trailing: Icon(Icons.chevron_right)),
-          const ListTile(leading: Icon(Icons.logout, color: Colors.red), title: Text("Keluar Akun", style: TextStyle(color: Colors.red))),
+
+          const SizedBox(height: 10),
+
+          _menuItem(Icons.edit_outlined, "Edit Profil"),
+          const Divider(indent: 20, endIndent: 20),
+          _menuItem(Icons.lock_outline, "Ubah Password"),
+          const Divider(indent: 20, endIndent: 20),
+          _menuItem(Icons.notifications, "Atur Notifikasi"),
+          const Divider(indent: 20, endIndent: 20),
+          _menuItem(Icons.logout, "Keluar Akun", textColor: Colors.red),
         ],
       ),
     );
   }
+
+  // Tambahkan {Color? textColor} sebagai parameter opsional
+Widget _menuItem(IconData icon, String title, {Color? textColor}) {
+  return ListTile(
+    leading: Icon(
+      icon, 
+      // Jika textColor ada, pakai itu. Jika tidak, pakai abu-abu.
+      color: textColor ?? Colors.grey[700], 
+    ),
+    title: Text(
+      title, 
+      style: TextStyle(
+        fontWeight: FontWeight.w500,
+        // Jika textColor ada, pakai itu. Jika tidak, pakai hitam.
+        color: textColor ?? Colors.black87, 
+      ),
+    ),
+    trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+    onTap: () {
+      if (title == "Keluar Akun") {
+        // Tambahkan logika logout di sini
+      }
+    },
+  );
+}
 }
