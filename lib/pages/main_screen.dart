@@ -23,14 +23,14 @@ class _MainScreenState extends State<MainScreen> {
     // Daftar halaman
     final List<Widget> pages = [
       isSeller ? const HomeSellerPage() : HomepageClient(), 
-      const Center(child: Text("Halaman Order")),
+      const Center(child: Text("Order")),
       
       // Halaman untuk tombol tengah
       isSeller 
-          ? const Center(child: Text("Halaman Tambah Jasa Talent")) 
+          ? const Center() 
           : const CariLayananPage(), 
       
-      const Center(child: Text("Halaman Chat")),
+      const Center(child: Text("Chat")),
       const ProfilePage(),
     ];
 
