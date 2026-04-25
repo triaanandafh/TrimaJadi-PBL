@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class HomeSellerPage extends StatelessWidget {
-  const HomeSellerPage({super.key});
+class HomepageTalent extends StatelessWidget {
+  const HomepageTalent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,6 @@ class HomeSellerPage extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNav(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {},
         backgroundColor: const Color(0xFFE68C3A), // Orange FAB
