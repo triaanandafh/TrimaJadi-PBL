@@ -19,16 +19,16 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> pages = [
-      UserData.role == "Seller" ? HomepageSeller() : HomepageClient(
+      UserData.role == "Talent" ? HomepageSeller() : HomepageClient(
         onTapSearch: () => setState(() => _currentIndex = 2),
       ),
       const OrderPage(),
-      UserData.role == "Seller" ? const Center(child: Text("Post Jasa")) : SearchingClient(),
+      UserData.role == "Talent" ? const Center(child: Text("Post Jasa")) : SearchingClient(),
       Center(child: Text("Halaman Chat")),
       ProfilePage(),
     ];
 
-    bool isSeller = UserData.role == "Seller";
+    bool isSeller = UserData.role == "Talent";
 
     return Scaffold(
       body: pages[_currentIndex], 
