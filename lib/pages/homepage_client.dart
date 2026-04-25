@@ -105,7 +105,7 @@ const HomepageClient({super.key, required this.onTapSearch});
                       ),
                     ),
                   ),
-                ),
+                
               ],
             ),
             const SizedBox(height: 45),
