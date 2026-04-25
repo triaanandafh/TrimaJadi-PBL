@@ -4,6 +4,7 @@ import 'homepage_client.dart';
 import 'homepage_seller.dart';
 import 'profile_page.dart';
 import 'searching_page.dart';
+import 'order_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,7 +22,7 @@ class _MainScreenState extends State<MainScreen> {
       UserData.role == "Seller" ? HomepageSeller() : HomepageClient(
         onTapSearch: () => setState(() => _currentIndex = 2),
       ),
-      Center(child: Text("Halaman Order")),
+      const OrderPage(),
       UserData.role == "Seller" ? const Center(child: Text("Post Jasa")) : SearchingClient(),
       Center(child: Text("Halaman Chat")),
       ProfilePage(),
