@@ -1,8 +1,4 @@
 import 'package:flutter/material.dart';
-import '../widgets/category_item.dart';
-import '../widgets/service_item.dart';
-import '../widgets/box.dart';
-import '../models/user_model.dart';
 
 class HomepageClient extends StatelessWidget {
   @override
@@ -87,7 +83,7 @@ class HomepageClient extends StatelessWidget {
                     ),
                     child: TextField(
                       decoration: InputDecoration(
-                        hintText: 'Search for services...',
+                        hintText: 'Search',
                         prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
                         filled: true,
                         fillColor: Colors.white,
@@ -112,46 +108,26 @@ class HomepageClient extends StatelessWidget {
                   const SizedBox(height: 15),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       CategoryItem(label: 'Desain', icon: Icons.palette, bgColor: Colors.orange[50]!, iconColor: Colors.orange[700]!),
-                      CategoryItem(label: 'Web & Prog', icon: Icons.code, bgColor: Colors.blue[50]!, iconColor: Colors.blue[700]!),
+                      CategoryItem(label: 'Web & Pemrograman', icon: Icons.code, bgColor: Colors.blue[50]!, iconColor: Colors.blue[700]!),
                       CategoryItem(label: 'Edukasi', icon: Icons.school, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
                       CategoryItem(label: 'Visual Audio', icon: Icons.music_note, bgColor: Colors.purple[50]!, iconColor: Colors.purple[700]!),
-                      CategoryItem(label: 'Penulisan', icon: Icons.edit, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
+                      CategoryItem(label: 'Penulisan', icon: Icons.translate, bgColor: Colors.green[50]!, iconColor: Colors.green[700]!),
                     ],
                   ),
                   const SizedBox(height: 30),
                   
-                  // Promo Card
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: Container(
-                      height: 140,
+                      height: 160,
                       width: double.infinity,
                       decoration: const BoxDecoration(
-                        color: Color.fromARGB(255, 17, 155, 224),
                         image: DecorationImage(
-                          image: AssetImage('assets/images/promo.jpg'),
+                          image: AssetImage('assets/images/image.png'),
                           fit: BoxFit.cover,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'Creative solutions for your home',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                            ),
-                            SizedBox(height: 10),
-                            Text(
-                              'Dapatkan diskon hingga 30% untuk layanan tertentu.',
-                              style: TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
                         ),
                       ),
                     ),
@@ -198,8 +174,13 @@ class HomepageClient extends StatelessWidget {
     );
   }
 
-  Widget CategoryItem({required String label, required IconData icon, required Color bgColor, required Color iconColor}) {
-    return Column(
+Widget CategoryItem({required String label, required IconData icon, required Color bgColor, required Color iconColor}) {
+  return SizedBox(
+    width: 75, // Lebar tetap agar teks bisa membungkus ke bawah
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      // Memastikan semua isi kolom mulai dari atas
+      mainAxisAlignment: MainAxisAlignment.start, 
       children: [
         Container(
           width: 60,
@@ -210,18 +191,28 @@ class HomepageClient extends StatelessWidget {
           ),
           child: Icon(icon, color: iconColor, size: 28),
         ),
-        const SizedBox(height: 5),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w500, color: Colors.blueGrey[800]),
-          textAlign: TextAlign.center,
+        const SizedBox(height: 8),
+        // GUNAKAN SIZEDBOX DENGAN TINGGI TETAP DI SINI
+        SizedBox(
+          height: 32, // Tinggi cukup untuk 2 baris teks (atur sesuai kebutuhan)
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: Colors.blueGrey[800],
+            ),
+            maxLines: 2,
+            softWrap: true,
+          ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 }
 
-// Perbaikan Utama pada Fungsi ServiceCard
 Widget ServiceCard(String title, String imgPath) {
   return Container(
     width: 155,
@@ -234,7 +225,6 @@ Widget ServiceCard(String title, String imgPath) {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Menampilkan Gambar dari Assets
         Container(
           height: 100,
           width: double.infinity,
@@ -246,9 +236,8 @@ Widget ServiceCard(String title, String imgPath) {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
             child: Image.asset(
               imgPath,
-              fit: BoxFit.cover, // Gambar akan memenuhi area tanpa merusak aspek rasio
+              fit: BoxFit.cover,
               errorBuilder: (context, error, stackTrace) {
-                // Widget cadangan jika file gambar tidak ditemukan
                 return const Center(
                   child: Icon(Icons.broken_image, color: Colors.grey, size: 40),
                 );
