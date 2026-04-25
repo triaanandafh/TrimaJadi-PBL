@@ -28,17 +28,12 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/images/desain.jpeg
-    - assets/images/edukasi.jpeg
-    - assets/images/pemrograman.jpeg
-    - assets/images/visual_audio.jpeg
-    - assets/images/pemrograman.jpeg
     - assets/images/desain_logo.jpeg
     - assets/images/web_development.jpeg
     - assets/images/video_editing.jpeg
-    - assets/images/penulisan.jpeg
     - assets/images/logoapp.png
     - assets/images/onboarding.png
     - assets/images/desain_logo.png
     - assets/images/logo_profesional.png
     - assets/images/desain_web.png
+    - assets/images/image.png
