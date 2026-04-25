@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../models/user_model.dart'; // Pastikan path ini sesuai dengan struktur foldermu
+import '../models/user_model.dart';
 import 'homepage_client.dart';
 import 'homepage_seller.dart';
 import 'profile_page.dart';
-import 'cari_layanan.dart'; // Import halaman yang baru dibuat tadi
+import 'cari_layanan.dart'; 
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -20,22 +20,21 @@ class _MainScreenState extends State<MainScreen> {
     // Cek role user
     bool isSeller = UserData.role == "Seller";
 
-    // Daftar halaman yang akan ditampilkan berdasarkan index
+    // Daftar halaman
     final List<Widget> pages = [
-      isSeller ? const HomeSellerPage() : HomepageClient(), // Index 0: Beranda
-      const Center(child: Text("Halaman Order")),                 // Index 1: Order
+      isSeller ? const HomeSellerPage() : HomepageClient(), 
+      const Center(child: Text("Halaman Order")),
       
-      // Index 2: Tombol Tengah (Search untuk Client / Kelola Jasa untuk Seller)
+      // Halaman untuk tombol tengah
       isSeller 
-          ? const Center(child: Text("Halaman Tambah/Kelola Jasa Seller")) 
+          ? const Center(child: Text("Halaman Tambah Jasa Talent")) 
           : const CariLayananPage(), 
       
-      const Center(child: Text("Halaman Chat")),                  // Index 3: Chat
-      const ProfilePage(),                                        // Index 4: Profil
+      const Center(child: Text("Halaman Chat")),
+      const ProfilePage(),
     ];
 
     return Scaffold(
-      // Menggunakan IndexedStack agar state halaman (seperti scroll) tidak hilang saat pindah tab
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -47,23 +46,21 @@ class _MainScreenState extends State<MainScreen> {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, -2),
+              offset: const Offset(0, -5), // Shadow tipis di bagian atas navbar
             ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Navigasi Kiri
             _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
             _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
             
-            // Tombol Tengah (Action Button)
+            // Tombol Tengah (Briefcase untuk Talent / Search untuk Client)
             _buildCenterItem(isSeller), 
             
-            // Navigasi Kanan
             _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
             _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
           ],
@@ -72,12 +69,10 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // Widget untuk item navigasi standar
   Widget _buildNavItem(IconData unselected, IconData selected, String label, int index) {
     bool isSelected = _currentIndex == index;
-    // Memanggil warna orange langsung sesuai permintaanmu
-    Color activeColor = const Color(0xFFE68C3A);
-    Color inactiveColor = Colors.grey;
+    Color activeColor = const Color(0xFFE68C3A); // Orange sesuai desain
+    Color inactiveColor = const Color(0xFF9E9E9E); // Abu-abu ikon tidak aktif
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -90,16 +85,16 @@ class _MainScreenState extends State<MainScreen> {
             Icon(
               isSelected ? selected : unselected, 
               color: isSelected ? activeColor : inactiveColor, 
-              size: 26
+              size: 28,
             ),
             const SizedBox(height: 4),
             Text(
               label, 
               style: TextStyle(
                 color: isSelected ? activeColor : inactiveColor, 
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
-              )
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
             ),
           ],
         ),
@@ -107,28 +102,28 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  // Widget untuk tombol tengah yang menonjol
   Widget _buildCenterItem(bool isSeller) {
     bool isSelected = _currentIndex == 2;
     
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        width: 55,
+        height: 55,
         decoration: BoxDecoration(
-          // Tetap orange, tapi beri sedikit bayangan jika terpilih
           color: const Color(0xFFE68C3A),
           shape: BoxShape.circle,
-          boxShadow: isSelected ? [
+          boxShadow: [
             BoxShadow(
-              color: const Color(0xFFE68C3A).withOpacity(0.4),
+              color: const Color(0xFFE68C3A).withOpacity(0.3),
               blurRadius: 8,
-              spreadRadius: 2
-            )
-          ] : null,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Icon(
-          isSeller ? Icons.work_outline : Icons.search,
+          // Ikon tas (business_center) untuk Talent sesuai gambar
+          isSeller ? Icons.business_center : Icons.search,
           color: Colors.white,
           size: 28,
         ),
