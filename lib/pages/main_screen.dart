@@ -5,6 +5,7 @@ import 'homepage_seller.dart';
 import 'profile_page.dart';
 import 'searching_page.dart';
 import 'order_page.dart';
+import 'cari_layanan.dart'; 
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -18,30 +19,45 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isSeller = UserData.role == "Seller";
+
     final List<Widget> pages = [
-      UserData.role == "Talent" ? HomepageSeller() : HomepageClient(
-        onTapSearch: () => setState(() => _currentIndex = 2),
-      ),
-      const OrderPage(),
-      UserData.role == "Talent" ? const Center(child: Text("Post Jasa")) : SearchingClient(),
-      Center(child: Text("Halaman Chat")),
-      ProfilePage(),
+      isSeller 
+        ? const HomeSellerPage() 
+        : HomepageClient(
+            onTapSearch: () {
+              setState(() {
+                _currentIndex = 2; 
+              });
+            },
+          ), 
+      
+      const Center(child: Text("Order")),
+      
+      isSeller 
+          ? const Center() 
+          : const CariLayananPage(), 
+      
+      const Center(child: Text("Chat")),
+      const ProfilePage(),
     ];
 
     bool isSeller = UserData.role == "Talent";
 
     return Scaffold(
-      body: pages[_currentIndex], 
-      
+      body: IndexedStack(
+        index: _currentIndex,
+        children: pages,
+      ),
       bottomNavigationBar: Container(
         height: 85,
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, -2),
+              offset: const Offset(0, -5), 
             ),
           ],
         ),
@@ -50,9 +66,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
             _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
-            
             _buildCenterItem(isSeller), 
-            
             _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
             _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
           ],
@@ -63,7 +77,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildNavItem(IconData unselected, IconData selected, String label, int index) {
     bool isSelected = _currentIndex == index;
-    Color color = isSelected ? const Color(0xFFE68C3A) : Colors.grey;
+    Color activeColor = const Color(0xFFE68C3A);
+    Color inactiveColor = const Color(0xFF9E9E9E);
 
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
@@ -73,9 +88,20 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(isSelected ? selected : unselected, color: color, size: 26),
+            Icon(
+              isSelected ? selected : unselected, 
+              color: isSelected ? activeColor : inactiveColor, 
+              size: 28,
+            ),
             const SizedBox(height: 4),
-            Text(label, style: TextStyle(color: color, fontSize: 12)),
+            Text(
+              label, 
+              style: TextStyle(
+                color: isSelected ? activeColor : inactiveColor, 
+                fontSize: 11,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),
@@ -83,16 +109,25 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildCenterItem(bool isSeller) {
+    bool isSelected = _currentIndex == 2;
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = 2),
       child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: const BoxDecoration(
-          color: Color(0xFFE68C3A),
+        width: 55,
+        height: 55,
+        decoration: BoxDecoration(
+          color: const Color(0xFFE68C3A),
           shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE68C3A).withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Icon(
-          isSeller ? Icons.work_outline : Icons.search,
+          isSeller ? Icons.business_center : Icons.search,
           color: Colors.white,
           size: 28,
         ),
