@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import 'homepage_client.dart';
-import 'homepage_seller.dart';
+import 'homepage_talent.dart';
 import 'profile_page.dart';
-import 'searching_page.dart';
-import 'order_page.dart';
-import 'cari_layanan.dart'; 
+import 'cari_layanan.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -22,23 +20,35 @@ class _MainScreenState extends State<MainScreen> {
     bool isTalent = UserData.role == "Talent";
 
     final List<Widget> pages = [
-      isTalent 
-        ? const HomeSellerPage() 
-        : HomepageClient(
-            onTapSearch: () {
-              setState(() {
-                _currentIndex = 2; 
-              });
-            },
-          ), 
-      
-      const OrderPage(),
-      
-      isTalent 
-          ? const Center() 
-          : const CariLayananPage(), 
-      
-      const Center(child: Text("Chat")),
+      // HOME
+      isTalent
+          ? const HomepageTalent()
+          : HomepageClient(
+              onTapSearch: () {
+                setState(() {
+                  _currentIndex = 2;
+                });
+              },
+            ),
+
+      // ORDER
+      const Center(
+        child: Text("Order"),
+      ),
+
+      // CENTER PAGE
+      isTalent
+          ? const Center(
+              child: Text("Talent Services"),
+            )
+          : const CariLayananPage(),
+
+      // CHAT
+      const Center(
+        child: Text("Chat"),
+      ),
+
+      // PROFILE
       const ProfilePage(),
     ];
 
@@ -56,31 +66,61 @@ class _MainScreenState extends State<MainScreen> {
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 10,
-              offset: const Offset(0, -5), 
+              offset: const Offset(0, -5),
             ),
           ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
-            _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
-            _buildCenterItem(isTalent), 
-            _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
-            _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
+            _buildNavItem(
+              Icons.home_outlined,
+              Icons.home,
+              "Beranda",
+              0,
+            ),
+            _buildNavItem(
+              Icons.assignment_outlined,
+              Icons.assignment,
+              "Order",
+              1,
+            ),
+            _buildCenterItem(isTalent),
+            _buildNavItem(
+              Icons.chat_bubble_outline,
+              Icons.chat_bubble,
+              "Chat",
+              3,
+            ),
+            _buildNavItem(
+              Icons.person_outline,
+              Icons.person,
+              "Profil",
+              4,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData unselected, IconData selected, String label, int index) {
+  Widget _buildNavItem(
+    IconData unselected,
+    IconData selected,
+    String label,
+    int index,
+  ) {
     bool isSelected = _currentIndex == index;
+
     Color activeColor = const Color(0xFFE68C3A);
     Color inactiveColor = const Color(0xFF9E9E9E);
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () {
+        setState(() {
+          _currentIndex = index;
+        });
+      },
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 60,
@@ -88,17 +128,18 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              isSelected ? selected : unselected, 
-              color: isSelected ? activeColor : inactiveColor, 
+              isSelected ? selected : unselected,
+              color: isSelected ? activeColor : inactiveColor,
               size: 28,
             ),
             const SizedBox(height: 4),
             Text(
-              label, 
+              label,
               style: TextStyle(
-                color: isSelected ? activeColor : inactiveColor, 
+                color: isSelected ? activeColor : inactiveColor,
                 fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight:
+                    isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
@@ -107,10 +148,13 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _buildCenterItem(bool isSeller) {
-    bool isSelected = _currentIndex == 2;
+  Widget _buildCenterItem(bool isTalent) {
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = 2),
+      onTap: () {
+        setState(() {
+          _currentIndex = 2;
+        });
+      },
       child: Container(
         width: 55,
         height: 55,
@@ -126,7 +170,7 @@ class _MainScreenState extends State<MainScreen> {
           ],
         ),
         child: Icon(
-          isSeller ? Icons.business_center : Icons.search,
+          isTalent ? Icons.business_center : Icons.search,
           color: Colors.white,
           size: 28,
         ),

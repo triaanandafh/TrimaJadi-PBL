@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'pages/onboarding_page.dart';
-import 'pages/main_screen.dart';
 
-void main() { 
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
+    SystemUiMode.immersiveSticky,
   );
 
-  runApp(const MyApp());}
+  runApp(const MyApp());
+}
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: OnboardingPage(),
+      home: const OnboardingPage(),
     );
   }
 }

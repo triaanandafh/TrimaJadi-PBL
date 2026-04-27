@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trimajadi/pages/main_screen.dart';
-import '../models/user_model.dart';
-import 'homepage_client.dart';
+import 'login_client_page.dart';
+import 'login_talent_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -24,23 +23,36 @@ class OnboardingPage extends StatelessWidget {
               fit: BoxFit.cover,
             ),
           ),
+
           const SizedBox(height: 30),
+
           const Text(
             "Mulai dari Skill,\nJadi Penghasilan",
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+
           const SizedBox(height: 15),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: Text(
-              "TrimaJadi menghubungkan kamu dengan peluang nyata. Tawarkan keahlianmu, "
-              "temukan bantuan yang kamu butuhkan, dan selesaikan semuanya dengan mudah dan aman.",
+              "TrimaJadi menghubungkan kamu dengan peluang nyata. "
+              "Tawarkan keahlianmu, temukan bantuan yang kamu butuhkan, "
+              "dan selesaikan semuanya dengan mudah dan aman.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[600],
+              ),
             ),
           ),
+
           const Spacer(),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: ElevatedButton(
@@ -52,45 +64,53 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                UserData.name = "User";
-                UserData.role = "Talent";
-
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => MainScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const LoginTalentPage(),
+                  ),
                 );
               },
-              child: const Text("Mulai sebagai Talent"),
+              child: const Text(
+                "Mulai sebagai Seller",
+                style: TextStyle(
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
+
           const SizedBox(height: 15),
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFE67E22)),
+                side: const BorderSide(
+                  color: Color(0xFFE67E22),
+                ),
                 minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
               ),
               onPressed: () {
-                UserData.name = "User";
-                UserData.role = "Client";
-
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => MainScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const LoginClientPage(),
+                  ),
                 );
               },
               child: const Text(
                 "Mulai sebagai Client",
-                style: TextStyle(color: Color(0xFFE67E22)),
+                style: TextStyle(
+                  color: Color(0xFFE67E22),
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          const Text("Belum punya akun? Daftar"),
+
           const SizedBox(height: 25),
         ],
       ),
