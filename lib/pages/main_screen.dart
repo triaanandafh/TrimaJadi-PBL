@@ -19,10 +19,10 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isSeller = UserData.role == "Seller";
+    bool isTalent = UserData.role == "Talent";
 
     final List<Widget> pages = [
-      isSeller 
+      isTalent 
         ? const HomeSellerPage() 
         : HomepageClient(
             onTapSearch: () {
@@ -32,9 +32,9 @@ class _MainScreenState extends State<MainScreen> {
             },
           ), 
       
-      const Center(child: Text("Order")),
+      const OrderPage(),
       
-      isSeller 
+      isTalent 
           ? const Center() 
           : const CariLayananPage(), 
       
@@ -42,8 +42,7 @@ class _MainScreenState extends State<MainScreen> {
       const ProfilePage(),
     ];
 
-    bool isSeller = UserData.role == "Talent";
-
+ 
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -66,7 +65,7 @@ class _MainScreenState extends State<MainScreen> {
           children: [
             _buildNavItem(Icons.home_outlined, Icons.home, "Beranda", 0),
             _buildNavItem(Icons.assignment_outlined, Icons.assignment, "Order", 1),
-            _buildCenterItem(isSeller), 
+            _buildCenterItem(isTalent), 
             _buildNavItem(Icons.chat_bubble_outline, Icons.chat_bubble, "Chat", 3),
             _buildNavItem(Icons.person_outline, Icons.person, "Profil", 4),
           ],
