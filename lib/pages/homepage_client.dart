@@ -17,7 +17,7 @@ class HomepageClient extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 Container(
-                  height: 150,
+                  height: 135,
                   width: double.infinity,
                   decoration: const BoxDecoration(
                     color: Color(0xFF1A43BF), 
@@ -28,7 +28,7 @@ class HomepageClient extends StatelessWidget {
                   ),
                   child: SafeArea(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                      padding: const EdgeInsets.only(left: 25, right: 25, top: 30),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
