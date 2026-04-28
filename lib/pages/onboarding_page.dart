@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:trimajadi/models/user_model.dart';
+import 'package:trimajadi/pages/main_screen.dart';
 import 'login_client_page.dart';
 import 'login_talent_page.dart';
+import 'homepage_talent.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -64,10 +67,14 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
+                UserData.role = "Talent";
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const LoginTalentPage(),
+                    // builder: (_) => const LoginTalentPage(),
+                    builder: (_) => const MainScreen(
+                      // Tambahkan callback kosong untuk onTapSearch
+                    ),
                   ),
                 );
               },
