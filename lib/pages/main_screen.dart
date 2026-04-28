@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:trimajadi/pages/chat_list_page.dart';
+import 'package:trimajadi/pages/layanan_talent.dart';
 import '../models/user_model.dart';
 import 'homepage_client.dart';
 import 'homepage_talent.dart';
 import 'profile_page.dart';
 import 'cari_layanan.dart';
+import 'order_page.dart';
+import 'chat_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -32,21 +36,16 @@ class _MainScreenState extends State<MainScreen> {
             ),
 
       // ORDER
-      const Center(
-        child: Text("Order"),
+      const OrderPage(
       ),
 
       // CENTER PAGE
       isTalent
-          ? const Center(
-              child: Text("Talent Services"),
-            )
+          ? const LayananPage()
           : const CariLayananPage(),
 
       // CHAT
-      const Center(
-        child: Text("Chat"),
-      ),
+      const ChatListPage(),
 
       // PROFILE
       const ProfilePage(),
