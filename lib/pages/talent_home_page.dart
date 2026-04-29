@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:trimajadi/pages/notification_page.dart';
 import '../widgets/order_card.dart';
+import 'tambah_layanan.dart';
+import 'notification_page.dart';
 
 class HomepageTalent extends StatelessWidget {
   const HomepageTalent({super.key});
@@ -12,9 +15,9 @@ class HomepageTalent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             const SizedBox(height: 60),
-            _buildOnboardingCard(),
+            _buildOnboardingCard(context),
             const SizedBox(height: 25),
             _buildRecentActivityHeader(),
             _buildActivityList(),
@@ -33,7 +36,7 @@ class HomepageTalent extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
   return Stack(
     clipBehavior: Clip.none,
     children: [
@@ -75,12 +78,23 @@ class HomepageTalent extends StatelessWidget {
                     ),
                   ],
                 ),
-                Container(
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationPage(),
+                      ),
+                    );
+                  },
+                child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: const BoxDecoration(
                     color: Colors.white,
                     shape: BoxShape.circle,),
                     child: const Icon(Icons.notifications_none, color: Color(0xFFE68C3A)),
+                    
+                ),
                 ),
                   ],
                 ),
@@ -164,7 +178,7 @@ class HomepageTalent extends StatelessWidget {
     );
   }
 
-  Widget _buildOnboardingCard() {
+  Widget _buildOnboardingCard(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Container(
@@ -183,7 +197,14 @@ class HomepageTalent extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AddServicePage(),
+                ),
+              );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFE68C3A),
                 foregroundColor: Colors.white,

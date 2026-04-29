@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'detail_order_page.dart';
 import '../models/user_model.dart';
 import '../widgets/order_card.dart';
 
@@ -119,6 +120,16 @@ class _OrderPageState extends State<OrderPage> {
           status: "Selesai",
           statusColor: Colors.green, // Seller selesai warnanya hijau
           icon: Icons.palette,
+          onTap: () {
+            print("Tapped Desain Logo Minimalis");
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DetailOrderPage(
+                isTalent: UserData.role == "Talent",
+                status: "done",
+              )),
+            );
+          },
         ),
       ],
     );
