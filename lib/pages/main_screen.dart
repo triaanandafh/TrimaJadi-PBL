@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:trimajadi/pages/chat_list_page.dart';
-import 'package:trimajadi/pages/layanan_talent.dart';
+import 'package:trimajadi/pages/talent_service_page.dart';
 import '../models/user_model.dart';
-import 'homepage_client.dart';
-import 'homepage_talent.dart';
+import 'client_home_page.dart';
+import 'talent_home_page.dart';
 import 'profile_page.dart';
-import 'cari_layanan.dart';
+import 'search_service_page.dart';
 import 'order_page.dart';
-import 'chat_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
