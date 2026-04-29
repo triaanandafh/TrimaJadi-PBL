@@ -102,6 +102,7 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
+                UserData.role = "Client";
                 Navigator.push(
                   context,
                   MaterialPageRoute(

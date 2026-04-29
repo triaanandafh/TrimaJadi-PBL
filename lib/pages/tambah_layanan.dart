@@ -82,7 +82,8 @@ class AddServicePage extends StatelessWidget {
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: TextStyle(color: Colors.grey[400]),
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13
+        ),
         filled: true,
         fillColor: Colors.grey[50],
         border: OutlineInputBorder(
