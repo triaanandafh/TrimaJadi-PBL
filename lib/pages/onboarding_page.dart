@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:trimajadi/models/user_model.dart';
 import 'package:trimajadi/pages/main_screen.dart';
 import 'login_client_page.dart';
-import 'login_talent_page.dart';
-import 'homepage_talent.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
