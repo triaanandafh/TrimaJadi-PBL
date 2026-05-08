@@ -36,7 +36,7 @@ class OrderCard extends StatelessWidget {
               BoxShadow(
                 color: Colors.black.withOpacity(0.02),
                 blurRadius: 5,
-                offset: const Offset(0, 2),
+                // offset: const Offset(0, 2),
               )
             ],
           ),
@@ -97,7 +97,7 @@ class OrderCard extends StatelessWidget {
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
               blurRadius: 5,
-              offset: const Offset(0, 2),
+              // offset: const Offset(0, 2),
             )
           ],
         ),
@@ -154,7 +154,7 @@ class OrderCard extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.02),
             blurRadius: 5,
-            offset: const Offset(0, 2),
+            // offset: const Offset(0, 1),
           )
         ],
       ),

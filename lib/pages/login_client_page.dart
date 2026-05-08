@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'register_client_page.dart';
 import '../pages/main_screen.dart';
+import 'talent_register_page.dart';
+import 'client_register_page.dart';
 
 class LoginClientPage extends StatefulWidget {
   const LoginClientPage({super.key});

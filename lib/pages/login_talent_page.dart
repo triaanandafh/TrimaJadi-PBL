@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
-import 'register_talent_page.dart';
+import 'talent_register_page.dart';
 import 'main_screen.dart';
 
 class LoginTalentPage extends StatefulWidget {
