@@ -143,13 +143,33 @@ class _OrderPageState extends State<OrderPage> {
           title: "Desain Logo Minimalis",
           subTitle: "30 April 2026", // Untuk client, subTitle kita isi tanggal
           status: "In Progress",
-          statusColor: Colors.red, // Client in progress warnanya merah
+          statusColor: Colors.red, 
+          onTap: () {
+            print("Tapped Desain Logo Minimalis");
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DetailOrderPage(
+                isTalent: UserData.role == "Talent",
+                status: "done",
+              )),
+            );
+          },// Client in progress warnanya merah
         ),
         OrderCard(
           title: "Desain Poster",
           subTitle: "30 April 2026",
           status: "In Progress",
           statusColor: Colors.red,
+          onTap: () {
+            print("Tapped Desain Poster");
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => DetailOrderPage(
+                isTalent: UserData.role == "Talent",
+                status: "done",
+              )),
+            );
+          },
         ),
       ],
     );

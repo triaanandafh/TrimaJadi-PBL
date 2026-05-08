@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'service_list_page.dart';
 
 class SearchingClient extends StatelessWidget {
   @override
@@ -71,6 +72,7 @@ class SearchingClient extends StatelessWidget {
 
               // --- LIST KATEGORI VERTIKAL ---
               searchCategoryCard(
+                context: context,
                 title: "Desain",
                 subtitle: "Logo, seni, dan ilustrasi",
                 icon: Icons.palette,
@@ -78,6 +80,7 @@ class SearchingClient extends StatelessWidget {
                 iconColor: const Color(0xFF1A43BF),
               ),
               searchCategoryCard(
+                context: context,
                 title: "Web & Pemrograman",
                 subtitle: "Pengembangan Website",
                 icon: Icons.code,
@@ -85,6 +88,7 @@ class SearchingClient extends StatelessWidget {
                 iconColor: Colors.orange[800]!,
               ),
               searchCategoryCard(
+                context: context,
                 title: "Edukasi",
                 subtitle: "Bimbingan belajar, tugas, mentoring",
                 icon: Icons.school,
@@ -92,6 +96,7 @@ class SearchingClient extends StatelessWidget {
                 iconColor: Colors.purple[700]!,
               ),
               searchCategoryCard(
+                context: context,
                 title: "Visual dan Audio",
                 subtitle: "Voice Over, edit video, podcast.",
                 icon: Icons.music_note,
@@ -99,6 +104,7 @@ class SearchingClient extends StatelessWidget {
                 iconColor: Colors.teal[700]!,
               ),
               searchCategoryCard(
+                context: context,
                 title: "Penulisan & Penerjemahan",
                 subtitle: "Olah kata konten, artikel, esai",
                 icon: Icons.translate,
@@ -116,65 +122,99 @@ class SearchingClient extends StatelessWidget {
 
   // Helper Widget untuk Kartu Kategori di Halaman Search
   Widget searchCategoryCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color cardColor,
-    required Color iconColor,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        // Menambahkan sedikit bayangan agar halus
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // Icon dengan background lingkaran putih transparan agar terlihat bersih
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: cardColor,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: iconColor, size: 30),
-          ),
-          const SizedBox(width: 16),
-          // Teks Judul dan Subjudul
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
+  required BuildContext context,
+  required String title,
+  required String subtitle,
+  required IconData icon,
+  required Color cardColor,
+  required Color iconColor,
+}) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+
+    child: InkWell(
+      borderRadius: BorderRadius.circular(20),
+
+      onTap: () {
+        print("clicked: $title");
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ServiceListPage(
+              categoryName: title,
             ),
           ),
-        ],
+        );
+      },
+
+      child: Container(
+        padding: const EdgeInsets.all(16),
+
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(20),
+
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.5),
+                shape: BoxShape.circle,
+              ),
+
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 30,
+              ),
+            ),
+
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  Text(
+                    title,
+
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+
+                  const SizedBox(height: 4),
+
+                  Text(
+                    subtitle,
+
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

@@ -165,7 +165,7 @@ class DetailOrderPage extends StatelessWidget {
             child: ElevatedButton(
               style: _blueButton(),
               onPressed: () {},
-              child: const Text("Terima Hasil"),
+              child: const Text("Terima Hasil", style: TextStyle(color: Colors.white),),
             ),
           ),
         ],
