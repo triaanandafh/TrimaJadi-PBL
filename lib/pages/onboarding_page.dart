@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trimajadi/models/user_model.dart';
 import 'package:trimajadi/pages/main_screen.dart';
 import 'login_client_page.dart';
+import 'login_talent_page.dart';
 
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
@@ -69,10 +70,8 @@ class OnboardingPage extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    // builder: (_) => const LoginTalentPage(),
-                    builder: (_) => const MainScreen(
-                      // Tambahkan callback kosong untuk onTapSearch
-                    ),
+                    builder: (_) => const LoginTalentPage(),
+                    // builder: (_) => const MainScreen(),
                   ),
                 );
               },
