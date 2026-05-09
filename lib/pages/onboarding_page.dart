@@ -77,7 +77,7 @@ class OnboardingPage extends StatelessWidget {
                 );
               },
               child: const Text(
-                "Mulai sebagai Seller",
+                "Mulai sebagai Talent",
                 style: TextStyle(
                   color: Colors.white,
                 ),
