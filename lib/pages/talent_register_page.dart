@@ -5,22 +5,30 @@ class RegisterTalentPage extends StatefulWidget {
   const RegisterTalentPage({super.key});
 
   @override
-  State<RegisterTalentPage> createState() => _RegisterTalentPageState();
+  State<RegisterTalentPage> createState() =>
+      _RegisterTalentPageState();
 }
 
-class _RegisterTalentPageState extends State<RegisterTalentPage> {
+class _RegisterTalentPageState
+    extends State<RegisterTalentPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final passwordController =
+      TextEditingController();
   final phoneController = TextEditingController();
-
   final nimController = TextEditingController();
-  final universityController = TextEditingController();
-  final majorController = TextEditingController();
-
-  final skillController = TextEditingController();
-  final descController = TextEditingController();
+  final universityController =
+      TextEditingController();
+  final majorController =
+      TextEditingController();
+  final skillController =
+      TextEditingController();
+  final descController =
+      TextEditingController();
   final cvController = TextEditingController();
+
+  bool obscurePassword = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -41,24 +49,47 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
         const SnackBar(
-          content: Text('Mohon isi data wajib'),
+          content: Text(
+            'Mohon isi data wajib',
+          ),
         ),
       );
       return;
     }
 
-    await AuthService.register(
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-      role: "talent",
-    );
+    try {
+      setState(() => isLoading = true);
 
-    if (!context.mounted) return;
+      await AuthService.register(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password:
+            passwordController.text.trim(),
+        role: "talent",
+      );
 
-    Navigator.pop(context, true);
+      if (!context.mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
   }
 
   Widget buildInputField({
@@ -69,20 +100,41 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
     int maxLines = 1,
   }) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
       children: [
         Text(label),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          obscureText: isPassword,
+          obscureText:
+              isPassword ? obscurePassword : false,
           maxLines: maxLines,
           decoration: InputDecoration(
             prefixIcon: Icon(icon),
+            suffixIcon: isPassword
+                ? IconButton(
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword =
+                            !obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      obscurePassword
+                          ? Icons
+                              .visibility_outlined
+                          : Icons
+                              .visibility_off_outlined,
+                    ),
+                  )
+                : null,
             filled: true,
-            fillColor: Colors.grey.shade200,
+            fillColor:
+                Colors.grey.shade200,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius:
+                  BorderRadius.circular(20),
               borderSide: BorderSide.none,
             ),
           ),
@@ -93,11 +145,13 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
 
   Widget sectionTitle(String title) {
     return Align(
-      alignment: Alignment.centerLeft,
+      alignment:
+          Alignment.centerLeft,
       child: Text(
         title,
         style: const TextStyle(
-          fontWeight: FontWeight.bold,
+          fontWeight:
+              FontWeight.bold,
         ),
       ),
     );
@@ -106,159 +160,258 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor:
+          Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+        child:
+            SingleChildScrollView(
+          padding:
+              const EdgeInsets.all(
+                  20),
           child: Column(
             children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
+                width:
+                    double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(
                   vertical: 28,
                   horizontal: 24,
                 ),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF1A43BF),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(35),
-                    bottomRight: Radius.circular(35),
+                decoration:
+                    const BoxDecoration(
+                  color: Color(
+                      0xFF1A43BF),
+                  borderRadius:
+                      BorderRadius.only(
+                    bottomLeft:
+                        Radius.circular(
+                            35),
+                    bottomRight:
+                        Radius.circular(
+                            35),
                   ),
                 ),
-                child: const Column(
+                child:
+                    const Column(
                   children: [
                     Text(
                       'Daftar sebagai Talent',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
+                      style:
+                          TextStyle(
+                        color: Colors
+                            .white,
+                        fontSize:
+                            22,
+                        fontWeight:
+                            FontWeight
+                                .bold,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(
+                  height: 25),
 
-              sectionTitle("Data Akun"),
-              const SizedBox(height: 15),
+              sectionTitle(
+                  "Data Akun"),
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Nama Lengkap",
-                icon: Icons.person_outline,
-                controller: nameController,
+                label:
+                    "Nama Lengkap",
+                icon: Icons
+                    .person_outline,
+                controller:
+                    nameController,
               ),
-              const SizedBox(height: 15),
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
                 label: "E-mail",
-                icon: Icons.email_outlined,
-                controller: emailController,
+                icon: Icons
+                    .email_outlined,
+                controller:
+                    emailController,
               ),
-              const SizedBox(height: 15),
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Password",
-                icon: Icons.lock_outline,
-                controller: passwordController,
+                label:
+                    "Password",
+                icon: Icons
+                    .lock_outline,
+                controller:
+                    passwordController,
                 isPassword: true,
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Nomor Telepon",
-                icon: Icons.phone_outlined,
-                controller: phoneController,
+                label:
+                    "Nomor Telepon",
+                icon: Icons
+                    .phone_outlined,
+                controller:
+                    phoneController,
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(
+                  height: 25),
 
-              sectionTitle("Data Akademik"),
-              const SizedBox(height: 15),
+              sectionTitle(
+                  "Data Akademik"),
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
                 label: "NIM",
-                icon: Icons.badge_outlined,
-                controller: nimController,
+                icon: Icons
+                    .badge_outlined,
+                controller:
+                    nimController,
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Universitas",
-                icon: Icons.school_outlined,
-                controller: universityController,
+                label:
+                    "Universitas",
+                icon: Icons
+                    .school_outlined,
+                controller:
+                    universityController,
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Jurusan / Program Studi",
-                icon: Icons.menu_book_outlined,
-                controller: majorController,
+                label:
+                    "Jurusan / Program Studi",
+                icon: Icons
+                    .menu_book_outlined,
+                controller:
+                    majorController,
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(
+                  height: 25),
 
-              sectionTitle("Data Profesional"),
-              const SizedBox(height: 15),
+              sectionTitle(
+                  "Data Profesional"),
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
                 label: "Skill",
-                icon: Icons.workspace_premium_outlined,
-                controller: skillController,
+                icon: Icons
+                    .workspace_premium_outlined,
+                controller:
+                    skillController,
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "Deskripsi Diri",
-                icon: Icons.description_outlined,
-                controller: descController,
+                label:
+                    "Deskripsi Diri",
+                icon: Icons
+                    .description_outlined,
+                controller:
+                    descController,
                 maxLines: 3,
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                  height: 15),
 
               buildInputField(
-                label: "CV / Portfolio",
-                icon: Icons.folder_open_outlined,
-                controller: cvController,
+                label:
+                    "CV / Portfolio",
+                icon: Icons
+                    .folder_open_outlined,
+                controller:
+                    cvController,
                 maxLines: 3,
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(
+                  height: 30),
 
               SizedBox(
-                width: double.infinity,
+                width:
+                    double.infinity,
                 height: 50,
-                child: ElevatedButton(
-                  onPressed: _register,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE88A2F),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
+                child:
+                    ElevatedButton(
+                  onPressed:
+                      isLoading
+                          ? null
+                          : _register,
+                  style:
+                      ElevatedButton
+                          .styleFrom(
+                    backgroundColor:
+                        const Color(
+                            0xFFE88A2F),
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                              30),
                     ),
                   ),
-                  child: const Text(
-                    'Daftar',
-                    style: TextStyle(color: Colors.white),
-                  ),
+                  child: isLoading
+                      ? const CircularProgressIndicator(
+                          color: Colors
+                              .white,
+                        )
+                      : const Text(
+                          'Daftar',
+                          style:
+                              TextStyle(
+                            color: Colors
+                                .white,
+                          ),
+                        ),
                 ),
               ),
 
-              const SizedBox(height: 15),
+              const SizedBox(
+                  height: 15),
 
               Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .center,
                 children: [
-                  const Text('Sudah punya akun? '),
+                  const Text(
+                      'Sudah punya akun? '),
                   GestureDetector(
                     onTap: () {
-                      Navigator.pop(context);
+                      Navigator.pop(
+                          context);
                     },
-                    child: const Text(
+                    child:
+                        const Text(
                       'Masuk',
-                      style: TextStyle(
-                        color: Colors.orange,
-                        fontWeight: FontWeight.bold,
+                      style:
+                          TextStyle(
+                        color: Colors
+                            .orange,
+                        fontWeight:
+                            FontWeight
+                                .bold,
                       ),
                     ),
                   ),

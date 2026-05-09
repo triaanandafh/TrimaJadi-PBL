@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:trimajadi/models/user_model.dart';
-import 'package:trimajadi/pages/main_screen.dart';
 import 'login_client_page.dart';
 import 'login_talent_page.dart';
 
@@ -48,13 +47,14 @@ class OnboardingPage extends StatelessWidget {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.grey[600],
+                color: Colors.grey,
               ),
             ),
           ),
 
           const Spacer(),
 
+          // BUTTON SELLER / TALENT
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: ElevatedButton(
@@ -66,12 +66,13 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                UserData.role = "Talent";
+                // simpan role untuk flow login/register
+                UserData.role = "talent";
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const LoginTalentPage(),
-                    // builder: (_) => const MainScreen(),
                   ),
                 );
               },
@@ -86,6 +87,7 @@ class OnboardingPage extends StatelessWidget {
 
           const SizedBox(height: 15),
 
+          // BUTTON CLIENT
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 30),
             child: OutlinedButton(
@@ -99,7 +101,9 @@ class OnboardingPage extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                UserData.role = "Client";
+                // simpan role untuk flow login/register
+                UserData.role = "client";
+
                 Navigator.push(
                   context,
                   MaterialPageRoute(

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../models/user_model.dart';
-import 'talent_register_page.dart';
 import 'main_screen.dart';
+import 'talent_register_page.dart';
 
 class LoginTalentPage extends StatefulWidget {
   const LoginTalentPage({super.key});
@@ -12,8 +11,11 @@ class LoginTalentPage extends StatefulWidget {
 }
 
 class _LoginTalentPageState extends State<LoginTalentPage> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+
+  bool obscurePassword = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -33,17 +35,34 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
       return;
     }
 
-    bool success = await AuthService.login(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-      role: "talent",
-    );
+    try {
+      setState(() => isLoading = true);
 
-    if (!context.mounted) return;
+      bool success = await AuthService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-    if (success) {
-      // Simpan role agar MainScreen tahu halaman mana yang dibuka
-      UserData.role = "Talent";
+      if (!success) {
+        throw Exception("Login gagal");
+      }
+
+      final role = await AuthService.getCurrentRole();
+
+      if (role != "talent") {
+        await AuthService.logout();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Akun ini bukan talent"),
+          ),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
 
       Navigator.pushReplacement(
         context,
@@ -51,13 +70,62 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
           builder: (context) => const MainScreen(),
         ),
       );
-    } else {
+    } catch (e) {
+      if (!context.mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email atau password salah"),
+        SnackBar(
+          content: Text(e.toString()),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
+  }
+
+  Widget buildInputField({
+    required String label,
+    required IconData icon,
+    required TextEditingController controller,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: isPassword ? obscurePassword : false,
+          decoration: InputDecoration(
+            prefixIcon: Icon(icon, color: Colors.grey),
+            suffixIcon: isPassword
+                ? IconButton(
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword = !obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.grey,
+                    ),
+                  )
+                : null,
+            filled: true,
+            fillColor: Colors.grey.shade200,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   Future<void> _goToRegister() async {
@@ -102,34 +170,6 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
     }
   }
 
-  Widget buildInputField({
-    required String label,
-    required IconData icon,
-    required TextEditingController controller,
-    bool isPassword = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: isPassword,
-          decoration: InputDecoration(
-            prefixIcon: Icon(icon, color: Colors.grey),
-            filled: true,
-            fillColor: Colors.grey.shade200,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(25),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -137,7 +177,6 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(
@@ -173,9 +212,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -195,9 +232,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                 ],
               ),
             ),
-
             const Spacer(),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -206,21 +241,24 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: _login,
+                      onPressed: isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE88A2F),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      child: const Text(
-                        "Masuk",
-                        style: TextStyle(color: Colors.white),
-                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              "Masuk",
+                              style: TextStyle(color: Colors.white),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 15),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

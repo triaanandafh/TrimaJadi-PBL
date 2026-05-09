@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../pages/main_screen.dart';
-import 'talent_register_page.dart';
+import 'main_screen.dart';
 import 'client_register_page.dart';
 
 class LoginClientPage extends StatefulWidget {
@@ -14,6 +13,9 @@ class LoginClientPage extends StatefulWidget {
 class _LoginClientPageState extends State<LoginClientPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+
+  bool obscurePassword = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -33,26 +35,53 @@ class _LoginClientPageState extends State<LoginClientPage> {
       return;
     }
 
-    bool success = await AuthService.login(
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    try {
+      setState(() => isLoading = true);
 
-    if (!context.mounted) return;
+      bool success = await AuthService.login(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-    if (success) {
+      if (!success) {
+        throw Exception("Login gagal");
+      }
+
+      final role = await AuthService.getCurrentRole();
+
+      if (role != "client") {
+        await AuthService.logout();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Akun ini bukan client"),
+          ),
+        );
+        return;
+      }
+
+      if (!context.mounted) return;
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => MainScreen(),
+          builder: (context) => const MainScreen(),
         ),
       );
-    } else {
+    } catch (e) {
+      if (!context.mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email atau password salah'),
+        SnackBar(
+          content: Text(e.toString()),
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 
@@ -98,6 +127,57 @@ class _LoginClientPageState extends State<LoginClientPage> {
     }
   }
 
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText: isPassword ? obscurePassword : false,
+          decoration: InputDecoration(
+            prefixIcon: Icon(
+              icon,
+              color: Colors.grey,
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword = !obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.grey,
+                    ),
+                  )
+                : null,
+            filled: true,
+            fillColor: const Color(0xFFF2F2F2),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,9 +220,7 @@ class _LoginClientPageState extends State<LoginClientPage> {
                 ],
               ),
             ),
-
             const SizedBox(height: 30),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -157,15 +235,12 @@ class _LoginClientPageState extends State<LoginClientPage> {
                     controller: passwordController,
                     label: 'Password',
                     icon: Icons.lock_outline,
-                    obscureText: true,
-                    showEye: true,
+                    isPassword: true,
                   ),
                 ],
               ),
             ),
-
             const Spacer(),
-
             Padding(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -180,20 +255,22 @@ class _LoginClientPageState extends State<LoginClientPage> {
                           borderRadius: BorderRadius.circular(30),
                         ),
                       ),
-                      onPressed: _login,
-                      child: const Text(
-                        'Masuk',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      onPressed: isLoading ? null : _login,
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors.white,
+                            )
+                          : const Text(
+                              'Masuk',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -216,49 +293,6 @@ class _LoginClientPageState extends State<LoginClientPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    bool showEye = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          decoration: InputDecoration(
-            prefixIcon: Icon(
-              icon,
-              color: Colors.grey,
-            ),
-            suffixIcon: showEye
-                ? const Icon(
-                    Icons.visibility_outlined,
-                    color: Colors.grey,
-                  )
-                : null,
-            filled: true,
-            fillColor: const Color(0xFFF2F2F2),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(25),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

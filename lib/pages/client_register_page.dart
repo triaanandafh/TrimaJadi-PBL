@@ -5,13 +5,19 @@ class RegisterClientPage extends StatefulWidget {
   const RegisterClientPage({super.key});
 
   @override
-  State<RegisterClientPage> createState() => _RegisterClientPageState();
+  State<RegisterClientPage> createState() =>
+      _RegisterClientPageState();
 }
 
-class _RegisterClientPageState extends State<RegisterClientPage> {
+class _RegisterClientPageState
+    extends State<RegisterClientPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final passwordController =
+      TextEditingController();
+
+  bool obscurePassword = true;
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -27,21 +33,102 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
         passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Semua field wajib diisi'),
+          content: Text(
+            'Semua field wajib diisi',
+          ),
         ),
       );
       return;
     }
 
-    await AuthService.register(
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
+    try {
+      setState(() => isLoading = true);
+
+      await AuthService.register(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        password:
+            passwordController.text.trim(),
+        role: "client",
+      );
+
+      if (!context.mounted) return;
+
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+        SnackBar(
+          content: Text(
+            e.toString(),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
+    }
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool isPassword = false,
+  }) {
+    return Column(
+      crossAxisAlignment:
+          CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          obscureText:
+              isPassword ? obscurePassword : false,
+          decoration: InputDecoration(
+            prefixIcon: Icon(
+              icon,
+              color: Colors.grey,
+            ),
+            suffixIcon: isPassword
+                ? IconButton(
+                    onPressed: () {
+                      setState(() {
+                        obscurePassword =
+                            !obscurePassword;
+                      });
+                    },
+                    icon: Icon(
+                      obscurePassword
+                          ? Icons
+                              .visibility_outlined
+                          : Icons
+                              .visibility_off_outlined,
+                      color: Colors.grey,
+                    ),
+                  )
+                : null,
+            filled: true,
+            fillColor:
+                const Color(0xFFF2F2F2),
+            border: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(25),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ],
     );
-
-    if (!context.mounted) return;
-
-    Navigator.pop(context, true);
   }
 
   @override
@@ -53,15 +140,20 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
+              padding:
+                  const EdgeInsets.symmetric(
                 vertical: 28,
                 horizontal: 24,
               ),
-              decoration: const BoxDecoration(
+              decoration:
+                  const BoxDecoration(
                 color: Color(0xFF1A43BF),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(35),
-                  bottomRight: Radius.circular(35),
+                borderRadius:
+                    BorderRadius.only(
+                  bottomLeft:
+                      Radius.circular(35),
+                  bottomRight:
+                      Radius.circular(35),
                 ),
               ),
               child: const Column(
@@ -71,13 +163,15 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 22,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
                     ),
                   ),
                   SizedBox(height: 8),
                   Text(
                     'Langkah awal temukan talent\nmahasiswa terbaik untuk kebutuhanmu',
-                    textAlign: TextAlign.center,
+                    textAlign:
+                        TextAlign.center,
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 13,
@@ -86,30 +180,42 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
                 ],
               ),
             ),
+
             const SizedBox(height: 30),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding:
+                  const EdgeInsets.symmetric(
+                horizontal: 20,
+              ),
               child: Column(
                 children: [
                   _buildTextField(
-                    controller: nameController,
-                    label: 'Nama Lengkap',
-                    icon: Icons.person_outline,
+                    controller:
+                        nameController,
+                    label:
+                        'Nama Lengkap',
+                    icon: Icons
+                        .person_outline,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(
+                      height: 20),
                   _buildTextField(
-                    controller: emailController,
+                    controller:
+                        emailController,
                     label: 'E-mail',
-                    icon: Icons.email_outlined,
+                    icon: Icons
+                        .email_outlined,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(
+                      height: 20),
                   _buildTextField(
-                    controller: passwordController,
+                    controller:
+                        passwordController,
                     label: 'Password',
-                    icon: Icons.lock_outline,
-                    obscureText: true,
-                    showEye: true,
+                    icon: Icons
+                        .lock_outline,
+                    isPassword: true,
                   ),
                 ],
               ),
@@ -118,46 +224,78 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
             const Spacer(),
 
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding:
+                  const EdgeInsets.all(
+                      20),
               child: Column(
                 children: [
                   SizedBox(
-                    width: double.infinity,
+                    width:
+                        double.infinity,
                     height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE88A2F),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                    child:
+                        ElevatedButton(
+                      style:
+                          ElevatedButton
+                              .styleFrom(
+                        backgroundColor:
+                            const Color(
+                                0xFFE88A2F),
+                        shape:
+                            RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                                  30),
                         ),
                       ),
-                      onPressed: _register,
-                      child: const Text(
-                        'Daftar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      onPressed:
+                          isLoading
+                              ? null
+                              : _register,
+                      child: isLoading
+                          ? const CircularProgressIndicator(
+                              color: Colors
+                                  .white,
+                            )
+                          : const Text(
+                              'Daftar',
+                              style:
+                                  TextStyle(
+                                color: Colors
+                                    .white,
+                                fontSize:
+                                    16,
+                                fontWeight:
+                                    FontWeight.bold,
+                              ),
+                            ),
                     ),
                   ),
 
-                  const SizedBox(height: 15),
+                  const SizedBox(
+                      height: 15),
 
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center,
                     children: [
-                      const Text('Sudah punya akun? '),
+                      const Text(
+                          'Sudah punya akun? '),
                       GestureDetector(
                         onTap: () {
-                          Navigator.pop(context);
+                          Navigator.pop(
+                              context);
                         },
                         child: const Text(
                           'Masuk',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
+                          style:
+                              TextStyle(
+                            color: Colors
+                                .orange,
+                            fontWeight:
+                                FontWeight
+                                    .bold,
                           ),
                         ),
                       ),
@@ -169,49 +307,6 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    bool showEye = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          obscureText: obscureText,
-          decoration: InputDecoration(
-            prefixIcon: Icon(
-              icon,
-              color: Colors.grey,
-            ),
-            suffixIcon: showEye
-                ? const Icon(
-                    Icons.visibility_outlined,
-                    color: Colors.grey,
-                  )
-                : null,
-            filled: true,
-            fillColor: const Color(0xFFF2F2F2),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(25),
-              borderSide: BorderSide.none,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
