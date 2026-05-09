@@ -47,7 +47,11 @@ class _MainScreenState extends State<MainScreen> {
       const ChatListPage(),
 
       // PROFILE
-      const ProfilePage(),
+      ProfilePage(onNavigate: (index) {
+        setState(() {
+          _currentIndex = index;
+        });
+      }),
     ];
 
  
@@ -80,14 +84,14 @@ class _MainScreenState extends State<MainScreen> {
             _buildNavItem(
               Icons.assignment_outlined,
               Icons.assignment,
-              "Order",
+              "Aktivitas",
               1,
             ),
             _buildCenterItem(isTalent),
             _buildNavItem(
               Icons.chat_bubble_outline,
               Icons.chat_bubble,
-              "Chat",
+              "Obrolan",
               3,
             ),
             _buildNavItem(

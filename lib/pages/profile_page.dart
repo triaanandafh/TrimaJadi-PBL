@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import 'profile_wallet.dart';
-import 'change_password_page.dart';
 import 'profile_portfolio.dart';
-import 'edit_profile_page.dart'; // ← tambahan import
+import 'edit_profile_page.dart';
+import 'onboarding_page.dart';
 
 class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+  final Function(int)? onNavigate; // ← callback untuk pindah tab di MainScreen
+
+  const ProfilePage({super.key, this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +16,6 @@ class ProfilePage extends StatelessWidget {
       backgroundColor: const Color(0xFFF5F6F9),
       body: CustomScrollView(
         slivers: [
-          // 1. Header yang bisa mengecil (SliverAppBar)
           SliverAppBar(
             expandedHeight: 280.0,
             pinned: true,
@@ -66,7 +67,6 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
 
-          // 2. Konten Menu
           SliverToBoxAdapter(
             child: Column(
               children: [
@@ -78,7 +78,7 @@ class ProfilePage extends StatelessWidget {
 
                 _sectionHeader("Pusat Kerja Talent"),
                 _buildMenuCard([
-                  _menuItem(context, Icons.work_outline, "Kelola Jasa Saya", isFirst: true),
+                  _menuItem(context, Icons.work_outline, "Kelola Layanan Saya", isFirst: true),
                   _divider(),
                   _menuItem(context, Icons.image_outlined, "Portofolio Saya"),
                   _divider(),
@@ -112,6 +112,68 @@ class ProfilePage extends StatelessWidget {
 
                 const SizedBox(height: 50),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Keluar Akun',
+          style: TextStyle(fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
+        ),
+        content: const Text(
+          'Apakah kamu yakin ingin keluar dari akun ini?',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(ctx),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF1A237E)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text(
+                'Batal',
+                style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.w600),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                // TODO: await supabase.auth.signOut();
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OnboardingPage()),
+                  (route) => false,
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+              child: const Text(
+                'Keluar',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ],
@@ -227,13 +289,14 @@ class ProfilePage extends StatelessWidget {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletPage()));
         } else if (title == "Portofolio Saya") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const PortfolioPage()));
-        } else if (title == "Kelola Jasa Saya") {
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => const ManageServicePage()));
+        } else if (title == "Kelola Layanan Saya") {
+          onNavigate?.call(2); // ← pindah ke tab index 2 (LayananPage) di MainScreen
         } else if (title == "Edit Profil") {
-          // ← tambahan navigasi ke Edit Profil
           Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
         } else if (title == "Ubah Password") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
+          // Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
+        } else if (title == "Keluar Akun") {
+          _showLogoutDialog(context);
         }
       },
     );
