@@ -3,6 +3,7 @@ import '../models/user_model.dart';
 import 'profile_wallet.dart';
 import 'change_password_page.dart';
 import 'profile_portfolio.dart';
+import 'edit_profile_page.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});

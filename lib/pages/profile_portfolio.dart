@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class Project {
+  final String id; // ID unik untuk setiap project (bisa dari Supabase)
   final String title;
   final String description;
   final int year;
   final String imageUrl;
 
   Project({
+    required this.id,
     required this.title,
     required this.description,
     required this.year,
     required this.imageUrl,
   });
+
+  // Fungsi pembantu untuk mengubah data dari Supabase (Map) ke Object Project
+  factory Project.fromMap(Map<String, dynamic> map) {
+    return Project(
+      id: map['id'].toString(),
+      title: map['title'] ?? '',
+      description: map['description'] ?? '',
+      year: map['year'] ?? 0,
+      imageUrl: map['image_url'] ?? '',
+    );
+  }
 }
 
 class PortfolioPage extends StatefulWidget {
@@ -22,35 +36,59 @@ class PortfolioPage extends StatefulWidget {
 }
 
 class _PortfolioPageState extends State<PortfolioPage> {
+  final supabase = Supabase.instance.client;
+
+  Future<List<Project>> fetchProjects() async {
+    final userId = supabase.auth.currentUser!.id; // Mengambil ID Talent yang login
+
+    final data = await supabase
+        .from('projects') // Nama tabel di Supabase kamu
+        .select()
+        .eq('talent_id', userId) // Filter agar hanya muncul portofolio milik user ini
+        .order('created_at', ascending: false);
+    print("Data projects yang diambil: $data");
+    return (data as List).map((item) => Project.fromMap(item as Map<String, dynamic>)).toList();
+  }
   // data project diletakkan di state agar bisa dimanipulasi
-    final List<Project> projects = [
-      Project(
-        title: "TrimaJadi-PBL",
-        description: "Aplikasi manajemen proyek untuk kolaborasi tim mahasiswa.",
-        year: 2026,
-        imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop",
-      ),
-      Project(
-        title: "Queezly",
-        description: "Aplikasi quiz interaktif untuk belajar lebih menyenangkan.",
-        year: 2026,
-        imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
-      ),
-      Project(
-        title: "Aplikasi Weather App",
-        description: "Aplikasi informasi cuaca secara real-time.",
-        year: 2026,
-        imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
-      ),
-    ];
+    // final List<Project> projects = [
+    //   Project(
+    //     title: "TrimaJadi-PBL",
+    //     description: "Aplikasi manajemen proyek untuk kolaborasi tim mahasiswa.",
+    //     year: 2026,
+    //     imageUrl: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=600&auto=format&fit=crop",
+    //   ),
+    //   Project(
+    //     title: "Queezly",
+    //     description: "Aplikasi quiz interaktif untuk belajar lebih menyenangkan.",
+    //     year: 2026,
+    //     imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
+    //   ),
+    //   Project(
+    //     title: "Aplikasi Weather App",
+    //     description: "Aplikasi informasi cuaca secara real-time.",
+    //     year: 2026,
+    //     imageUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=600&auto=format&fit=crop",
+    //   ),
+    // ];
 
-    void _deleteProject(int index) {
-      setState(() {
-        projects.removeAt(index);
-      });
+    Future<void> _deleteProject(String id) async {
+    try {
+      await supabase.from('projects').delete().eq('id', id);
+      
+      // Refresh UI
+      setState(() {}); 
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Project berhasil dihapus dari database")),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Gagal menghapus: $e")),
+      );
     }
+  }
 
-    void _showDeleteDialog(int index) {
+    void _showDeleteDialog(Project project) {
   showDialog(
     context: context,
     builder: (BuildContext context) {
@@ -66,7 +104,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
           // Tombol Hapus
           TextButton(
             onPressed: () {
-              _deleteProject(index); // Jalankan fungsi hapus
+              _deleteProject(project.id); // Jalankan fungsi hapus
               Navigator.pop(context); // Tutup dialog
               
               // Opsional: Tampilkan SnackBar sebagai feedback
@@ -82,7 +120,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
   );
 }
 
-    void _editProject(int index) {
+    void _editProject(Project project) {
       // Logika untuk edit project (bisa buka dialog atau halaman baru)
     }
 
@@ -97,15 +135,35 @@ class _PortfolioPageState extends State<PortfolioPage> {
       appBar: AppBar(
         title: const Text("Portofolio Saya"),
       ),
-      body: projects.isEmpty 
-        ? const Center(child: Text("Belum ada proyek.")) 
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: projects.length,
-            itemBuilder: (context, index) {
-              return buildProjectCard(projects[index], index);
-            },
-          ),
+      body: FutureBuilder<List<Project>>(
+        future: fetchProjects(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text("Terjadi kesalahan: ${snapshot.error}"));
+          }
+
+          final projects = snapshot.data ?? [];
+
+          if (projects.isEmpty) {
+            return const Center(child: Text("Belum ada proyek. Klik + untuk menambah."));
+          }
+
+          return RefreshIndicator(
+            onRefresh: () async => setState(() {}), // Swipe down untuk refresh
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: projects.length,
+              itemBuilder: (context, index) {
+                return buildProjectCard(projects[index]);
+              },
+            ),
+          );
+        },
+      ),
       // PERUBAHAN: Tambahkan Floating Action Button (Tombol +)
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -118,7 +176,7 @@ class _PortfolioPageState extends State<PortfolioPage> {
     );
   }
 
-  Widget buildProjectCard(Project project, int index) {
+  Widget buildProjectCard(Project project) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
@@ -164,9 +222,9 @@ class _PortfolioPageState extends State<PortfolioPage> {
                 icon: const Icon(Icons.more_vert, color: Colors.white, size: 20),
                 onSelected: (value) {
                   if (value == 'edit') {
-                    _editProject(index);
+                    _editProject(project);
                   } else if (value == 'delete') {
-                   _showDeleteDialog(index);
+                   _showDeleteDialog(project);
                   }
                 },
                 itemBuilder: (context) => [
