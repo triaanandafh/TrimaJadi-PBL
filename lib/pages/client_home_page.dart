@@ -115,10 +115,10 @@ class HomepageClient extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildCategoryItem('Desain', Icons.palette_outlined, const Color(0xFFE3F2FD), Colors.blue.shade700),
+                        _buildCategoryItem('Desain', Icons.palette, const Color(0xFFE3F2FD), Colors.blue.shade700),
                         _buildCategoryItem('Web & Pemrograman', Icons.code, const Color(0xFFFFF3E0), const Color(0xFFE68C3A)),
-                        _buildCategoryItem('Edukasi', Icons.school_outlined, const Color(0xFFF3E5F5), Colors.purple.shade700),
-                        _buildCategoryItem('Visual & Audio', Icons.music_note_outlined, const Color(0xFFE0F2F1), Colors.teal.shade700),
+                        _buildCategoryItem('Edukasi', Icons.school, const Color(0xFFF3E5F5), Colors.purple.shade700),
+                        _buildCategoryItem('Visual & Audio', Icons.music_note, const Color(0xFFE0F2F1), Colors.teal.shade700),
                         _buildCategoryItem('Penulisan', Icons.translate, const Color(0xFFE8F5E9), Colors.green.shade700),
                       ],
                     ),
