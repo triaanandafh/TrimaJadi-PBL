@@ -6,12 +6,14 @@ import 'edit_profile_page.dart';
 import 'onboarding_page.dart';
 
 class ProfilePage extends StatelessWidget {
-  final Function(int)? onNavigate; // ← callback untuk pindah tab di MainScreen
+  final Function(int)? onNavigate;
 
   const ProfilePage({super.key, this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
+    final bool isTalent = UserData.role == "Talent";
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F9),
       body: CustomScrollView(
@@ -72,12 +74,12 @@ class ProfilePage extends StatelessWidget {
               children: [
                 const SizedBox(height: 25),
 
-                _buildWalletCard(context),
+                // ── Hanya muncul untuk Talent ──────────────────────────────
+                if (isTalent) _buildWalletCard(context),
+                if (isTalent) const SizedBox(height: 25),
 
-                const SizedBox(height: 25),
-
-                _sectionHeader("Pusat Kerja Talent"),
-                _buildMenuCard([
+                if (isTalent) _sectionHeader("Pusat Kerja Talent"),
+                if (isTalent) _buildMenuCard([
                   _menuItem(context, Icons.work_outline, "Kelola Layanan Saya", isFirst: true),
                   _divider(),
                   _menuItem(context, Icons.image_outlined, "Portofolio Saya"),
@@ -85,7 +87,8 @@ class ProfilePage extends StatelessWidget {
                   _menuItem(context, Icons.star_outline, "Ulasan Klien", isLast: true),
                 ]),
 
-                const SizedBox(height: 25),
+                if (isTalent) const SizedBox(height: 25),
+                // ──────────────────────────────────────────────────────────
 
                 _sectionHeader("Pengaturan Akun"),
                 _buildMenuCard([
@@ -290,7 +293,7 @@ class ProfilePage extends StatelessWidget {
         } else if (title == "Portofolio Saya") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const PortfolioPage()));
         } else if (title == "Kelola Layanan Saya") {
-          onNavigate?.call(2); // ← pindah ke tab index 2 (LayananPage) di MainScreen
+          onNavigate?.call(2);
         } else if (title == "Edit Profil") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
         } else if (title == "Ubah Password") {
