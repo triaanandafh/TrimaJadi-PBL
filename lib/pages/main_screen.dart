@@ -20,7 +20,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isTalent = UserData.role == "Talent";
+    bool isTalent = UserData.role == "talent";
 
     final List<Widget> pages = [
       // HOME

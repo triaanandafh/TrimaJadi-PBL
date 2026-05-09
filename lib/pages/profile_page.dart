@@ -12,7 +12,7 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isTalent = UserData.role == "Talent";
+    final bool isTalent = UserData.role == "talent";
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F9),
