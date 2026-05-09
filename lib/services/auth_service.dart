@@ -3,7 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   static final supabase = Supabase.instance.client;
 
-  // REGISTER UNTUK CLIENT
+  // PERBAIKAN REGISTER UNTUK CLIENT
   static Future<void> registerClient({
     required String name,
     required String email,
