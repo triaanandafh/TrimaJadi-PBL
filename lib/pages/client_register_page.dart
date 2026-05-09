@@ -22,7 +22,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    phoneController.dispose();
+    phoneController.dispose(); // Jangan lupa di-dispose
     super.dispose();
   }
 
