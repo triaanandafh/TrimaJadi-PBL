@@ -3,16 +3,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class AuthService {
   static final supabase = Supabase.instance.client;
 
-  // REGISTER
-  static Future<void> register({
+  // REGISTER UNTUK CLIENT
+  static Future<void> registerClient({
     required String name,
     required String email,
     required String password,
-    required String role,
   }) async {
-    // buat akun auth
-    final AuthResponse response =
-        await supabase.auth.signUp(
+    // Buat akun auth
+    final AuthResponse response = await supabase.auth.signUp(
       email: email,
       password: password,
     );
@@ -23,12 +21,53 @@ class AuthService {
       throw Exception("Gagal membuat akun");
     }
 
-    // insert ke tabel users
+    // Insert ke tabel users khusus Klien
+    await supabase.from('users').insert({
+      'id': user.id,
+      'name': name, 
+      'email': email,
+      'role': 'Client',
+    });
+  }
+
+  // REGISTER UNTUK TALENT
+  static Future<void> registerTalent({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+    required String nim,
+    required String university,
+    required String major,
+    required String skill,
+    required String desc,
+    required String cv,
+  }) async {
+    // Buat akun auth
+    final AuthResponse response = await supabase.auth.signUp(
+      email: email,
+      password: password,
+    );
+
+    final user = response.user;
+
+    if (user == null) {
+      throw Exception("Gagal membuat akun");
+    }
+
+    // Insert ke tabel users dengan data lengkap Talent
     await supabase.from('users').insert({
       'id': user.id,
       'name': name,
       'email': email,
-      'role': role,
+      'role': 'Talent',
+      'phone': phone,
+      'nim': nim,
+      'university': university,
+      'major': major,
+      'skill': skill,
+      'description': desc,
+      'cv_portfolio': cv,
     });
   }
 
@@ -37,8 +76,7 @@ class AuthService {
     required String email,
     required String password,
   }) async {
-    final AuthResponse response =
-        await supabase.auth.signInWithPassword(
+    final AuthResponse response = await supabase.auth.signInWithPassword(
       email: email,
       password: password,
     );
@@ -72,8 +110,7 @@ class AuthService {
   }
 
   // AMBIL DATA USER
-  static Future<Map<String, dynamic>?>
-      getCurrentUserData() async {
+  static Future<Map<String, dynamic>?> getCurrentUserData() async {
     final user = supabase.auth.currentUser;
 
     if (user == null) return null;
