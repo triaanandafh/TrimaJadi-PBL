@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:io';
 
 class AuthService {
   static final supabase = Supabase.instance.client;
@@ -24,7 +25,7 @@ class AuthService {
     // Insert ke tabel users khusus Klien
     await supabase.from('users').insert({
       'id': user.id,
-      'name': name, 
+      'name': name,
       'email': email,
       'role': 'Client',
     });
@@ -36,38 +37,39 @@ class AuthService {
     required String email,
     required String password,
     required String phone,
-    required String nim,
-    required String university,
-    required String major,
-    required String skill,
-    required String desc,
-    required String cv,
+    required File cvPdf, 
+    required File ktmImage,
   }) async {
-    // Buat akun auth
+    // Buat Akun Auth
     final AuthResponse response = await supabase.auth.signUp(
       email: email,
       password: password,
     );
-
+    
     final user = response.user;
-
     if (user == null) {
       throw Exception("Gagal membuat akun");
     }
 
-    // Insert ke tabel users dengan data lengkap Talent
+    // Upload Gambar KTM ke Storage
+    final ktmFileName = 'ktm_${user.id}.jpg';
+    await supabase.storage.from('dokumen_ktm').upload(ktmFileName, ktmImage);
+    final ktmUrl = supabase.storage.from('dokumen_ktm').getPublicUrl(ktmFileName);
+
+    // Upload File CV (PDF) ke Storage
+    final cvFileName = 'cv_${user.id}.pdf';
+    await supabase.storage.from('dokumen_cv').upload(cvFileName, cvPdf);
+    final cvUrl = supabase.storage.from('dokumen_cv').getPublicUrl(cvFileName);
+
+    // Insert data teks + URL gambar & PDF ke tabel users
     await supabase.from('users').insert({
       'id': user.id,
       'name': name,
       'email': email,
       'role': 'Talent',
       'phone': phone,
-      'nim': nim,
-      'university': university,
-      'major': major,
-      'skill': skill,
-      'description': desc,
-      'cv_portfolio': cv,
+      'cv_portfolio': cvUrl, 
+      'ktm_url': ktmUrl, 
     });
   }
 
