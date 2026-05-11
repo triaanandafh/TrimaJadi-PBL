@@ -4,6 +4,7 @@ import 'profile_wallet.dart';
 import 'profile_portfolio.dart';
 import 'edit_profile_page.dart';
 import 'onboarding_page.dart';
+import 'change_password_page.dart';
 
 class ProfilePage extends StatelessWidget {
   final Function(int)? onNavigate;
@@ -50,7 +51,7 @@ class ProfilePage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     UserData.name,
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 5),
                   Container(
@@ -297,7 +298,7 @@ class ProfilePage extends StatelessWidget {
         } else if (title == "Edit Profil") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
         } else if (title == "Ubah Password") {
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
         } else if (title == "Keluar Akun") {
           _showLogoutDialog(context);
         }
