@@ -63,12 +63,17 @@ class _RegisterTalentPageState
     try {
       setState(() => isLoading = true);
 
-      await AuthService.register(
+      await AuthService.registerTalent(
         name: nameController.text.trim(),
         email: emailController.text.trim(),
-        password:
-            passwordController.text.trim(),
-        role: "talent",
+        password: passwordController.text.trim(),
+        phone: phoneController.text.trim(),
+        nim: nimController.text.trim(),
+        university: universityController.text.trim(),
+        major: majorController.text.trim(),
+        skill: skillController.text.trim(),
+        desc: descController.text.trim(),
+        cv: cvController.text.trim(),
       );
 
       if (!context.mounted) return;
