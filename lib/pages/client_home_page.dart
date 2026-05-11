@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/user_model.dart';
 
 class HomepageClient extends StatelessWidget {
   final VoidCallback onTapSearch;
@@ -34,16 +35,16 @@ class HomepageClient extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            children: const [
-                              CircleAvatar(
+                            children: [
+                              const CircleAvatar(
                                 radius: 22,
                                 backgroundColor: Colors.white24,
                                 child: Icon(Icons.person, color: Colors.white, size: 24),
                               ),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
                               Text(
-                                'Halo, Tria!',
-                                style: TextStyle(
+                                'Halo, ${UserData.name}!',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,

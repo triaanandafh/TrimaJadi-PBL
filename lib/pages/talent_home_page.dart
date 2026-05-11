@@ -3,6 +3,7 @@ import 'package:trimajadi/pages/notification_page.dart';
 import '../widgets/order_card.dart';
 import 'add_service_page.dart';
 import 'notification_page.dart';
+import '../models/user_model.dart';
 
 class HomepageTalent extends StatelessWidget {
   const HomepageTalent({super.key});
@@ -68,8 +69,8 @@ class HomepageTalent extends StatelessWidget {
                       child: Icon(Icons.person, color: Colors.white),
                     ),
                     const SizedBox(width: 15),
-                    const Text(
-                      "Halo, Tria!",
+                    Text(
+                      "Halo, ${UserData.name}!",
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,

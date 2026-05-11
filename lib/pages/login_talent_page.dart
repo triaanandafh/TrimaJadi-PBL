@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'main_screen.dart';
 import 'talent_register_page.dart';
+import '../models/user_model.dart';
 
 class LoginTalentPage extends StatefulWidget {
   const LoginTalentPage({super.key});
@@ -61,6 +62,11 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
         );
         return;
       }
+
+      final userData = await AuthService.getCurrentUserData();
+      UserData.name = userData?['name'] ?? '';
+      UserData.email = userData?['email'] ?? '';
+      UserData.role = userData?['role'] ?? '';
 
       if (!context.mounted) return;
 

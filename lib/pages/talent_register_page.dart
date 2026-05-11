@@ -45,7 +45,7 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   }
 
   Future<void> _pickCVPdf() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
+    FilePickerResult? result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf'], 
     );

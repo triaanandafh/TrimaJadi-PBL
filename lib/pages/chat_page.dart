@@ -17,7 +17,7 @@ class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
 
   Future<void> pickDocument() async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles();
+  FilePickerResult? result = await FilePicker.pickFiles();
 
   if (result != null) {
     PlatformFile file = result.files.first;
