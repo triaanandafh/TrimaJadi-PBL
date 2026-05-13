@@ -63,10 +63,15 @@ class HomepageTalent extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                    const CircleAvatar(
-                      radius: 25,
+                    CircleAvatar(
+                      radius: 22,
                       backgroundColor: Colors.white24,
-                      child: Icon(Icons.person, color: Colors.white),
+                      backgroundImage: UserData.avatarUrl.isNotEmpty
+                          ? NetworkImage(UserData.avatarUrl)
+                          : null,
+                      child: UserData.avatarUrl.isEmpty
+                          ? const Icon(Icons.person, color: Colors.white, size: 24)
+                          : null,
                     ),
                     const SizedBox(width: 15),
                     Text(

@@ -67,6 +67,7 @@ class _LoginClientPageState extends State<LoginClientPage> {
       UserData.name = userData?['name'] ?? '';
       UserData.email = userData?['email'] ?? '';
       UserData.role = userData?['role'] ?? '';
+      UserData.avatarUrl = userData?['avatar_url'] ?? '';
 
       if (!context.mounted) return;
 
