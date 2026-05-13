@@ -15,6 +15,9 @@ dependencies:
   file_picker: ^11.0.2
   image_picker: ^1.2.2
   supabase_flutter: ^2.0.0
+  http: ^1.2.0        # untuk HTTP request ke Duitku
+  crypto: ^3.0.3      # untuk generate MD5 signature
+  url_launcher: ^6.3.0 # untuk buka halaman pembayaran Duitku
 
 dev_dependencies:
   flutter_test:
