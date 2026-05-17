@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:trimajadi/pages/search_service_page.dart';
+import 'package:trimajadi/pages/add_service_page.dart';
 import 'detail_order_page.dart';
+import 'create_order_page.dart';
 import '../models/user_model.dart';
 import '../widgets/order_card.dart';
 
@@ -14,8 +17,8 @@ class OrderPage extends StatefulWidget {
 class _OrderPageState extends State<OrderPage> {
   final supabase = Supabase.instance.client;
 
-  int _selectedFilter = 0;
-  bool _isLoading = true;
+  int  _selectedFilter = 0;
+  bool _isLoading      = true;
   List<Map<String, dynamic>> _orders = [];
 
   @override
@@ -40,7 +43,10 @@ class _OrderPageState extends State<OrderPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat order: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal memuat order: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -80,12 +86,12 @@ class _OrderPageState extends State<OrderPage> {
               children: [
                 const SizedBox(height: 20),
 
-                // --- HEADER ---
+                // HEADER
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
-                      'Order',
+                      'Aktivitas',
                       style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
@@ -97,7 +103,7 @@ class _OrderPageState extends State<OrderPage> {
 
                 const SizedBox(height: 16),
 
-                // --- FILTER TABS ---
+                // FILTER TABS
                 Row(
                   children: [
                     _filterTab(0, 'Semua'),
@@ -110,7 +116,7 @@ class _OrderPageState extends State<OrderPage> {
 
                 const SizedBox(height: 24),
 
-                // --- LOADING ---
+                // LOADING
                 if (_isLoading)
                   const Center(
                     child: Padding(
@@ -119,7 +125,7 @@ class _OrderPageState extends State<OrderPage> {
                     ),
                   )
 
-                // --- EMPTY STATE ---
+                // EMPTY STATE
                 else if (_filteredOrders.isEmpty)
                   Center(
                     child: Padding(
@@ -129,7 +135,7 @@ class _OrderPageState extends State<OrderPage> {
                           Icon(Icons.inbox_outlined, size: 60, color: Colors.grey[300]),
                           const SizedBox(height: 12),
                           Text(
-                            'Belum ada order',
+                            'Belum ada pesanan',
                             style: TextStyle(color: Colors.grey[500], fontSize: 16),
                           ),
                         ],
@@ -137,7 +143,7 @@ class _OrderPageState extends State<OrderPage> {
                     ),
                   )
 
-                // --- ORDER LIST ---
+                // ORDER LIST
                 else
                   Column(
                     children: _filteredOrders.map((order) {
@@ -154,10 +160,13 @@ class _OrderPageState extends State<OrderPage> {
                       } else if (paymentStatus == 'pending') {
                         statusLabel = 'Menunggu Bayar';
                         statusColor = Colors.orange;
-                      } else if (workStatus == 'progress') {
+                      } else if (paymentStatus == 'paid' && workStatus == 'progress') {
                         statusLabel = 'In Progress';
                         statusColor = Colors.blue;
-                      } else if (workStatus == 'done' || workStatus == 'accepted') {
+                      } else if (workStatus == 'done') {
+                        statusLabel = 'Menunggu Konfirmasi';
+                        statusColor = Colors.teal;
+                      } else if (workStatus == 'accepted') {
                         statusLabel = 'Selesai';
                         statusColor = Colors.green;
                       } else {
@@ -167,7 +176,7 @@ class _OrderPageState extends State<OrderPage> {
 
                       final subTitle = isTalent
                           ? (order['client_name'] ?? 'Client')
-                          : (order['order_date']  ?? '-');
+                          : (order['order_date']?.toString() ?? '-');
 
                       return OrderCard(
                         title      : serviceName,
@@ -190,50 +199,6 @@ class _OrderPageState extends State<OrderPage> {
                       );
                     }).toList(),
                   ),
-
-                // ===== TOMBOL TEST PAYMENT — HAPUS KALAU SUDAH LIVE =====
-                const SizedBox(height: 20),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.amber),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        '🧪 Mode Testing',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange),
-                      ),
-                      const SizedBox(height: 6),
-                      const Text(
-                        'Buat order dummy untuk test pembayaran Duitku sandbox.',
-                        style: TextStyle(fontSize: 12),
-                      ),
-                      const SizedBox(height: 10),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF2C4A6E),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                          onPressed: _createDummyOrder,
-                          icon: const Icon(Icons.add_shopping_cart, color: Colors.white),
-                          label: const Text(
-                            'Buat Order Test & Bayar',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                // ===== END TOMBOL TEST =====
-
                 const SizedBox(height: 30),
               ],
             ),
@@ -241,62 +206,6 @@ class _OrderPageState extends State<OrderPage> {
         ),
       ),
     );
-  }
-
-  // ===== BUAT ORDER DUMMY UNTUK TESTING =====
-  Future<void> _createDummyOrder() async {
-    try {
-      final userId   = supabase.auth.currentUser?.id;
-      final isTalent = UserData.role == 'Talent';
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      final response = await supabase.from('orders').insert({
-        'client_id'     : userId,
-        'talent_id'     : userId,
-        'service_name'  : 'Desain Logo Test #$timestamp',
-        'duration'      : 3,
-        'order_date'    : DateTime.now().toIso8601String().substring(0, 10),
-        'deadline'      : DateTime.now()
-            .add(const Duration(days: 3))
-            .toIso8601String()
-            .substring(0, 10),
-        'total_price'   : 50000,
-        'payment_status': 'unpaid',
-        'work_status'   : 'pending',
-        'description'   : 'Order dummy untuk testing pembayaran Duitku sandbox.',
-      }).select().single();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Order test dibuat! Tap Bayar Sekarang.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailOrderPage(
-              orderId  : response['id'].toString(),
-              isTalent : isTalent,
-              status   : 'pending',
-            ),
-          ),
-        );
-
-        _fetchOrders();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal buat order test: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Widget _filterTab(int index, String label) {

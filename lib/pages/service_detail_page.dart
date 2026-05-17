@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'create_order_page.dart';
 
 class ServiceDetailPage extends StatefulWidget {
   final Map<String, dynamic> service;
@@ -249,11 +250,13 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                         selectedPackage['price'] == null
                     ? null
                     : () {
-                        // TODO: navigasi ke halaman order
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                                'Paket ${_tabs[_selectedTab]} dipilih'),
+                        final serviceId =
+                            widget.service['id']?.toString() ?? '';
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                CreateOrderPage(serviceId: serviceId),
                           ),
                         );
                       },
