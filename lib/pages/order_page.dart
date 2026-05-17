@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:trimajadi/pages/search_service_page.dart';
-import 'package:trimajadi/pages/add_service_page.dart';
 import 'detail_order_page.dart';
-import 'create_order_page.dart';
 import '../models/user_model.dart';
 import '../widgets/order_card.dart';
 
@@ -31,12 +28,16 @@ class _OrderPageState extends State<OrderPage> {
     setState(() => _isLoading = true);
     try {
       final userId   = supabase.auth.currentUser?.id;
-      final isTalent = UserData.role == 'Talent';
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final isTalent = UserData.role.toLowerCase() == 'talent';
 
       final response = await supabase
           .from('orders')
           .select()
-          .eq(isTalent ? 'talent_id' : 'client_id', userId ?? '')
+          .eq(isTalent ? 'talent_id' : 'client_id', userId)
           .order('created_at', ascending: false);
 
       setState(() => _orders = List<Map<String, dynamic>>.from(response));
@@ -69,9 +70,22 @@ class _OrderPageState extends State<OrderPage> {
     }).toList();
   }
 
+  /// Label & warna status berdasarkan payment_status + work_status
+  ({String label, Color color}) _resolveStatus(Map<String, dynamic> order) {
+    final ws = order['work_status']    ?? '';
+    final ps = order['payment_status'] ?? '';
+
+    if (ps == 'unpaid')  return (label: 'Belum Dibayar',        color: Colors.orange);
+    if (ps == 'pending') return (label: 'Menunggu Bayar',        color: Colors.orange);
+    if (ws == 'progress') return (label: 'In Progress',          color: Colors.blue);
+    if (ws == 'done')     return (label: 'Menunggu Konfirmasi',  color: Colors.teal);
+    if (ws == 'accepted') return (label: 'Selesai',              color: Colors.green);
+    return (label: ws.isEmpty ? '-' : ws, color: Colors.grey);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isTalent = UserData.role == 'Talent';
+    final isTalent = UserData.role.toLowerCase() == 'talent';
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -92,7 +106,8 @@ class _OrderPageState extends State<OrderPage> {
                   children: [
                     const Text(
                       'Aktivitas',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     IconButton(
                       icon: const Icon(Icons.refresh),
@@ -132,11 +147,13 @@ class _OrderPageState extends State<OrderPage> {
                       padding: const EdgeInsets.all(40),
                       child: Column(
                         children: [
-                          Icon(Icons.inbox_outlined, size: 60, color: Colors.grey[300]),
+                          Icon(Icons.inbox_outlined,
+                              size: 60, color: Colors.grey[300]),
                           const SizedBox(height: 12),
                           Text(
                             'Belum ada pesanan',
-                            style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                            style:
+                                TextStyle(color: Colors.grey[500], fontSize: 16),
                           ),
                         ],
                       ),
@@ -147,33 +164,14 @@ class _OrderPageState extends State<OrderPage> {
                 else
                   Column(
                     children: _filteredOrders.map((order) {
-                      final workStatus    = order['work_status']    ?? 'pending';
-                      final paymentStatus = order['payment_status'] ?? 'unpaid';
-                      final serviceName   = order['service_name']   ?? 'Layanan';
-                      final orderId       = order['id']?.toString() ?? '';
+                      final workStatus = order['work_status'] ?? 'pending';
+                      final serviceName =
+                          order['service_name'] ?? 'Layanan';
+                      final orderId = order['id']?.toString() ?? '';
 
-                      String statusLabel;
-                      Color  statusColor;
-                      if (paymentStatus == 'unpaid') {
-                        statusLabel = 'Belum Dibayar';
-                        statusColor = Colors.orange;
-                      } else if (paymentStatus == 'pending') {
-                        statusLabel = 'Menunggu Bayar';
-                        statusColor = Colors.orange;
-                      } else if (paymentStatus == 'paid' && workStatus == 'progress') {
-                        statusLabel = 'In Progress';
-                        statusColor = Colors.blue;
-                      } else if (workStatus == 'done') {
-                        statusLabel = 'Menunggu Konfirmasi';
-                        statusColor = Colors.teal;
-                      } else if (workStatus == 'accepted') {
-                        statusLabel = 'Selesai';
-                        statusColor = Colors.green;
-                      } else {
-                        statusLabel = workStatus;
-                        statusColor = Colors.grey;
-                      }
+                      final resolved = _resolveStatus(order);
 
+                      // Talent: tampilkan nama client; Client: tampilkan tanggal
                       final subTitle = isTalent
                           ? (order['client_name'] ?? 'Client')
                           : (order['order_date']?.toString() ?? '-');
@@ -181,16 +179,16 @@ class _OrderPageState extends State<OrderPage> {
                       return OrderCard(
                         title      : serviceName,
                         subTitle   : subTitle,
-                        status     : statusLabel,
-                        statusColor: statusColor,
+                        status     : resolved.label,
+                        statusColor: resolved.color,
                         onTap: () async {
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => DetailOrderPage(
-                                orderId  : orderId,
-                                isTalent : isTalent,
-                                status   : workStatus,
+                                orderId : orderId,
+                                isTalent: isTalent,
+                                status  : workStatus,
                               ),
                             ),
                           );
@@ -199,6 +197,7 @@ class _OrderPageState extends State<OrderPage> {
                       );
                     }).toList(),
                   ),
+
                 const SizedBox(height: 30),
               ],
             ),
