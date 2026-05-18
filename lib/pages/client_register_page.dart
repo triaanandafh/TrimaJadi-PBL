@@ -124,43 +124,53 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 28,
-              bottom: 28,
-              left: 24,
-              right: 24,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A43BF),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(35),
-                bottomRight: Radius.circular(35),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(
+                vertical: 40,
+                horizontal: 24,
+              ),
+              decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1A237E), // Deep Blue (Profil kamu)
+                  Color(0xFF283593), // Indigo yang lebih terang
+                  Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+                ],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(35),
+                  bottomRight: Radius.circular(35),
+                ),
+              ),
+              child: const Column(
+                children: [
+                  Text(
+                    'Daftar sebagai Client',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Langkah awal temukan talent\nmahasiswa terbaik untuk kebutuhanmu',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
               ),
             ),
-            child: const Column(
-              children: [
-                Text(
-                  'Daftar sebagai Client',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Langkah awal temukan talent\nmahasiswa terbaik untuk kebutuhanmu',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-
           const SizedBox(height: 30),
 
           Expanded(
@@ -252,6 +262,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
