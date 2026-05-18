@@ -12,7 +12,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final phoneController = TextEditingController(); // Tambahan controller telepon
+  final phoneController = TextEditingController();
 
   bool obscurePassword = true;
   bool isLoading = false;
@@ -22,17 +22,18 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    phoneController.dispose(); // Jangan lupa di-dispose
+    phoneController.dispose();
     super.dispose();
   }
 
   Future<void> _register() async {
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
-        passwordController.text.trim().isEmpty) {
+        passwordController.text.trim().isEmpty ||
+        phoneController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nama, E-mail, dan Password wajib diisi'),
+          content: Text('Semua field wajib diisi'),
           backgroundColor: Colors.red,
         ),
       );
@@ -42,29 +43,22 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
     try {
       setState(() => isLoading = true);
 
-      // Gunakan fungsi registerClient yang sudah kita buat di AuthService
       await AuthService.registerClient(
         name: nameController.text.trim(),
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
+        phone: phoneController.text.trim(),
       );
 
       if (!mounted) return;
-
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Gagal mendaftar: $e"),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text("Gagal mendaftar: $e"), backgroundColor: Colors.red),
       );
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -73,32 +67,24 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
     required String label,
     required IconData icon,
     bool isPassword = false,
+    String? note,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword ? obscurePassword : false,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
-            prefixIcon: Icon(
-              icon,
-              color: Colors.grey,
-            ),
+            prefixIcon: Icon(icon, color: Colors.grey),
             suffixIcon: isPassword
                 ? IconButton(
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
+                    onPressed: () =>
+                        setState(() => obscurePassword = !obscurePassword),
                     icon: Icon(
                       obscurePassword
                           ? Icons.visibility_outlined
@@ -115,6 +101,21 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
             ),
           ),
         ),
+        if (note != null) ...[
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 13, color: Colors.orange),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  note,
+                  style: const TextStyle(fontSize: 11, color: Colors.orange),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -170,104 +171,98 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
                 ],
               ),
             ),
+          const SizedBox(height: 30),
 
-            const SizedBox(height: 30),
-
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  children: [
-                    _buildTextField(
-                      controller: nameController,
-                      label: 'Nama Lengkap *',
-                      icon: Icons.person_outline,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: emailController,
-                      label: 'E-mail *',
-                      icon: Icons.email_outlined,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: passwordController,
-                      label: 'Password *',
-                      icon: Icons.lock_outline,
-                      isPassword: true,
-                    ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: phoneController,
-                      label: 'Nomor Telepon',
-                      icon: Icons.phone_outlined,
-                    ),
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(20),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 children: [
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFE88A2F),
-                        disabledBackgroundColor: Colors.grey,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      // Matikan tombol jika sedang loading
-                      onPressed: isLoading ? null : _register,
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text(
-                              'Daftar',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
+                  _buildTextField(
+                    controller: nameController,
+                    label: 'Nama Lengkap *',
+                    icon: Icons.person_outline,
                   ),
-                  const SizedBox(height: 15),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text('Sudah punya akun? '),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text(
-                          'Masuk',
-                          style: TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: emailController,
+                    label: 'E-mail *',
+                    icon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    note: 'Email tidak dapat diubah setelah pendaftaran.',
                   ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: passwordController,
+                    label: 'Password *',
+                    icon: Icons.lock_outline,
+                    isPassword: true,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(
+                    controller: phoneController,
+                    label: 'Nomor Telepon *',
+                    icon: Icons.phone_outlined,
+                    keyboardType: TextInputType.phone,
+                    note: 'Nomor telepon tidak dapat diubah setelah pendaftaran.',
+                  ),
+                  const SizedBox(height: 40),
                 ],
               ),
-            )
-          ],
-        ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE88A2F),
+                      disabledBackgroundColor: Colors.grey,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(30)),
+                    ),
+                    onPressed: isLoading ? null : _register,
+                    child: isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Daftar',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Sudah punya akun? '),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text(
+                        'Masuk',
+                        style: TextStyle(
+                            color: Colors.orange, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
       ),
     );
   }

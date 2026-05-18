@@ -14,8 +14,8 @@ class OrderPage extends StatefulWidget {
 class _OrderPageState extends State<OrderPage> {
   final supabase = Supabase.instance.client;
 
-  int _selectedFilter = 0;
-  bool _isLoading = true;
+  int  _selectedFilter = 0;
+  bool _isLoading      = true;
   List<Map<String, dynamic>> _orders = [];
 
   @override
@@ -28,19 +28,26 @@ class _OrderPageState extends State<OrderPage> {
     setState(() => _isLoading = true);
     try {
       final userId   = supabase.auth.currentUser?.id;
-      final isTalent = UserData.role == 'Talent';
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+      final isTalent = UserData.role.toLowerCase() == 'talent';
 
       final response = await supabase
           .from('orders')
           .select()
-          .eq(isTalent ? 'talent_id' : 'client_id', userId ?? '')
+          .eq(isTalent ? 'talent_id' : 'client_id', userId)
           .order('created_at', ascending: false);
 
       setState(() => _orders = List<Map<String, dynamic>>.from(response));
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal memuat order: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Gagal memuat order: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -63,9 +70,22 @@ class _OrderPageState extends State<OrderPage> {
     }).toList();
   }
 
+  /// Label & warna status berdasarkan payment_status + work_status
+  ({String label, Color color}) _resolveStatus(Map<String, dynamic> order) {
+    final ws = order['work_status']    ?? '';
+    final ps = order['payment_status'] ?? '';
+
+    if (ps == 'unpaid')  return (label: 'Belum Dibayar',        color: Colors.orange);
+    if (ps == 'pending') return (label: 'Menunggu Bayar',        color: Colors.orange);
+    if (ws == 'progress') return (label: 'In Progress',          color: Colors.blue);
+    if (ws == 'done')     return (label: 'Menunggu Konfirmasi',  color: Colors.teal);
+    if (ws == 'accepted') return (label: 'Selesai',              color: Colors.green);
+    return (label: ws.isEmpty ? '-' : ws, color: Colors.grey);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isTalent = UserData.role == 'Talent';
+    final isTalent = UserData.role.toLowerCase() == 'talent';
 
     return Scaffold(
       // PERUBAHAN: Warna background disamakan dengan halaman Chat & Profil
@@ -309,62 +329,6 @@ class _OrderPageState extends State<OrderPage> {
         ],
       ),
     );
-  }
-
-  // ===== BUAT ORDER DUMMY UNTUK TESTING =====
-  Future<void> _createDummyOrder() async {
-    try {
-      final userId   = supabase.auth.currentUser?.id;
-      final isTalent = UserData.role == 'Talent';
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      final response = await supabase.from('orders').insert({
-        'client_id'     : userId,
-        'talent_id'     : userId,
-        'service_name'  : 'Desain Logo Test #$timestamp',
-        'duration'      : 3,
-        'order_date'    : DateTime.now().toIso8601String().substring(0, 10),
-        'deadline'      : DateTime.now()
-            .add(const Duration(days: 3))
-            .toIso8601String()
-            .substring(0, 10),
-        'total_price'   : 50000,
-        'payment_status': 'unpaid',
-        'work_status'   : 'pending',
-        'description'   : 'Order dummy untuk testing pembayaran Duitku sandbox.',
-      }).select().single();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Order test dibuat! Tap Bayar Sekarang.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailOrderPage(
-              orderId  : response['id'].toString(),
-              isTalent : isTalent,
-              status   : 'pending',
-            ),
-          ),
-        );
-
-        _fetchOrders();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Gagal buat order test: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
   }
 
   Widget _filterTab(int index, String label) {

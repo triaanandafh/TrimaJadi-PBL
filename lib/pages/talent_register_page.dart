@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart'; 
+import 'package:file_picker/file_picker.dart';
 import '../services/auth_service.dart';
 
 class RegisterTalentPage extends StatefulWidget {
@@ -20,10 +22,15 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   bool obscurePassword = true;
   bool isLoading = false;
 
+  // KTM
   File? ktmImage;
+  Uint8List? ktmImageBytes;
+  String? ktmImageExt;
   final ImagePicker _picker = ImagePicker();
 
+  // CV
   File? cvPdfFile;
+  Uint8List? cvPdfBytes;
   String? cvFileName;
 
   @override
@@ -36,34 +43,60 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   }
 
   Future<void> _pickKTMImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
     if (pickedFile != null) {
-      setState(() {
-        ktmImage = File(pickedFile.path);
-      });
+      ktmImageExt = pickedFile.name.contains('.')
+          ? pickedFile.name.split('.').last
+          : 'jpg';
+      if (kIsWeb) {
+        final bytes = await pickedFile.readAsBytes();
+        setState(() => ktmImageBytes = bytes);
+      } else {
+        setState(() => ktmImage = File(pickedFile.path));
+      }
     }
   }
 
   Future<void> _pickCVPdf() async {
-    FilePickerResult? result = await FilePicker.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf'], 
-    );
-
-    if (result != null && result.files.single.path != null) {
-      setState(() {
-        cvPdfFile = File(result.files.single.path!);
-        cvFileName = result.files.single.name;
-      });
+    if (kIsWeb) {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+        withData: true, // penting untuk web
+      );
+      if (result != null && result.files.single.bytes != null) {
+        setState(() {
+          cvPdfBytes = result.files.single.bytes;
+          cvFileName = result.files.single.name;
+        });
+      }
+    } else {
+      FilePickerResult? result = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          cvPdfFile = File(result.files.single.path!);
+          cvFileName = result.files.single.name;
+        });
+      }
     }
   }
 
   Future<void> _register() async {
+    final hasKtm = kIsWeb ? ktmImageBytes != null : ktmImage != null;
+    final hasCv = kIsWeb ? cvPdfBytes != null : cvPdfFile != null;
+
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty ||
-        ktmImage == null ||
-        cvPdfFile == null) {
+        phoneController.text.trim().isEmpty ||
+        !hasKtm ||
+        !hasCv) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Mohon isi semua data, upload KTM, dan upload CV'),
@@ -81,26 +114,22 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
         phone: phoneController.text.trim(),
-        cvPdf: cvPdfFile!, 
-        ktmImage: ktmImage!, 
+        cvPdf: kIsWeb ? null : cvPdfFile,
+        cvPdfBytes: kIsWeb ? cvPdfBytes : null,
+        ktmImage: kIsWeb ? null : ktmImage,
+        ktmImageBytes: kIsWeb ? ktmImageBytes : null,
+        ktmImageExt: ktmImageExt,
       );
 
       if (!mounted) return;
-
       Navigator.pop(context, true);
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(e.toString()), backgroundColor: Colors.red),
       );
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
@@ -109,27 +138,24 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
     required IconData icon,
     required TextEditingController controller,
     bool isPassword = false,
+    String? note,
+    TextInputType? keyboardType,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword ? obscurePassword : false,
+          keyboardType: keyboardType,
           decoration: InputDecoration(
             prefixIcon: Icon(icon, color: Colors.grey),
             suffixIcon: isPassword
                 ? IconButton(
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
+                    onPressed: () =>
+                        setState(() => obscurePassword = !obscurePassword),
                     icon: Icon(
                       obscurePassword
                           ? Icons.visibility_outlined
@@ -146,6 +172,21 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
             ),
           ),
         ),
+        if (note != null) ...[
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              const Icon(Icons.info_outline, size: 13, color: Colors.orange),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  note,
+                  style: const TextStyle(fontSize: 11, color: Colors.orange),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -155,16 +196,16 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 16,
-        ),
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
       ),
     );
   }
 
  @override
   Widget build(BuildContext context) {
+    final hasKtm = kIsWeb ? ktmImageBytes != null : ktmImage != null;
+    final hasCv = kIsWeb ? cvPdfBytes != null : cvPdfFile != null;
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -415,7 +456,7 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
               ),
             ],
           ),
-        ),
+        ],
       ),
     );
   }}
