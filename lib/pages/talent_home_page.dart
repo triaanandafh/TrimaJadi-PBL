@@ -26,14 +26,7 @@ class HomepageTalent extends StatelessWidget {
         ),
       ),
       
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {},
-      //   backgroundColor: const Color(0xFFE68C3A), // Orange FAB
-      //   elevation: 4,
-      //   shape: const CircleBorder(),
-      //   child: const Icon(Icons.business_center, color: Colors.white),
-      // ),
-      // floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      
     );
   }
 
@@ -46,7 +39,15 @@ class HomepageTalent extends StatelessWidget {
         height: 220,
         width: double.infinity,
         decoration: const BoxDecoration(
-          color: Color(0xFF1E3A8A),
+          gradient: LinearGradient(
+            colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
+              Color(0xFF283593), // Indigo yang lebih terang
+              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+            ],
+            stops: [0.0, 0.5, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.only(
             bottomLeft: Radius.circular(40),
             bottomRight: Radius.circular(40),
