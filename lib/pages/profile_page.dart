@@ -6,6 +6,7 @@ import 'profile_portfolio.dart';
 import 'edit_profile_page.dart';
 import 'onboarding_page.dart';
 import 'change_password_page.dart';
+import 'talent_review_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final Function(int)? onNavigate;
@@ -19,6 +20,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final supabase = Supabase.instance.client;
   int _balance = 0;
+  bool _isVerified = false;
 
   @override
   void initState() {
@@ -35,9 +37,17 @@ class _ProfilePageState extends State<ProfilePage> {
           .select('balance')
           .eq('user_id', userId)
           .maybeSingle();
+
+      final profile = await supabase
+          .from('users')
+          .select('is_verified')
+          .eq('id', userId)
+          .maybeSingle();
+
       if (mounted) {
         setState(() {
-          _balance = (res?['balance'] as num?)?.toInt() ?? 0;
+          _balance    = (res?['balance'] as num?)?.toInt() ?? 0;
+          _isVerified = profile?['is_verified'] == true;
         });
       }
     } catch (_) {}
@@ -65,8 +75,7 @@ class _ProfilePageState extends State<ProfilePage> {
             expandedHeight: 280.0,
             pinned: true,
             elevation: 0,
-            backgroundColor:Colors.transparent,
-            surfaceTintColor: Colors.transparent,
+            backgroundColor: const Color(0xFF1A237E),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
@@ -76,26 +85,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(40),
-                  bottomRight: Radius.circular(40),
-                ),
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF1A237E), // Deep Blue (Profil kamu)
-                      Color(0xFF283593), // Indigo yang lebih terang
-                      Color(0xFF3949AB), // Light Indigo (Orderan kamu)
-                    ],
-                    stops: [0.0, 0.5, 1.0],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-          
-              child: Column(
+              background: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 60),
@@ -121,23 +111,49 @@ class _ProfilePageState extends State<ProfilePage> {
                     style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                   const SizedBox(height: 5),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F5E9),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      UserData.role,
-                      style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5E9),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          UserData.role,
+                          style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      if (isTalent && _isVerified) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00C853),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified, color: Colors.white, size: 13),
+                              SizedBox(width: 4),
+                              Text('Verified',
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ],
               ),
             ),
           ),
-          ),
-          ),
+
           SliverToBoxAdapter(
             child: Column(
               children: [
@@ -365,6 +381,8 @@ class _ProfilePageState extends State<ProfilePage> {
           widget.onNavigate?.call(2);
         } else if (title == "Edit Profil") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
+        } else if (title == "Ulasan Klien") {
+          Navigator.push(context, MaterialPageRoute(builder: (context) => const TalentReviewsPage()));
         } else if (title == "Ubah Password") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
         } else if (title == "Keluar Akun") {
