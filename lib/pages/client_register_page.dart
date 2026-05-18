@@ -129,11 +129,20 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(
-                vertical: 28,
+                vertical: 40,
                 horizontal: 24,
               ),
               decoration: const BoxDecoration(
-                color: Color(0xFF1A43BF),
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1A237E), // Deep Blue (Profil kamu)
+                  Color(0xFF283593), // Indigo yang lebih terang
+                  Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+                ],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(35),
                   bottomRight: Radius.circular(35),
