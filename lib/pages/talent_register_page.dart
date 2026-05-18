@@ -456,7 +456,8 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
               ),
             ],
           ),
-        ],
+        
       ),
-    );
+    ));
+    
   }}

@@ -351,4 +351,57 @@ class _OrderPageState extends State<OrderPage> {
       ),
     );
   }
+
+
+  Future<void> _createDummyOrder() async {
+    try {
+      final userId   = supabase.auth.currentUser?.id;
+      final isTalent = UserData.role.toLowerCase() == 'talent';
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+
+      final response = await supabase.from('orders').insert({
+        'client_id'     : userId,
+        'talent_id'     : userId,
+        'service_name'  : 'Desain Logo Test #$timestamp',
+        'duration'      : 3,
+        'order_date'    : DateTime.now().toIso8601String().substring(0, 10),
+        'deadline'      : DateTime.now().add(const Duration(days: 3)).toIso8601String().substring(0, 10),
+        'total_price'   : 50000,
+        'payment_status': 'unpaid',
+        'work_status'   : 'pending',
+        'description'   : 'Order dummy untuk testing pembayaran Duitku sandbox.',
+      }).select().single();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Order test dibuat! Tap Bayar Sekarang.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailOrderPage(
+              orderId  : response['id'].toString(),
+              isTalent : isTalent,
+              status   : 'pending',
+            ),
+          ),
+        );
+
+        _fetchOrders();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal buat order test: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
 }
+
+
+
