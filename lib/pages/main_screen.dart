@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:trimajadi/pages/chat_list_page.dart';
 import 'package:trimajadi/pages/talent_service_page.dart';
+import 'package:trimajadi/pages/talent_home_page.dart';
 import '../models/user_model.dart';
 import 'client_home_page.dart';
-import 'talent_home_page.dart';
 import 'profile_page.dart';
 import 'search_service_page.dart';
 import 'order_page.dart';
@@ -12,49 +12,42 @@ class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<MainScreen> createState() => MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+// MainScreenState dipublish (bukan _MainScreenState) supaya bisa direferensi jika perlu.
+class MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+
+  void goToIndex(int index) {
+    if (mounted) setState(() => _currentIndex = index);
+  }
 
   @override
   Widget build(BuildContext context) {
-    bool isTalent = UserData.role == "talent";
+    final bool isTalent = UserData.role.toLowerCase() == 'talent';
 
     final List<Widget> pages = [
       // HOME
       isTalent
-          ? const HomepageTalent()
+          ? HomepageTalent(onViewAll: () => goToIndex(1))
           : HomepageClient(
-              onTapSearch: () {
-                setState(() {
-                  _currentIndex = 2;
-                });
-              },
+              onTapSearch: () => goToIndex(2),
             ),
 
-      // ORDER
-      const OrderPage(
-      ),
+      // AKTIVITAS
+      const OrderPage(),
 
       // CENTER PAGE
-      isTalent
-          ? const LayananPage()
-          : const CariLayananPage(),
+      isTalent ? const LayananPage() : const CariLayananPage(),
 
       // CHAT
       const ChatListPage(),
 
-      // PROFILE
-      ProfilePage(onNavigate: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-      }),
+      // PROFIL
+      ProfilePage(onNavigate: goToIndex),
     ];
 
- 
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -75,31 +68,13 @@ class _MainScreenState extends State<MainScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            _buildNavItem(Icons.home_outlined, Icons.home, 'Beranda', 0),
             _buildNavItem(
-              Icons.home_outlined,
-              Icons.home,
-              "Beranda",
-              0,
-            ),
-            _buildNavItem(
-              Icons.assignment_outlined,
-              Icons.assignment,
-              "Aktivitas",
-              1,
-            ),
+                Icons.assignment_outlined, Icons.assignment, 'Aktivitas', 1),
             _buildCenterItem(isTalent),
             _buildNavItem(
-              Icons.chat_bubble_outline,
-              Icons.chat_bubble,
-              "Obrolan",
-              3,
-            ),
-            _buildNavItem(
-              Icons.person_outline,
-              Icons.person,
-              "Profil",
-              4,
-            ),
+                Icons.chat_bubble_outline, Icons.chat_bubble, 'Obrolan', 3),
+            _buildNavItem(Icons.person_outline, Icons.person, 'Profil', 4),
           ],
         ),
       ),
@@ -107,22 +82,13 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildNavItem(
-    IconData unselected,
-    IconData selected,
-    String label,
-    int index,
-  ) {
-    bool isSelected = _currentIndex == index;
-
-    Color activeColor = const Color(0xFFE68C3A);
-    Color inactiveColor = const Color(0xFF9E9E9E);
+      IconData unselected, IconData selected, String label, int index) {
+    final bool isSelected = _currentIndex == index;
+    const Color activeColor   = Color(0xFFE68C3A);
+    const Color inactiveColor = Color(0xFF9E9E9E);
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
+      onTap: () => setState(() => _currentIndex = index),
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
         width: 60,
@@ -140,8 +106,7 @@ class _MainScreenState extends State<MainScreen> {
               style: TextStyle(
                 color: isSelected ? activeColor : inactiveColor,
                 fontSize: 11,
-                fontWeight:
-                    isSelected ? FontWeight.bold : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
@@ -152,11 +117,7 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildCenterItem(bool isTalent) {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _currentIndex = 2;
-        });
-      },
+      onTap: () => setState(() => _currentIndex = 2),
       child: Container(
         width: 55,
         height: 55,

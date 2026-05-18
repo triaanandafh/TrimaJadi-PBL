@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'profile_wallet.dart';
 import 'profile_portfolio.dart';
@@ -6,10 +7,51 @@ import 'edit_profile_page.dart';
 import 'onboarding_page.dart';
 import 'change_password_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final Function(int)? onNavigate;
 
   const ProfilePage({super.key, this.onNavigate});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final supabase = Supabase.instance.client;
+  int _balance = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBalance();
+  }
+
+  Future<void> _fetchBalance() async {
+    try {
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return;
+      final res = await supabase
+          .from('wallets')
+          .select('balance')
+          .eq('user_id', userId)
+          .maybeSingle();
+      if (mounted) {
+        setState(() {
+          _balance = (res?['balance'] as num?)?.toInt() ?? 0;
+        });
+      }
+    } catch (_) {}
+  }
+
+  String _formatRupiah(int value) {
+    final str = value.toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+    }
+    return 'Rp $buffer';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -227,12 +269,12 @@ class ProfilePage extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Saldo Tersedia", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                SizedBox(height: 5),
-                Text("Rp 750.000", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
+                const Text("Saldo Tersedia", style: TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 5),
+                Text(_formatRupiah(_balance), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
               ],
             ),
             ElevatedButton(
@@ -320,7 +362,7 @@ class ProfilePage extends StatelessWidget {
         } else if (title == "Portofolio Saya") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const PortfolioPage()));
         } else if (title == "Kelola Layanan Saya") {
-          onNavigate?.call(2);
+          widget.onNavigate?.call(2);
         } else if (title == "Edit Profil") {
           Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
         } else if (title == "Ubah Password") {
