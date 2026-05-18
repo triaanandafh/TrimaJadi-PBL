@@ -99,18 +99,26 @@ class _HomepageTalentState extends State<HomepageTalent> {
 
   // ===== HEADER =====
   Widget _buildHeader(BuildContext context) {
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Container(
-          height: 220,
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E3A8A),
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(40),
-              bottomRight: Radius.circular(40),
-            ),
+  return Stack(
+    clipBehavior: Clip.none,
+    children: [
+      // 1. Bagian Biru Header
+      Container(
+        height: 220,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
+              Color(0xFF283593), // Indigo yang lebih terang
+              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+            ],
+            stops: [0.0, 0.5, 1.0],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.only(
+            bottomLeft: Radius.circular(40),
+            bottomRight: Radius.circular(40),
           ),
           child: SafeArea(
             child: Padding(

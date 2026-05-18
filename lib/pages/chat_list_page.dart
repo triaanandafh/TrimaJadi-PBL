@@ -1,11 +1,50 @@
 import 'package:flutter/material.dart';
 import 'chat_page.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class ChatListPage extends StatelessWidget {
+class ChatListPage extends StatefulWidget {
   const ChatListPage({super.key});
 
   @override
+  State<ChatListPage> createState() => _ChatListPageState();
+}
+
+class _ChatListPageState extends State<ChatListPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = "";
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  String formatChatTime(String? timestampStr) {
+    // Logika sederhana untuk memformat waktu (bisa dikembangkan lebih lanjut)
+    if (timestampStr == null) return "";
+    try{
+      DateTime date =DateTime.parse(timestampStr).toLocal();
+      DateTime now = DateTime.now();
+      DateTime today = DateTime(now.year, now.month, now.day);
+      DateTime chatDay = DateTime(date.year, date.month, date.day);
+
+      final difference = today.difference(chatDay).inDays;
+      if (difference == 0) {
+        return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
+      } else if (difference == 1) {
+        return "Kemarin";
+      } else {
+        return "${date.day}/${date.month}/${date.year}";
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final supabase = Supabase.instance.client;
+    final String myId = supabase.auth.currentUser?.id ?? '';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FB), // Warna background abu muda
       body: Stack(
@@ -15,7 +54,16 @@ class ChatListPage extends StatelessWidget {
             height: 220,
             width: double.infinity,
             decoration: const BoxDecoration(
-              color: Color(0xFF1A43BF), // Warna biru utama kamu
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1A237E), // Deep Blue (Profil kamu)
+                  Color(0xFF283593), // Indigo yang lebih terang
+                  Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+                ],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.only(
                 bottomLeft: Radius.circular(40),
                 bottomRight: Radius.circular(40),
@@ -50,7 +98,7 @@ class ChatListPage extends StatelessWidget {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.search, color: Colors.white),
+                        icon: const Icon(Icons.more_vert, color: Colors.white),
                         onPressed: () {},
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white.withOpacity(0.2),
@@ -60,14 +108,21 @@ class ChatListPage extends StatelessWidget {
                   ),
                 ),
 
-                const Padding(
-                  padding: EdgeInsets.only(left: 25, bottom: 20),
-                  child: Text(
-                    "3 percakapan aktif",
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: supabase.from('chats').stream(primaryKey: ['id']).eq('user_id', myId),
+                  builder: (context, snapshot) {
+                    final int chatCount = snapshot.data?.length ?? 0;
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 25, bottom: 20),
+                      child: Text(
+                        "$chatCount percakapan aktif",
+                        style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      ),
+                    );
+                  },
                 ),
-
+                
+                const SizedBox(height: 10),
                 // 3. DAFTAR CHAT (Card Putih)
                 Expanded(
                   child: Container(
@@ -86,43 +141,113 @@ class ChatListPage extends StatelessWidget {
                         )
                       ],
                     ),
+                    child: Column(
+                      children: [
+                        
+                        // PERUBAHAN UTAMA: Kolom Searching ala WhatsApp
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              setState(() {
+                                _searchQuery = value;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: "Cari percakapan...",
+                              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
+                              prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, color: Colors.grey),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() {
+                                          _searchQuery = "";
+                                        });
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: const Color(0xFFF2F5FA), // Warna abu-biru soft agar kontras dengan card putih
+                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                borderSide: BorderSide.none, // Menghilangkan garis border luar
+                              ),
+                            ),
+                          ),
+                        ),
+                    Expanded(
                     child: ClipRRect(
                       borderRadius: const BorderRadius.only(
                         topLeft: Radius.circular(30),
                         topRight: Radius.circular(30),
                       ),
-                      child: ListView(
-                        padding: EdgeInsets.zero,
-                        children:  [
-                          ChatItem(
-                            name: "Budi Designer",
-                            lastMessage: "Siap kak, revisinya sudah saya kirim",
-                            time: "10:30",
-                            unread: 2,
-                          ),
-                          Divider(height: 1, indent: 80),
-                          ChatItem(
-                            name: "Andi Programmer",
-                            lastMessage: "Website nya sudah fix ya",
-                            time: "09:10",
-                          ),
-                          Divider(height: 1, indent: 80),
-                          ChatItem(
-                            name: "Siti Tutor",
-                            lastMessage: "Jadwal besok jadi ya",
-                            time: "Kemarin",
-                          ),
-                        ],
+                      child: StreamBuilder<List<Map<String, dynamic>>>(
+                        stream: supabase.from('chats').stream(primaryKey: ['id']).eq('user_id', myId).order('time', ascending: false),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.waiting) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          }
+                          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(
+                              child: Text('Belum ada obrolan aktif',
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                            );
+                          }
+                          final chatList = snapshot.data!;
+
+                          // lOGIKA fILTERING CHAT BERDASARKAN NAMA DAN PESAN TERAKHIR
+                          final filteredChatList = _searchQuery.isEmpty
+                              ? chatList
+                              : chatList.where((chat) {
+                                  final name = (chat['name'] as String).toLowerCase();
+                                  final lastMessage = (chat['last_message'] as String).toLowerCase();
+                                  final query = _searchQuery.toLowerCase();
+                                  return name.contains(query) || lastMessage.contains(query);
+                                }).toList();
+
+                          if (filteredChatList.isEmpty) {
+                            return const Center(
+                              child: Text('Tidak ada percakapan yang cocok',
+                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                            ),
+                            );
+                          }
+
+                          return ListView.separated(
+                            padding: EdgeInsets.zero,
+                            itemCount: filteredChatList.length,
+                            separatorBuilder: (context, index) => const Divider(height: 1, indent: 80),
+                            itemBuilder: (context, index) {
+                              final chat = filteredChatList[index];
+                              return ChatItem(
+                                name: chat['name'] as String,
+                                lastMessage: chat['last_message'] as String,
+                                time: formatChatTime(chat['time'] as String?),
+                                unread: chat['unread'] as int,
+                              );
+                            },
+                          );
+                        },
                       ),
                     ),
                   ),
-                ),
               ],
+            ),
             ),
           ),
         ],
       ),
-    );
+    ),
+        ],
+      ),
+      );
   }
 }
 

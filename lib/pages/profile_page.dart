@@ -65,7 +65,8 @@ class _ProfilePageState extends State<ProfilePage> {
             expandedHeight: 280.0,
             pinned: true,
             elevation: 0,
-            backgroundColor: const Color(0xFF1A237E),
+            backgroundColor:Colors.transparent,
+            surfaceTintColor: Colors.transparent,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
@@ -75,7 +76,26 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
             flexibleSpace: FlexibleSpaceBar(
-              background: Column(
+              background: ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(40),
+                  bottomRight: Radius.circular(40),
+                ),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Color(0xFF1A237E), // Deep Blue (Profil kamu)
+                      Color(0xFF283593), // Indigo yang lebih terang
+                      Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+                    ],
+                    stops: [0.0, 0.5, 1.0],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+          
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 60),
@@ -116,7 +136,8 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-
+          ),
+          ),
           SliverToBoxAdapter(
             child: Column(
               children: [
