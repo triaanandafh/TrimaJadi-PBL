@@ -79,57 +79,75 @@ class _ProfilePageState extends State<ProfilePage> {
         slivers: [
           // ── App Bar ───────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 280,
-            pinned: true,
+            expandedHeight: 340,
+            pinned: false,
             elevation: 0,
             backgroundColor: const Color(0xFF1A237E),
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+            automaticallyImplyLeading: false,
+            toolbarHeight: 70,
+            title: const Padding(
+              padding: EdgeInsets.only(left: 10), // geser ke kanan
+              child: Text('Profil',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
             ),
-            title: const Text('Profil',
-                style: TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold)),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 25),
+                child: InkWell(
+                  onTap: () => Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => const NotificationPage())),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.notifications_none,
+                        color: Color(0xFFE68C3A), size: 22),
+                  ),
+                ),
+              ),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 60),
-                  // Avatar
+                  const SizedBox(height: 110), // naikkan angka ini untuk geser ke bawah
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 4),
                     ),
                     child: CircleAvatar(
-                      radius: 50,
+                      radius: 55,
                       backgroundColor: Colors.grey[200],
                       backgroundImage: UserData.avatarUrl.isNotEmpty
                           ? NetworkImage(UserData.avatarUrl)
                           : null,
                       child: UserData.avatarUrl.isEmpty
-                          ? Icon(Icons.person,
-                              size: 55, color: Colors.grey[400])
+                          ? Icon(Icons.person, size: 60, color: Colors.grey[400])
                           : null,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // Nama
-                  Text(
-                    UserData.name,
-                    style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      UserData.name,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  // Role + Verified Badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(20),
