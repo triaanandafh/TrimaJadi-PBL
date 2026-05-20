@@ -106,10 +106,10 @@ class _CariLayananPageState extends State<CariLayananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB), // Menggunakan latar abu muda sesuai mockup kanan
+      backgroundColor: const Color(0xFFF5F7FB), 
       body: Stack(
         children: [
-          // 1. REVISI: HEADER BIRU GRADASI SEPERTI MOCKUP KANAN
+          // 1. HEADER BIRU GRADASI SEPERTI MOCKUP KANAN
           Container(
             height: 160,
             width: double.infinity,
@@ -156,7 +156,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
                             ),
                           ],
                         ),
-                        // Notifikasi dengan bulatan transparan ala mockup
                         IconButton(
                           icon: const Icon(Icons.notifications_none_outlined, size: 28, color: Colors.white),
                           onPressed: () {},
@@ -172,12 +171,12 @@ class _CariLayananPageState extends State<CariLayananPage> {
             ),
           ),
 
-          // 2. AREA UTAMA (Menggunakan ScrollView)
+          // 2. AREA UTAMA
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 130), // Spacer memberikan ruang untuk title di atas
+                const SizedBox(height: 130), 
 
                 // Floating Search Bar & Filter Button
                 Padding(
@@ -220,7 +219,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Tombol Filter Kotak Melayang Putih
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
@@ -270,8 +268,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
         final service = _searchResults[index];
         final talentName = service['users']?['name'] ?? 'Talent';
         final categoryName = service['categories']?['name'] ?? '';
-        final packages =
-            service['service_packages'] as List<dynamic>? ?? [];
+        final packages = service['service_packages'] as List<dynamic>? ?? [];
         final minPrice = _getMinPrice(packages);
 
         return Container(
@@ -317,33 +314,8 @@ class _CariLayananPageState extends State<CariLayananPage> {
                     Text(minPrice, style: const TextStyle(color: Color(0xFFE68C3A), fontWeight: FontWeight.bold, fontSize: 13)),
                   ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(categoryName,
-                          style: TextStyle(
-                              color: Colors.grey[400], fontSize: 11)),
-                      const SizedBox(height: 2),
-                      Text(service['title'] ?? '',
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 15)),
-                      const SizedBox(height: 2),
-                      Text(talentName,
-                          style: TextStyle(
-                              color: Colors.grey[600], fontSize: 12)),
-                      const SizedBox(height: 6),
-                      Text(minPrice,
-                          style: const TextStyle(
-                              color: Color(0xFFE68C3A),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -356,7 +328,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sub-header Kategori seperti di mockup kanan
           Padding(
             padding: const EdgeInsets.only(left: 4, bottom: 16),
             child: Row(
@@ -364,7 +335,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
               children: [
                 const Text(
                   "Kategori",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 0, 0, 0)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
                 ),
                 Text(
                   "5 layanan",
@@ -374,7 +345,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
             ),
           ),
           
-          // REVISI: Semua Card Kategori dirubah berlatar belakang putih bersih (Gaya Mockup Kanan)
           _buildCategoryCard(
             context,
             categoryId: '34b4a9b2-2b77-4ce3-afc9-7a119212d6b3',
@@ -432,7 +402,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
     required String title,
     required String subtitle,
     required IconData icon,
-    required Color iconBgColor, // Diubah menjadi latar khusus lingkaran ikon saja
+    required Color iconBgColor, 
     required Color iconColor,
   }) {
     return GestureDetector(
@@ -451,7 +421,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white, // REVISI: Semua berlatar putih bersih
+          color: Colors.white, 
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -463,7 +433,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
         ),
         child: Row(
           children: [
-            // Lingkaran Ikon Berwarna Khusus
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
