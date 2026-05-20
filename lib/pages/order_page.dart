@@ -195,18 +195,12 @@ class _OrderPageState extends State<OrderPage> {
 
                         // --- EMPTY STATE ---
                         else if (_filteredOrders.isEmpty)
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.all(40),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.inbox_outlined, size: 60, color: Colors.grey[300]),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    'Belum ada order',
-                                    style: TextStyle(color: Colors.grey[500], fontSize: 16),
-                                  ),
-                                ],
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.5,
+                            child: Center(
+                              child: Text(
+                                'Belum ada order',
+                                style: TextStyle(color: Colors.grey[500], fontSize: 16),
                               ),
                             ),
                           )

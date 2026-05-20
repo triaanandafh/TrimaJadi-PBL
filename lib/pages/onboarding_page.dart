@@ -19,7 +19,7 @@ class OnboardingPage extends StatelessWidget {
             ),
             child: Image.asset(
               "assets/images/onboarding.png",
-              height: 400,
+              height: 380,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
@@ -46,13 +46,13 @@ class OnboardingPage extends StatelessWidget {
               "dan selesaikan semuanya dengan mudah dan aman.",
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: Colors.grey,
               ),
             ),
           ),
 
-          const Spacer(),
+          const SizedBox(height: 20),
 
           // BUTTON SELLER / TALENT
           Padding(
