@@ -56,13 +56,27 @@ class _OrderPageState extends State<OrderPage> {
   }
 
   List<Map<String, dynamic>> get _filteredOrders {
-    if (_selectedFilter == 0) return _orders;
+    if (_selectedFilter == 0) {
+      final sorted = [..._orders];
+      sorted.sort((a, b) {
+        final aIsProgress = (a['work_status'] ?? '') == 'progress' ? 0 : 1;
+        final bIsProgress = (b['work_status'] ?? '') == 'progress' ? 0 : 1;
+        return aIsProgress.compareTo(bIsProgress);
+      });
+      return sorted;
+    }
     if (_selectedFilter == 1) {
-      return _orders.where((o) {
+      final filtered = _orders.where((o) {
         final ws = o['work_status']    ?? '';
         final ps = o['payment_status'] ?? '';
         return ws == 'progress' || ps == 'pending' || ps == 'unpaid';
       }).toList();
+      filtered.sort((a, b) {
+        final aIsProgress = (a['work_status'] ?? '') == 'progress' ? 0 : 1;
+        final bIsProgress = (b['work_status'] ?? '') == 'progress' ? 0 : 1;
+        return aIsProgress.compareTo(bIsProgress);
+      });
+      return filtered;
     }
     return _orders.where((o) {
       final ws = o['work_status'] ?? '';
@@ -75,8 +89,8 @@ class _OrderPageState extends State<OrderPage> {
     final ws = order['work_status']    ?? '';
     final ps = order['payment_status'] ?? '';
 
-    if (ps == 'unpaid')  return (label: 'Belum Dibayar',        color: Colors.orange);
-    if (ps == 'pending') return (label: 'Menunggu Bayar',        color: Colors.orange);
+    if (ps == 'unpaid')   return (label: 'Belum Dibayar',       color: Colors.orange);
+    if (ps == 'pending')  return (label: 'Menunggu Bayar',       color: Colors.orange);
     if (ws == 'progress') return (label: 'In Progress',          color: Colors.blue);
     if (ws == 'done')     return (label: 'Menunggu Konfirmasi',  color: Colors.teal);
     if (ws == 'accepted') return (label: 'Selesai',              color: Colors.green);
@@ -146,15 +160,18 @@ class _OrderPageState extends State<OrderPage> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${_orders.length} order kamu',
-                                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                                    style: const TextStyle(
+                                        color: Colors.white70, fontSize: 14),
                                   ),
                                 ],
                               ),
                               IconButton(
-                                icon: const Icon(Icons.refresh, color: Colors.white),
+                                icon: const Icon(Icons.refresh,
+                                    color: Colors.white),
                                 onPressed: _fetchOrders,
                                 style: IconButton.styleFrom(
-                                  backgroundColor: Colors.white.withOpacity(0.2),
+                                  backgroundColor:
+                                      Colors.white.withOpacity(0.2),
                                 ),
                               ),
                             ],
@@ -200,7 +217,8 @@ class _OrderPageState extends State<OrderPage> {
                             child: Center(
                               child: Text(
                                 'Belum ada order',
-                                style: TextStyle(color: Colors.grey[500], fontSize: 16),
+                                style: TextStyle(
+                                    color: Colors.grey[500], fontSize: 16),
                               ),
                             ),
                           )
@@ -209,10 +227,14 @@ class _OrderPageState extends State<OrderPage> {
                         else
                           Column(
                             children: _filteredOrders.map((order) {
-                              final workStatus    = order['work_status']    ?? 'pending';
-                              final paymentStatus = order['payment_status'] ?? 'unpaid';
-                              final serviceName   = order['service_name']   ?? 'Layanan';
-                              final orderId       = order['id']?.toString() ?? '';
+                              final workStatus =
+                                  order['work_status'] ?? 'pending';
+                              final paymentStatus =
+                                  order['payment_status'] ?? 'unpaid';
+                              final serviceName =
+                                  order['service_name'] ?? 'Layanan';
+                              final orderId =
+                                  order['id']?.toString() ?? '';
 
                               String statusLabel;
                               Color statusColor;
@@ -225,7 +247,8 @@ class _OrderPageState extends State<OrderPage> {
                               } else if (workStatus == 'progress') {
                                 statusLabel = 'In Progress';
                                 statusColor = Colors.blue;
-                              } else if (workStatus == 'done' || workStatus == 'accepted') {
+                              } else if (workStatus == 'done' ||
+                                  workStatus == 'accepted') {
                                 statusLabel = 'Selesai';
                                 statusColor = Colors.green;
                               } else {
@@ -235,7 +258,7 @@ class _OrderPageState extends State<OrderPage> {
 
                               final subTitle = isTalent
                                   ? (order['client_name'] ?? 'Client')
-                                  : (order['order_date']  ?? '-');
+                                  : (order['order_date'] ?? '-');
 
                               return OrderCard(
                                 title: serviceName,
@@ -274,20 +297,31 @@ class _OrderPageState extends State<OrderPage> {
 
   Widget _filterTab(int index, String label) {
     final isSelected = _selectedFilter == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedFilter = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFE68C3A) : Colors.white.withOpacity(0.15),
+
+    return ElevatedButton(
+      onPressed: () {
+        setState(() {
+          _selectedFilter = index;
+        });
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected
+            ? const Color(0xFFE68C3A)
+            : Colors.white.withOpacity(0.15),
+        foregroundColor: isSelected ? Colors.white : Colors.white70,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 25,
+          vertical: 10,
+        ),
+        shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white70,
-            fontWeight: FontWeight.bold,
-          ),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

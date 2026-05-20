@@ -267,7 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const WalletPage())),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
+                backgroundColor: Color(0xFFE68C3A),
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
