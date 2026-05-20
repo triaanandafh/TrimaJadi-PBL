@@ -18,6 +18,7 @@ dependencies:
   http: ^1.2.0        # untuk HTTP request ke Duitku
   crypto: ^3.0.3      # untuk generate MD5 signature
   url_launcher: ^6.3.0 # untuk buka halaman pembayaran Duitku
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

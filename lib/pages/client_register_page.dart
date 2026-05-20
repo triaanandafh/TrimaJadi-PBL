@@ -124,145 +124,141 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                vertical: 40,
-                horizontal: 24,
-              ),
-              decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Color(0xFF1A237E), // Deep Blue (Profil kamu)
-                  Color(0xFF283593), // Indigo yang lebih terang
-                  Color(0xFF3949AB), // Light Indigo (Orderan kamu)
-                ],
-                stops: [0.0, 0.5, 1.0],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(35),
-                  bottomRight: Radius.circular(35),
-                ),
-              ),
-              child: const Column(
-                children: [
-                  Text(
-                    'Daftar sebagai Client',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Langkah awal temukan talent\nmahasiswa terbaik untuk kebutuhanmu',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 30),
-
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                children: [
-                  _buildTextField(
-                    controller: nameController,
-                    label: 'Nama Lengkap *',
-                    icon: Icons.person_outline,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: emailController,
-                    label: 'E-mail *',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                    note: 'Email tidak dapat diubah setelah pendaftaran.',
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: passwordController,
-                    label: 'Password *',
-                    icon: Icons.lock_outline,
-                    isPassword: true,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTextField(
-                    controller: phoneController,
-                    label: 'Nomor Telepon *',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                    note: 'Nomor telepon tidak dapat diubah setelah pendaftaran.',
-                  ),
-                  const SizedBox(height: 40),
-                ],
-              ),
-            ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
           ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
+          child: IntrinsicHeight(
             child: Column(
               children: [
-                SizedBox(
+                Container(
                   width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE88A2F),
-                      disabledBackgroundColor: Colors.grey,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
+                  padding: EdgeInsets.only(
+                    top: MediaQuery.of(context).padding.top + 40,
+                    bottom: 40,
+                    left: 24,
+                    right: 24,
+                  ),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Color(0xFF1A237E),
+                        Color(0xFF283593),
+                        Color(0xFF3949AB),
+                      ],
+                      stops: [0.0, 0.5, 1.0],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    onPressed: isLoading ? null : _register,
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                                color: Colors.white, strokeWidth: 2),
-                          )
-                        : const Text(
-                            'Daftar',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold),
-                          ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(35),
+                      bottomRight: Radius.circular(35),
+                    ),
+                  ),
+                  child: const Column(
+                    children: [
+                      Text(
+                        'Daftar sebagai Client',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Langkah awal temukan talent\nmahasiswa terbaik untuk kebutuhanmu',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 15),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text('Sudah punya akun? '),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: const Text(
-                        'Masuk',
-                        style: TextStyle(
-                            color: Colors.orange, fontWeight: FontWeight.bold),
-                      ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 10),
+                        _buildTextField(
+                          controller: nameController,
+                          label: 'Nama Lengkap *',
+                          icon: Icons.person_outline,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: emailController,
+                          label: 'E-mail *',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          note: 'Email tidak dapat diubah setelah pendaftaran.',
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: passwordController,
+                          label: 'Password *',
+                          icon: Icons.lock_outline,
+                          isPassword: true,
+                        ),
+                        const SizedBox(height: 20),
+                        _buildTextField(
+                          controller: phoneController,
+                          label: 'Nomor Telepon *',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          note: 'Nomor telepon tidak dapat diubah setelah pendaftaran.',
+                        ),
+                        const Spacer(),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE88A2F),
+                              disabledBackgroundColor: Colors.grey,
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30)),
+                            ),
+                            onPressed: isLoading ? null : _register,
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                        color: Colors.white, strokeWidth: 2),
+                                  )
+                                : const Text('Daftar',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text('Sudah punya akun? '),
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Text('Masuk',
+                                  style: TextStyle(
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
       ),
     );
   }

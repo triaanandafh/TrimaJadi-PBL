@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:trimajadi/pages/service_list_page.dart';
+import 'package:trimajadi/pages/service_detail_page.dart';
 
 class CariLayananPage extends StatefulWidget {
   const CariLayananPage({super.key});
@@ -37,18 +38,47 @@ class _CariLayananPageState extends State<CariLayananPage> {
     });
 
     try {
-      final response = await _supabase
+      // Cari berdasarkan judul layanan
+      final byTitle = await _supabase
           .from('services')
           .select('''
             id, title, description, image_url,
             categories(name),
-            users(name),
-            service_packages(package_type, price)
+            users(name, avatar_url),
+            service_packages(package_type, price, package_description)
           ''')
           .ilike('title', '%$query%');
 
+      // Cari berdasarkan nama talent
+      final talentMatch = await _supabase
+          .from('users')
+          .select('id')
+          .ilike('name', '%$query%')
+          .eq('role', 'talent');
+
+      List<Map<String, dynamic>> byTalent = [];
+      if (talentMatch.isNotEmpty) {
+        final talentIds = talentMatch.map((t) => t['id']).toList();
+        final byTalentResponse = await _supabase
+            .from('services')
+            .select('''
+              id, title, description, image_url,
+              categories(name),
+              users(name, avatar_url),
+              service_packages(package_type, price, package_description)
+            ''')
+            .inFilter('user_id', talentIds);
+        byTalent = List<Map<String, dynamic>>.from(byTalentResponse);
+      }
+
+      // Gabungkan hasil, hindari duplikat
+      final Map<String, Map<String, dynamic>> combined = {};
+      for (final s in [...byTitle, ...byTalent]) {
+        combined[s['id']] = s;
+      }
+
       setState(() {
-        _searchResults = List<Map<String, dynamic>>.from(response);
+        _searchResults = combined.values.toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -240,7 +270,8 @@ class _CariLayananPageState extends State<CariLayananPage> {
         final service = _searchResults[index];
         final talentName = service['users']?['name'] ?? 'Talent';
         final categoryName = service['categories']?['name'] ?? '';
-        final packages = service['service_packages'] as List<dynamic>? ?? [];
+        final packages =
+            service['service_packages'] as List<dynamic>? ?? [];
         final minPrice = _getMinPrice(packages);
 
         return Container(
@@ -286,8 +317,33 @@ class _CariLayananPageState extends State<CariLayananPage> {
                     Text(minPrice, style: const TextStyle(color: Color(0xFFE68C3A), fontWeight: FontWeight.bold, fontSize: 13)),
                   ],
                 ),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(categoryName,
+                          style: TextStyle(
+                              color: Colors.grey[400], fontSize: 11)),
+                      const SizedBox(height: 2),
+                      Text(service['title'] ?? '',
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15)),
+                      const SizedBox(height: 2),
+                      Text(talentName,
+                          style: TextStyle(
+                              color: Colors.grey[600], fontSize: 12)),
+                      const SizedBox(height: 6),
+                      Text(minPrice,
+                          style: const TextStyle(
+                              color: Color(0xFFE68C3A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
