@@ -88,20 +88,19 @@ class _OrderPageState extends State<OrderPage> {
     final isTalent = UserData.role.toLowerCase() == 'talent';
 
     return Scaffold(
-      // PERUBAHAN: Warna background disamakan dengan halaman Chat & Profil
-      backgroundColor: const Color(0xFFF5F7FB), 
+      backgroundColor: const Color(0xFFF5F7FB),
       body: Stack(
         children: [
-          // 1. HEADER GRADASI MELENGKUNG (Sama dengan Chat & Profil)
+          // 1. HEADER GRADASI MELENGKUNG
           Container(
-            height: 250, // Dibuat sedikit lebih tinggi untuk menampung Filter Tabs
+            height: 250,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF1A237E), // Deep Blue
-                  Color(0xFF283593), // Indigo
-                  Color(0xFF3949AB), // Light Indigo
+                  Color(0xFF1A237E),
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
                 ],
                 stops: [0.0, 0.5, 1.0],
                 begin: Alignment.topLeft,
@@ -123,7 +122,7 @@ class _OrderPageState extends State<OrderPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Area Header (Judul, Counter, & Tombol Refresh)
+                  // Area Header
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(25, 20, 25, 0),
@@ -137,22 +136,20 @@ class _OrderPageState extends State<OrderPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
-                                    'Order',
+                                    'Aktivitas',
                                     style: TextStyle(
-                                      fontSize: 26, 
-                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 26,
+                                      fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  // Mengaktifkan counter order dinamis dari database
                                   Text(
                                     '${_orders.length} order kamu',
                                     style: const TextStyle(color: Colors.white70, fontSize: 14),
                                   ),
                                 ],
                               ),
-                              // Tombol Refresh Lingkaran Transparan ala Chat Page
                               IconButton(
                                 icon: const Icon(Icons.refresh, color: Colors.white),
                                 onPressed: _fetchOrders,
@@ -162,10 +159,10 @@ class _OrderPageState extends State<OrderPage> {
                               ),
                             ],
                           ),
-                          
+
                           const SizedBox(height: 25),
 
-                          // --- FILTER TABS (Sekarang di atas background biru) ---
+                          // Filter Tabs
                           Row(
                             children: [
                               _filterTab(0, 'Semua'),
@@ -182,7 +179,7 @@ class _OrderPageState extends State<OrderPage> {
 
                   const SizedBox(height: 25),
 
-                  // Area Body Utama (List Order & Mode Testing)
+                  // Area Body Utama (List Order)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
@@ -268,56 +265,6 @@ class _OrderPageState extends State<OrderPage> {
                             }).toList(),
                           ),
 
-                        // --- WIDGET MODE TESTING PAYMENT ---
-                        const SizedBox(height: 25),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFF9E6), // Kuning soft pasir sandbox
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: const Color(0xFFFFD666)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Row(
-                                children: [
-                                  Icon(Icons.science_outlined, color: Colors.orange, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Mode Testing',
-                                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 14),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              const Text(
-                                'Buat order dummy untuk test pembayaran Duitku sandbox.',
-                                style: TextStyle(fontSize: 13, color: Colors.black87, height: 1.3),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF1A237E), // Biru tua matching tema
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    elevation: 0,
-                                  ),
-                                  onPressed: _createDummyOrder,
-                                  icon: const Icon(Icons.add_shopping_cart, color: Colors.white, size: 18),
-                                  label: const Text(
-                                    'Buat Order Test & Bayar',
-                                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
                         const SizedBox(height: 40),
                       ],
                     ),
@@ -351,57 +298,4 @@ class _OrderPageState extends State<OrderPage> {
       ),
     );
   }
-
-
-  Future<void> _createDummyOrder() async {
-    try {
-      final userId   = supabase.auth.currentUser?.id;
-      final isTalent = UserData.role.toLowerCase() == 'talent';
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-
-      final response = await supabase.from('orders').insert({
-        'client_id'     : userId,
-        'talent_id'     : userId,
-        'service_name'  : 'Desain Logo Test #$timestamp',
-        'duration'      : 3,
-        'order_date'    : DateTime.now().toIso8601String().substring(0, 10),
-        'deadline'      : DateTime.now().add(const Duration(days: 3)).toIso8601String().substring(0, 10),
-        'total_price'   : 50000,
-        'payment_status': 'unpaid',
-        'work_status'   : 'pending',
-        'description'   : 'Order dummy untuk testing pembayaran Duitku sandbox.',
-      }).select().single();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Order test dibuat! Tap Bayar Sekarang.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => DetailOrderPage(
-              orderId  : response['id'].toString(),
-              isTalent : isTalent,
-              status   : 'pending',
-            ),
-          ),
-        );
-
-        _fetchOrders();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal buat order test: $e'), backgroundColor: Colors.red),
-        );
-      }
-    }
-  }
 }
-
-
-

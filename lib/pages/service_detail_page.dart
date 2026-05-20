@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'create_order_page.dart';
 
+import 'create_order_page.dart';
+import '../services/rating_service.dart';
+import '../widgets/rating_widgets.dart';
+
+/// Halaman detail layanan dengan paket Basic / Standard / Premium
+/// dan rating talent yang diambil dari database.
 class ServiceDetailPage extends StatefulWidget {
   final Map<String, dynamic> service;
 
@@ -13,13 +18,31 @@ class ServiceDetailPage extends StatefulWidget {
 
 class _ServiceDetailPageState extends State<ServiceDetailPage> {
   int _selectedTab = 0;
-  final List<String> _tabs = ['Basic', 'Standard', 'Premium'];
+  final _tabs = const ['Basic', 'Standard', 'Premium'];
+
+  RatingSummary? _ratingSummary;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRating();
+  }
+
+  Future<void> _fetchRating() async {
+    final talentId = widget.service['talent_id']?.toString()
+        ?? widget.service['users']?['id']?.toString();
+    if (talentId == null) return;
+
+    final summary = await RatingService.getSummary(talentId);
+    if (mounted) setState(() => _ratingSummary = summary);
+  }
 
   Map<String, dynamic>? _getPackage(String type) {
     final packages =
         widget.service['service_packages'] as List<dynamic>? ?? [];
     try {
-      return packages.firstWhere((p) => p['package_type'] == type);
+      return packages.firstWhere((p) => p['package_type'] == type)
+          as Map<String, dynamic>;
     } catch (_) {
       return null;
     }
@@ -28,16 +51,22 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
   String _formatPrice(dynamic price) {
     if (price == null) return 'Tidak tersedia';
     final p = (price as num).toDouble();
-    return 'IDR ${p.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
+    return 'IDR ${p.toStringAsFixed(0).replaceAllMapped(
+          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+          (m) => '${m[1]}.',
+        )}';
   }
 
   @override
   Widget build(BuildContext context) {
-    final talentName = widget.service['users']?['name'] ?? 'Talent';
-    final title = widget.service['title'] ?? '';
-    final imageUrl = widget.service['image_url'];
+    final talentName   = widget.service['users']?['name'] ?? 'Talent';
+    final avatarUrl    = widget.service['users']?['avatar_url'];
+    final isVerified   = widget.service['users']?['is_verified'] == true
+        || (_ratingSummary?.isVerified ?? false);
+    final title        = widget.service['title'] ?? '';
+    final imageUrl     = widget.service['image_url'];
     final selectedType = _tabs[_selectedTab].toLowerCase();
-    final selectedPackage = _getPackage(selectedType);
+    final pkg          = _getPackage(selectedType);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -67,53 +96,67 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nama Talent
+
+                  // ── Info Talent ──────────────────────────────────
                   Row(
                     children: [
                       CircleAvatar(
-                        radius: 20,
+                        radius: 22,
                         backgroundColor: Colors.grey[200],
-                        backgroundImage: widget.service['users']
-                                    ?['avatar_url'] !=
-                                null
-                            ? NetworkImage(
-                                widget.service['users']['avatar_url'])
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl as String)
                             : null,
-                        child:
-                            widget.service['users']?['avatar_url'] == null
-                                ? const Icon(Icons.person, color: Colors.grey)
-                                : null,
+                        child: avatarUrl == null
+                            ? const Icon(Icons.person, color: Colors.grey)
+                            : null,
                       ),
                       const SizedBox(width: 10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(talentName,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 15)),
-                          Row(
-                            children: [
-                              const Icon(Icons.star,
-                                  color: Colors.amber, size: 14),
-                              const SizedBox(width: 3),
-                              Text('4.9',
-                                  style: TextStyle(
-                                      color: Colors.grey[600], fontSize: 12)),
-                            ],
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Nama + verified badge
+                            Row(
+                              children: [
+                                Text(talentName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15)),
+                                if (isVerified) ...[
+                                  const SizedBox(width: 6),
+                                  const VerifiedBadge(
+                                      fontSize: 10, iconSize: 11),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            // Rating
+                            if (_ratingSummary != null)
+                              RatingChip(
+                                rating: _ratingSummary!.averageRating,
+                                reviewCount: _ratingSummary!.reviewCount,
+                              )
+                            else
+                              const SizedBox(
+                                height: 16,
+                                width: 16,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 1.5),
+                              ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
 
                   const SizedBox(height: 20),
 
-                  // Gambar Layanan
+                  // ── Gambar Layanan ───────────────────────────────
                   ClipRRect(
                     borderRadius: BorderRadius.circular(15),
                     child: imageUrl != null
                         ? Image.network(
-                            imageUrl,
+                            imageUrl as String,
                             height: 200,
                             width: double.infinity,
                             fit: BoxFit.cover,
@@ -129,28 +172,28 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
 
                   const SizedBox(height: 20),
 
-                  // Tab Basic / Standard / Premium
+                  // ── Tab Basic / Standard / Premium ───────────────
                   Container(
                     decoration: BoxDecoration(
                       border: Border(
-                          bottom: BorderSide(color: Colors.grey.shade200)),
+                          bottom:
+                              BorderSide(color: Colors.grey.shade200)),
                     ),
                     child: Row(
-                      children: List.generate(_tabs.length, (index) {
-                        final isSelected = _selectedTab == index;
-                        final pkg =
-                            _getPackage(_tabs[index].toLowerCase());
-                        final isAvailable = pkg != null &&
-                            pkg['price'] != null;
+                      children: List.generate(_tabs.length, (i) {
+                        final isSelected = _selectedTab == i;
+                        final available  = _getPackage(
+                                _tabs[i].toLowerCase())?['price'] !=
+                            null;
                         return Expanded(
                           child: GestureDetector(
-                            onTap: isAvailable
+                            onTap: available
                                 ? () =>
-                                    setState(() => _selectedTab = index)
+                                    setState(() => _selectedTab = i)
                                 : null,
                             child: Container(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 12),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12),
                               decoration: BoxDecoration(
                                 border: Border(
                                   bottom: BorderSide(
@@ -162,7 +205,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                                 ),
                               ),
                               child: Text(
-                                _tabs[index],
+                                _tabs[i],
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontWeight: isSelected
@@ -170,7 +213,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                                       : FontWeight.normal,
                                   color: isSelected
                                       ? const Color(0xFF1A43BF)
-                                      : isAvailable
+                                      : available
                                           ? Colors.black
                                           : Colors.grey[400],
                                 ),
@@ -184,70 +227,65 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
 
                   const SizedBox(height: 20),
 
-                  // Konten Paket
-                  selectedPackage == null || selectedPackage['price'] == null
-                      ? Center(
-                          child: Text(
-                            'Paket ${_tabs[_selectedTab]} tidak tersedia',
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Harga
-                            Text(
-                              _formatPrice(selectedPackage['price']),
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF1A43BF),
-                              ),
-                            ),
-                            const SizedBox(height: 15),
-                            // Deskripsi paket
-                            if (selectedPackage['package_description'] !=
-                                null)
-                              ...((selectedPackage['package_description']
-                                          as String)
-                                      .split('\n'))
-                                  .map((line) => line.trim().isEmpty
-                                      ? const SizedBox(height: 4)
-                                      : Padding(
-                                          padding: const EdgeInsets.only(
-                                              bottom: 8),
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              const Icon(Icons.check,
-                                                  color: Color(0xFF1A43BF),
-                                                  size: 18),
-                                              const SizedBox(width: 8),
-                                              Expanded(
-                                                child: Text(line,
-                                                    style: const TextStyle(
-                                                        fontSize: 14)),
-                                              ),
-                                            ],
-                                          ),
-                                        )),
-                          ],
+                  // ── Konten Paket ─────────────────────────────────
+                  if (pkg == null || pkg['price'] == null)
+                    Center(
+                      child: Text(
+                        'Paket ${_tabs[_selectedTab]} tidak tersedia',
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _formatPrice(pkg['price']),
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1A43BF)),
                         ),
+                        const SizedBox(height: 15),
+                        if (pkg['package_description'] != null)
+                          ...(pkg['package_description'] as String)
+                              .split('\n')
+                              .map((line) => line.trim().isEmpty
+                                  ? const SizedBox(height: 4)
+                                  : Padding(
+                                      padding: const EdgeInsets.only(
+                                          bottom: 8),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(Icons.check,
+                                              color: Color(0xFF1A43BF),
+                                              size: 18),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(line,
+                                                style: const TextStyle(
+                                                    fontSize: 14)),
+                                          ),
+                                        ],
+                                      ),
+                                    )),
+                      ],
+                    ),
                 ],
               ),
             ),
           ),
 
-          // Tombol Lanjutkan
+          // ── Tombol Lanjutkan ─────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
             child: SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: selectedPackage == null ||
-                        selectedPackage['price'] == null
+                onPressed: pkg == null || pkg['price'] == null
                     ? null
                     : () {
                         final serviceId =

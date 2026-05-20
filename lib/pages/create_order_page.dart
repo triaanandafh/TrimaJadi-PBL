@@ -141,6 +141,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
         'deadline'      : deadline.toIso8601String().substring(0, 10),
         'payment_status': 'unpaid',
         'work_status'   : 'pending',
+        'package_type'  : selectedPackageType,
+        'revision_count': 0,
       }).select().single();
 
       if (mounted) {

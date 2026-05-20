@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'review_page.dart';
 
 // ============================================================
 // KONFIGURASI DUITKU
@@ -94,7 +95,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     final linkCtrl  = TextEditingController();
     final notesCtrl = TextEditingController();
 
-    // Isi ulang data lama kalau sebelumnya sudah pernah submit
     if ((orderData!['result_link'] ?? '').toString().isNotEmpty) {
       linkCtrl.text  = orderData!['result_link'].toString();
       notesCtrl.text = orderData!['result_notes']?.toString() ?? '';
@@ -117,7 +117,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
               Center(
                 child: Container(
                   width: 40, height: 4,
@@ -128,7 +127,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
               const Text(
                 'Submit Hasil Pekerjaan',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -139,8 +137,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                 style: TextStyle(color: Colors.grey[500], fontSize: 13),
               ),
               const SizedBox(height: 20),
-
-              // Link hasil
               TextField(
                 controller: linkCtrl,
                 keyboardType: TextInputType.url,
@@ -158,8 +154,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                 ),
               ),
               const SizedBox(height: 14),
-
-              // Catatan
               TextField(
                 controller: notesCtrl,
                 maxLines: 3,
@@ -180,7 +174,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                 ),
               ),
               const SizedBox(height: 20),
-
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -244,11 +237,11 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     });
   }
 
-  // ===== CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT =====
+  // ===== CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING =====
   Future<void> _handleTerimaHasil() async {
     final totalPrice = (orderData!['total_price'] as num?)?.toInt() ?? 0;
-    final platformFee = (totalPrice * 0.1).toInt();        // 10% platform
-    final talentReceives = totalPrice - platformFee;       // 90% talent
+    final platformFee = (totalPrice * 0.1).toInt();
+    final talentReceives = totalPrice - platformFee;
 
     final confirm = await showDialog<bool>(
       context: context,
@@ -329,7 +322,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
           .maybeSingle();
 
       if (walletRes == null) {
-        // Wallet belum ada → buat baru
         await supabase.from('wallets').insert({
           'user_id': talentId,
           'balance': talentReceives,
@@ -354,6 +346,24 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       setState(() => orderData!['work_status'] = 'accepted');
       _showSnackBar(
           'Order selesai! Dana ${_formatRupiah(talentReceives)} telah dikirim ke saldo talent.');
+
+      // 4. Navigasi ke halaman rating talent
+      if (mounted) {
+        await Future.delayed(const Duration(milliseconds: 600));
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ReviewPage(
+                orderId     : widget.orderId,
+                talentId    : talentId,
+                talentName  : otherUserData?['name']?.toString() ?? 'Talent',
+                serviceName : orderData!['service_name']?.toString() ?? '',
+              ),
+            ),
+          );
+        }
+      }
     } catch (e) {
       _showSnackBar('Gagal memproses: $e', isError: true);
     } finally {
@@ -361,7 +371,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
   }
 
-  /// Helper row untuk dialog konfirmasi
   Widget _dialogRow(String label, String value,
       {Color? valueColor, bool bold = false}) {
     return Padding(
@@ -653,6 +662,9 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     return 'Rp $buffer';
   }
 
+  String _capitalize(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
   String _labelPaymentStatus(dynamic status) {
     switch (status?.toString()) {
       case 'unpaid':  return 'Belum Dibayar';
@@ -762,6 +774,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                   const SizedBox(height: 15),
                                   _row('Nama Layanan',
                                       orderData!['service_name']?.toString() ?? '-'),
+                                  _row('Paket',
+                                      _capitalize(orderData!['package_type']?.toString() ?? 'basic')),
                                   _row('Durasi',
                                       '${orderData!['duration'] ?? '-'} hari'),
                                   _row('Tanggal Order',
@@ -810,7 +824,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                     ),
                                     const SizedBox(height: 12),
 
-                                    // Link hasil — bisa diklik
                                     InkWell(
                                       onTap: () async {
                                         final url = Uri.tryParse(
@@ -855,7 +868,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       ),
                                     ),
 
-                                    // Catatan talent
                                     if ((orderData!['result_notes'] ?? '')
                                         .toString()
                                         .isNotEmpty) ...[
@@ -870,7 +882,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                           style: const TextStyle(fontSize: 13)),
                                     ],
 
-                                    // Catatan revisi dari client
                                     if ((orderData!['revision_notes'] ?? '')
                                         .toString()
                                         .isNotEmpty) ...[
@@ -1056,26 +1067,64 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // CLIENT: order selesai
+    // CLIENT: order selesai — tampilkan tombol beri rating jika belum di-review
     if (!widget.isTalent && workStatus == 'accepted') {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.green[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green[200]!),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Order Selesai ✓',
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold)),
+      final isReviewed = orderData!['is_reviewed'] == true;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.green[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.green[200]!),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle, color: Colors.green),
+                SizedBox(width: 8),
+                Text('Order Selesai ✓',
+                    style: TextStyle(
+                        color: Colors.green, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          if (!isReviewed) ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFB800),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25)),
+                ),
+                onPressed: () {
+                  final talentId = orderData!['talent_id']?.toString() ?? '';
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ReviewPage(
+                        orderId    : widget.orderId,
+                        talentId   : talentId,
+                        talentName : otherUserData?['name']?.toString() ?? 'Talent',
+                        serviceName: orderData!['service_name']?.toString() ?? '',
+                      ),
+                    ),
+                  ).then((_) => _fetchOrderDetails());
+                },
+                icon: const Icon(Icons.star, color: Colors.white),
+                label: const Text('Beri Rating Talent',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
           ],
-        ),
+        ],
       );
     }
 
@@ -1154,7 +1203,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
               ],
             ),
             const SizedBox(height: 8),
-            // Talent bisa update hasil
             TextButton(
               onPressed: _showSubmitResultDialog,
               child: const Text('Perbarui Hasil',
