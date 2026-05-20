@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../models/user_model.dart';
-import 'profile_wallet.dart';
-import 'profile_portfolio.dart';
-import 'edit_profile_page.dart';
-import 'onboarding_page.dart';
+import '../services/auth_service.dart';
+import '../widgets/rating_widgets.dart';
 import 'change_password_page.dart';
+import 'edit_profile_page.dart';
+import 'notification_page.dart';
+import 'onboarding_page.dart';
+import 'profile_portfolio.dart';
+import 'profile_wallet.dart';
 import 'talent_review_page.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -18,27 +22,29 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final supabase = Supabase.instance.client;
-  int _balance = 0;
+  final _supabase = Supabase.instance.client;
+
+  int  _balance    = 0;
   bool _isVerified = false;
 
   @override
   void initState() {
     super.initState();
-    _fetchBalance();
+    _fetchProfileData();
   }
 
-  Future<void> _fetchBalance() async {
+  Future<void> _fetchProfileData() async {
     try {
-      final userId = supabase.auth.currentUser?.id;
+      final userId = _supabase.auth.currentUser?.id;
       if (userId == null) return;
-      final res = await supabase
+
+      final wallet = await _supabase
           .from('wallets')
           .select('balance')
           .eq('user_id', userId)
           .maybeSingle();
 
-      final profile = await supabase
+      final profile = await _supabase
           .from('users')
           .select('is_verified')
           .eq('id', userId)
@@ -46,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (mounted) {
         setState(() {
-          _balance    = (res?['balance'] as num?)?.toInt() ?? 0;
+          _balance    = (wallet?['balance'] as num?)?.toInt() ?? 0;
           _isVerified = profile?['is_verified'] == true;
         });
       }
@@ -54,7 +60,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _formatRupiah(int value) {
-    final str = value.toString();
+    final str    = value.toString();
     final buffer = StringBuffer();
     for (int i = 0; i < str.length; i++) {
       if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
@@ -65,14 +71,15 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isTalent = UserData.role == "talent";
+    final isTalent = UserData.role == 'talent';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6F9),
       body: CustomScrollView(
         slivers: [
+          // ── App Bar ───────────────────────────────────────────────
           SliverAppBar(
-            expandedHeight: 280.0,
+            expandedHeight: 280,
             pinned: true,
             elevation: 0,
             backgroundColor: const Color(0xFF1A237E),
@@ -80,15 +87,15 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const Icon(Icons.arrow_back, color: Colors.white),
               onPressed: () => Navigator.pop(context),
             ),
-            title: const Text(
-              'Profil',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
+            title: const Text('Profil',
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
             flexibleSpace: FlexibleSpaceBar(
               background: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const SizedBox(height: 60),
+                  // Avatar
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -101,51 +108,43 @@ class _ProfilePageState extends State<ProfilePage> {
                           ? NetworkImage(UserData.avatarUrl)
                           : null,
                       child: UserData.avatarUrl.isEmpty
-                          ? Icon(Icons.person, size: 55, color: Colors.grey[400])
+                          ? Icon(Icons.person,
+                              size: 55, color: Colors.grey[400])
                           : null,
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Nama
                   Text(
                     UserData.name,
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 8),
+                  // Role + Verified Badge
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 4),
                         decoration: BoxDecoration(
                           color: const Color(0xFFE8F5E9),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           UserData.role,
-                          style: const TextStyle(color: Color(0xFF4CAF50), fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Color(0xFF4CAF50),
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                       if (isTalent && _isVerified) ...[
                         const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00C853),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.verified, color: Colors.white, size: 13),
-                              SizedBox(width: 4),
-                              Text('Verified',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
+                        const VerifiedBadge(),
                       ],
                     ],
                   ),
@@ -154,34 +153,39 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
+          // ── Body ─────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Column(
               children: [
                 const SizedBox(height: 25),
 
-                // ── Hanya muncul untuk Talent ──────────────────────────────
-                if (isTalent) _buildWalletCard(context),
-                if (isTalent) const SizedBox(height: 25),
+                // Wallet & fitur talent
+                if (isTalent) ...[
+                  _buildWalletCard(context),
+                  const SizedBox(height: 25),
+                  _sectionHeader('Pusat Kerja Talent'),
+                  _buildMenuCard([
+                    _menuItem(context, Icons.work_outline,
+                        'Kelola Layanan Saya', isFirst: true),
+                    _divider(),
+                    _menuItem(
+                        context, Icons.image_outlined, 'Portofolio Saya'),
+                    _divider(),
+                    _menuItem(context, Icons.star_outline, 'Ulasan Klien',
+                        isLast: true),
+                  ]),
+                  const SizedBox(height: 25),
+                ],
 
-                if (isTalent) _sectionHeader("Pusat Kerja Talent"),
-                if (isTalent) _buildMenuCard([
-                  _menuItem(context, Icons.work_outline, "Kelola Layanan Saya", isFirst: true),
-                  _divider(),
-                  _menuItem(context, Icons.image_outlined, "Portofolio Saya"),
-                  _divider(),
-                  _menuItem(context, Icons.star_outline, "Ulasan Klien", isLast: true),
-                ]),
-
-                if (isTalent) const SizedBox(height: 25),
-                // ──────────────────────────────────────────────────────────
-
-                _sectionHeader("Pengaturan Akun"),
+                _sectionHeader('Pengaturan Akun'),
                 _buildMenuCard([
-                  _menuItem(context, Icons.person_outline, "Edit Profil", isFirst: true),
+                  _menuItem(context, Icons.person_outline, 'Edit Profil',
+                      isFirst: true),
                   _divider(),
-                  _menuItem(context, Icons.lock_outline, "Ubah Password"),
+                  _menuItem(context, Icons.lock_outline, 'Ubah Password'),
                   _divider(),
-                  _menuItem(context, Icons.notifications_none, "Notifikasi", isLast: true),
+                  _menuItem(context, Icons.notifications_none,
+                      'Notifikasi', isLast: true),
                 ]),
 
                 const SizedBox(height: 20),
@@ -190,7 +194,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _menuItem(
                     context,
                     Icons.logout,
-                    "Keluar Akun",
+                    'Keluar Akun',
                     textColor: Colors.red,
                     iconBgColor: Colors.red.withOpacity(0.1),
                     isFirst: true,
@@ -207,16 +211,68 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // ── Wallet card ─────────────────────────────────────────────────────
+  Widget _buildWalletCard(BuildContext context) {
+    return InkWell(
+      onTap: () => Navigator.push(context,
+          MaterialPageRoute(builder: (_) => const WalletPage())),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 25),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.05), blurRadius: 10)
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Saldo Tersedia',
+                    style: TextStyle(color: Colors.grey, fontSize: 13)),
+                const SizedBox(height: 5),
+                Text(
+                  _formatRupiah(_balance),
+                  style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1A237E)),
+                ),
+              ],
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const WalletPage())),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+              ),
+              child: const Text('Tarik Saldo',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ── Logout dialog ───────────────────────────────────────────────────
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          'Keluar Akun',
-          style: TextStyle(fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Keluar Akun',
+            style: TextStyle(fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center),
         content: const Text(
           'Apakah kamu yakin ingin keluar dari akun ini?',
           textAlign: TextAlign.center,
@@ -231,37 +287,42 @@ class _ProfilePageState extends State<ProfilePage> {
               onPressed: () => Navigator.pop(ctx),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF1A237E)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text(
-                'Batal',
-                style: TextStyle(color: Color(0xFF1A237E), fontWeight: FontWeight.w600),
-              ),
+              child: const Text('Batal',
+                  style: TextStyle(
+                      color: Color(0xFF1A237E),
+                      fontWeight: FontWeight.w600)),
             ),
           ),
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(ctx);
-                // TODO: await supabase.auth.signOut();
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const OnboardingPage()),
-                  (route) => false,
-                );
+                await AuthService.logout();
+                UserData.clear();
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const OnboardingPage()),
+                    (_) => false,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
-              child: const Text(
-                'Keluar',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
+              child: const Text('Keluar',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.w600)),
             ),
           ),
         ],
@@ -269,66 +330,28 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildWalletCard(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletPage()));
-      },
-      child: Container(
+  // ── Helpers ────────────────────────────────────────────────────────
+  Widget _buildMenuCard(List<Widget> items) => Container(
         margin: const EdgeInsets.symmetric(horizontal: 25),
-        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Saldo Tersedia", style: TextStyle(color: Colors.grey, fontSize: 13)),
-                const SizedBox(height: 5),
-                Text(_formatRupiah(_balance), style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF1A237E))),
-              ],
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletPage()));
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text("Tarik Saldo", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20)),
+        child: Column(children: items),
+      );
 
-  Widget _buildMenuCard(List<Widget> items) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 25),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20)),
-      child: Column(children: items),
-    );
-  }
-
-  Widget _sectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 30, bottom: 10),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          title,
-          style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.bold, fontSize: 14),
+  Widget _sectionHeader(String title) => Padding(
+        padding: const EdgeInsets.only(left: 30, bottom: 10),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            title,
+            style: TextStyle(
+                color: Colors.grey[600],
+                fontWeight: FontWeight.bold,
+                fontSize: 14),
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   Widget _divider() => Divider(
         height: 1,
@@ -342,17 +365,18 @@ class _ProfilePageState extends State<ProfilePage> {
     BuildContext context,
     IconData icon,
     String title, {
-    Color? textColor,
-    Color? iconBgColor,
-    bool isFirst = false,
-    bool isLast = false,
+    Color?  textColor,
+    Color?  iconBgColor,
+    bool    isFirst = false,
+    bool    isLast  = false,
   }) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
-          top: isFirst ? const Radius.circular(20) : Radius.zero,
-          bottom: isLast ? const Radius.circular(20) : Radius.zero,
+          top:    isFirst ? const Radius.circular(20) : Radius.zero,
+          bottom: isLast  ? const Radius.circular(20) : Radius.zero,
         ),
       ),
       leading: Container(
@@ -361,7 +385,8 @@ class _ProfilePageState extends State<ProfilePage> {
           color: iconBgColor ?? const Color(0xFFE8EAF6),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, color: textColor ?? const Color(0xFF3F51B5), size: 22),
+        child: Icon(icon,
+            color: textColor ?? const Color(0xFF3F51B5), size: 22),
       ),
       title: Text(
         title,
@@ -371,22 +396,39 @@ class _ProfilePageState extends State<ProfilePage> {
           fontSize: 15,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+      trailing:
+          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
       onTap: () {
-        if (title == "Dompet & Penarikan") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletPage()));
-        } else if (title == "Portofolio Saya") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const PortfolioPage()));
-        } else if (title == "Kelola Layanan Saya") {
-          widget.onNavigate?.call(2);
-        } else if (title == "Edit Profil") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
-        } else if (title == "Ulasan Klien") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const TalentReviewsPage()));
-        } else if (title == "Ubah Password") {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const ChangePasswordPage()));
-        } else if (title == "Keluar Akun") {
-          _showLogoutDialog(context);
+        switch (title) {
+          case 'Kelola Layanan Saya':
+            widget.onNavigate?.call(2);
+            break;
+          case 'Portofolio Saya':
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const PortfolioPage()));
+            break;
+          case 'Ulasan Klien':
+            Navigator.push(context,
+                MaterialPageRoute(
+                    builder: (_) => const TalentReviewsPage()));
+            break;
+          case 'Edit Profil':
+            Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const EditProfilePage()));
+            break;
+          case 'Ubah Password':
+            Navigator.push(context,
+                MaterialPageRoute(
+                    builder: (_) => const ChangePasswordPage()));
+            break;
+          case 'Notifikasi':
+            Navigator.push(context,
+                MaterialPageRoute(
+                    builder: (_) => const NotificationPage()));
+            break;
+          case 'Keluar Akun':
+            _showLogoutDialog(context);
+            break;
         }
       },
     );

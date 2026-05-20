@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../services/rating_service.dart';
+import '../widgets/rating_widgets.dart';
+
+/// Halaman daftar ulasan untuk satu talent.
+/// Jika [talentId] null → tampilkan ulasan talent yang sedang login.
 class TalentReviewsPage extends StatefulWidget {
-  /// Jika null, ambil talent dari current user (untuk halaman profil talent sendiri)
   final String? talentId;
   final String? talentName;
 
@@ -13,12 +17,14 @@ class TalentReviewsPage extends StatefulWidget {
 }
 
 class _TalentReviewsPageState extends State<TalentReviewsPage> {
-  final supabase = Supabase.instance.client;
+  final _supabase = Supabase.instance.client;
 
-  bool _isLoading = true;
+  bool   _isLoading = true;
   List<Map<String, dynamic>> _reviews = [];
-  double _avgRating = 0;
-  bool _isVerified = false;
+  RatingSummary? _summary;
+
+  String get _talentId =>
+      widget.talentId ?? _supabase.auth.currentUser?.id ?? '';
 
   @override
   void initState() {
@@ -26,76 +32,47 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     _fetchReviews();
   }
 
-  String get _talentId =>
-      widget.talentId ?? supabase.auth.currentUser?.id ?? '';
-
   Future<void> _fetchReviews() async {
     setState(() => _isLoading = true);
     try {
-      // Ambil reviews
-      final res = await supabase
+      final res = await _supabase
           .from('reviews')
           .select()
           .eq('talent_id', _talentId)
           .order('created_at', ascending: false);
 
-      final list = List<Map<String, dynamic>>.from(res);
-
-      // Hitung rata-rata
-      double avg = 0;
-      if (list.isNotEmpty) {
-        avg = list.fold<double>(
-                0, (sum, r) => sum + ((r['rating'] as num).toDouble())) /
-            list.length;
-      }
-
-      // Cek verified badge
-      final profile = await supabase
-          .from('users')
-          .select('is_verified')
-          .eq('id', _talentId)
-          .maybeSingle();
+      final summary = await RatingService.getSummary(_talentId);
 
       setState(() {
-        _reviews    = list;
-        _avgRating  = avg;
-        _isVerified = profile?['is_verified'] == true;
-        _isLoading  = false;
+        _reviews   = List<Map<String, dynamic>>.from(res);
+        _summary   = summary;
+        _isLoading = false;
       });
-    } catch (e) {
+    } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  String _formatDate(String? iso) {
-    if (iso == null) return '-';
-    try {
-      final dt  = DateTime.parse(iso).toLocal();
-      final mon = ['Jan','Feb','Mar','Apr','Mei','Jun',
-                   'Jul','Agt','Sep','Okt','Nov','Des'];
-      return '${dt.day} ${mon[dt.month - 1]} ${dt.year}';
-    } catch (_) { return iso; }
-  }
-
+  // ──────────────────────────────────────────────
+  // Build
+  // ──────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    final title = widget.talentName != null
+        ? 'Ulasan untuk ${widget.talentName}'
+        : 'Ulasan Klien';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F2EF),
       appBar: AppBar(
-        title: Text(
-          widget.talentName != null
-              ? 'Ulasan untuk ${widget.talentName}'
-              : 'Ulasan Klien',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         foregroundColor: Colors.black,
         elevation: 0.5,
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _fetchReviews,
-          ),
+              icon: const Icon(Icons.refresh), onPressed: _fetchReviews),
         ],
       ),
       body: _isLoading
@@ -107,20 +84,18 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
-                    // ── Kartu Ringkasan Rating ──
-                    _buildSummaryCard(),
-                    const SizedBox(height: 20),
-
-                    // ── Syarat Verified Badge ──
-                    _buildVerifiedInfo(),
-                    const SizedBox(height: 20),
-
-                    // ── List Ulasan ──
-                    if (_reviews.isEmpty)
-                      _buildEmpty()
-                    else
-                      ...(_reviews.map((r) => _buildReviewCard(r)).toList()),
-
+                    if (_summary != null) ...[
+                      _buildSummaryCard(),
+                      const SizedBox(height: 16),
+                      _buildVerifiedProgress(),
+                      const SizedBox(height: 20),
+                    ],
+                    _reviews.isEmpty
+                        ? _buildEmpty()
+                        : Column(
+                            children:
+                                _reviews.map(_buildReviewCard).toList(),
+                          ),
                     const SizedBox(height: 30),
                   ],
                 ),
@@ -129,7 +104,9 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     );
   }
 
+  // ── Kartu ringkasan rating ───────────────────────────────────────────
   Widget _buildSummaryCard() {
+    final s = _summary!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -156,32 +133,12 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Rating Talent',
-                      style: TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                    if (_isVerified) ...[
+                    const Text('Rating Talent',
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 14)),
+                    if (s.isVerified) ...[
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF00C853),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.verified, color: Colors.white, size: 13),
-                            SizedBox(width: 3),
-                            Text('Verified',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
+                      const VerifiedBadge(),
                     ],
                   ],
                 ),
@@ -190,7 +147,7 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      _avgRating.toStringAsFixed(1),
+                      s.averageRating.toStringAsFixed(1),
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 42,
@@ -206,7 +163,8 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                _buildStarRow(_avgRating, size: 20),
+                StarRow(rating: s.averageRating, size: 20,
+                    color: const Color(0xFFFFB800)),
               ],
             ),
           ),
@@ -216,10 +174,9 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
               const Icon(Icons.reviews_outlined,
                   color: Colors.white24, size: 48),
               const SizedBox(height: 8),
-              Text(
-                '${_reviews.length} ulasan',
-                style: const TextStyle(color: Colors.white70, fontSize: 13),
-              ),
+              Text('${s.reviewCount} ulasan',
+                  style: const TextStyle(
+                      color: Colors.white70, fontSize: 13)),
             ],
           ),
         ],
@@ -227,19 +184,18 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     );
   }
 
-  Widget _buildVerifiedInfo() {
-    final reviewCount = _reviews.length;
-    final progress = (reviewCount / 7).clamp(0.0, 1.0);
-    final avgOk    = _avgRating >= 4.5;
-    final countOk  = reviewCount >= 7;
+  // ── Progress menuju Verified Badge ─────────────────────────────────
+  Widget _buildVerifiedProgress() {
+    final s = _summary!;
 
-    if (_isVerified) {
+    if (s.isVerified) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: const Color(0xFFE8F5E9),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFF00C853).withOpacity(0.4)),
+          border: Border.all(
+              color: const Color(0xFF00C853).withOpacity(0.4)),
         ),
         child: const Row(
           children: [
@@ -257,7 +213,8 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   SizedBox(height: 2),
                   Text(
                     'Kamu telah mendapatkan Verified Badge atas kualitas kerja yang luar biasa.',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF2E7D32)),
+                    style: TextStyle(
+                        fontSize: 12, color: Color(0xFF2E7D32)),
                   ),
                 ],
               ),
@@ -266,6 +223,9 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
         ),
       );
     }
+
+    final countOk = s.reviewCount >= 7;
+    final avgOk   = s.averageRating >= 4.5;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -279,7 +239,8 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
         children: [
           const Row(
             children: [
-              Icon(Icons.verified_outlined, color: Colors.orange, size: 20),
+              Icon(Icons.verified_outlined,
+                  color: Colors.orange, size: 20),
               SizedBox(width: 8),
               Text('Syarat Verified Badge',
                   style: TextStyle(
@@ -290,30 +251,16 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
           ),
           const SizedBox(height: 12),
 
-          // Syarat 1: Jumlah order
-          Row(
-            children: [
-              Icon(
-                countOk ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: countOk ? Colors.green : Colors.grey,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Minimal 7 ulasan ($reviewCount/7)',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: countOk ? Colors.green[700] : Colors.grey[700]),
-              ),
-            ],
+          // Syarat 1: jumlah ulasan
+          _criteriaRow(
+            met: countOk,
+            label: 'Minimal 7 ulasan (${s.reviewCount}/7)',
           ),
           const SizedBox(height: 6),
-
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: progress,
+              value: s.reviewProgress,
               minHeight: 6,
               backgroundColor: Colors.grey[200],
               valueColor: AlwaysStoppedAnimation<Color>(
@@ -322,45 +269,37 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
           ),
           const SizedBox(height: 10),
 
-          // Syarat 2: Rata-rata bintang
-          Row(
-            children: [
-              Icon(
-                avgOk ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: avgOk ? Colors.green : Colors.grey,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Rata-rata ≥ 4.5 bintang (${_avgRating > 0 ? _avgRating.toStringAsFixed(1) : "-"})',
-                style: TextStyle(
-                    fontSize: 13,
-                    color: avgOk ? Colors.green[700] : Colors.grey[700]),
-              ),
-            ],
+          // Syarat 2: rata-rata bintang
+          _criteriaRow(
+            met: avgOk,
+            label:
+                'Rata-rata ≥ 4.5 bintang (${s.averageRating > 0 ? s.averageRating.toStringAsFixed(1) : '-'})',
           ),
         ],
       ),
     );
   }
 
-  Widget _buildEmpty() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 40),
-      child: Column(
-        children: [
-          Icon(Icons.star_outline, size: 64, color: Colors.grey[300]),
-          const SizedBox(height: 12),
-          Text('Belum ada ulasan',
-              style: TextStyle(color: Colors.grey[400], fontSize: 15)),
-          const SizedBox(height: 4),
-          Text('Ulasan akan muncul setelah order selesai',
-              style: TextStyle(color: Colors.grey[350], fontSize: 12)),
-        ],
-      ),
+  Widget _criteriaRow({required bool met, required String label}) {
+    return Row(
+      children: [
+        Icon(
+          met ? Icons.check_circle : Icons.radio_button_unchecked,
+          color: met ? Colors.green : Colors.grey,
+          size: 18,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+              fontSize: 13,
+              color: met ? Colors.green[700] : Colors.grey[700]),
+        ),
+      ],
     );
   }
 
+  // ── Kartu ulasan ────────────────────────────────────────────────────
   Widget _buildReviewCard(Map<String, dynamic> review) {
     final rating  = (review['rating'] as num?)?.toInt() ?? 0;
     final comment = review['comment']?.toString() ?? '';
@@ -391,7 +330,8 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   const CircleAvatar(
                     radius: 18,
                     backgroundColor: Color(0xFFE8EAF6),
-                    child: Icon(Icons.person, color: Color(0xFF3F51B5), size: 20),
+                    child: Icon(Icons.person,
+                        color: Color(0xFF3F51B5), size: 20),
                   ),
                   const SizedBox(width: 10),
                   Column(
@@ -409,37 +349,48 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   ),
                 ],
               ),
-              _buildStarRow(rating.toDouble(), size: 16),
+              StarRow(rating: rating.toDouble(), size: 16),
             ],
           ),
           if (comment.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text(
-              comment,
-              style: TextStyle(
-                  fontSize: 13, color: Colors.grey[700], height: 1.5),
-            ),
+            Text(comment,
+                style: TextStyle(
+                    fontSize: 13, color: Colors.grey[700], height: 1.5)),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildStarRow(double rating, {double size = 18}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: List.generate(5, (i) {
-        final star = i + 1;
-        IconData icon;
-        if (star <= rating.floor()) {
-          icon = Icons.star_rounded;
-        } else if (star == rating.ceil() && rating % 1 >= 0.5) {
-          icon = Icons.star_half_rounded;
-        } else {
-          icon = Icons.star_outline_rounded;
-        }
-        return Icon(icon, color: const Color(0xFFFFB800), size: size);
-      }),
+  Widget _buildEmpty() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Column(
+        children: [
+          Icon(Icons.star_outline, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 12),
+          Text('Belum ada ulasan',
+              style: TextStyle(color: Colors.grey[400], fontSize: 15)),
+          const SizedBox(height: 4),
+          Text('Ulasan akan muncul setelah order selesai',
+              style: TextStyle(color: Colors.grey[350], fontSize: 12)),
+        ],
+      ),
     );
+  }
+
+  String _formatDate(String? iso) {
+    if (iso == null) return '-';
+    try {
+      final dt  = DateTime.parse(iso).toLocal();
+      const mon = [
+        'Jan','Feb','Mar','Apr','Mei','Jun',
+        'Jul','Agt','Sep','Okt','Nov','Des'
+      ];
+      return '${dt.day} ${mon[dt.month - 1]} ${dt.year}';
+    } catch (_) {
+      return iso;
+    }
   }
 }
