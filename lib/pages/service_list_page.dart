@@ -61,7 +61,6 @@ class _ServiceListPageState extends State<ServiceListPage> {
   }
 
   Future<void> _searchServices(String query) async {
-    // Kalau kosong → tampilkan semua layanan kategori
     if (query.trim().isEmpty) {
       _fetchServices();
       return;
@@ -150,27 +149,25 @@ class _ServiceListPageState extends State<ServiceListPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: Text(widget.categoryName,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold,)
-                ),
+        title: Text(
+          widget.categoryName,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         leading: Padding(
           padding: const EdgeInsets.all(6.0),
           child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-          style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.15), // Putih transparan 15%
-              // shape: const CircleShape(), // Memastikan bentuknya lingkaran sempurna
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white.withOpacity(0.15), 
             ),
+          ),
         ),
-        ),
-        
-        
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
@@ -184,82 +181,60 @@ class _ServiceListPageState extends State<ServiceListPage> {
           ),
         ),
       ),
-
       body: Column(
         children: [
           // SEARCH BAR
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ],
               ),
-
               child: TextField(
                 onChanged: _searchServices,
-
                 decoration: InputDecoration(
                   hintText: "Cari layanan atau nama talent...",
-                  prefixIcon:
-                      const Icon(Icons.search, color: Colors.grey),
-
+                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
                   suffixIcon: _isSearching
                       ? IconButton(
-                          icon: const Icon(
-                            Icons.close,
-                            color: Colors.grey,
-                          ),
+                          icon: const Icon(Icons.close, color: Colors.grey),
                           onPressed: () {
                             _searchServices('');
                           },
                         )
                       : null,
-
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 12),
+                  focusedBorder: InputBorder.none, // Dihapus OutlineInputBorder-nya supaya tidak tabrakan dengan Container
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                ),
-
               ),
             ),
           ),
 
-          // LIST
+          // LIST AREA
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : _services.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Belum ada layanan di kategori ini',
-                        ),
-                      )
+                    ? const Center(child: Text('Belum ada layanan di kategori ini'))
                     : RefreshIndicator(
                         onRefresh: _fetchServices,
-
                         child: ListView.builder(
-                          padding:
-                              const EdgeInsets.fromLTRB(20, 5, 20, 20),
-
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
                           itemCount: _services.length,
-
                           itemBuilder: (context, index) {
                             final service = _services[index];
-
-                            final packages =
-                                service['service_packages']
-                                        as List<dynamic>? ??
-                                    [];
-
-                            final talentName =
-                                service['users']?['name'] ?? 'Talent';
+                            final packages = service['service_packages'] as List<dynamic>? ?? [];
+                            final talentName = service['users']?['name'] ?? 'Talent';
                             final talentAvatar = service['users']?['avatar_url']?.toString() ?? '';
                             final minPrice = _getMinPrice(packages);
 
@@ -289,15 +264,12 @@ class _ServiceListPageState extends State<ServiceListPage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                ServiceDetailPage(service: service),
+            builder: (context) => ServiceDetailPage(service: service),
           ),
         );
       },
-
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
-
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -309,14 +281,12 @@ class _ServiceListPageState extends State<ServiceListPage> {
             )
           ],
         ),
-
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // GAMBAR
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(20)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               child: service['image_url'] != null
                   ? Image.network(
                       service['image_url'],
@@ -328,18 +298,11 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       height: 150,
                       width: double.infinity,
                       color: const Color(0xFFE8F0FF),
-
-                      child: const Icon(
-                        Icons.image,
-                        size: 50,
-                        color: Color(0xFF1A43BF),
-                      ),
+                      child: const Icon(Icons.image, size: 50, color: Color(0xFF1A43BF)),
                     ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(12),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -367,10 +330,8 @@ class _ServiceListPageState extends State<ServiceListPage> {
                         ),
                       ),
                     ],
-                    ),
-                  // Nama talent
+                  ),
                   const SizedBox(height: 10),
-                  // Judul layanan
                   Text(
                     service['title'] ?? '',
                     maxLines: 2,
@@ -389,7 +350,6 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    // alignment: Alignment.bottomCenter,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +357,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           const Text(
                             "Mulai Dari",
                             style: TextStyle(
-                              color: Color.fromARGB(255, 158, 168, 181),
+                              color: Color(0xFF9EA8B5),
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
@@ -405,9 +365,9 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            minPrice == '0' ? 'Belum ada harga' : 'Rp $minPrice',
+                            minPrice == 'Belum ada harga' ? 'Belum ada harga' : 'Rp $minPrice',
                             style: const TextStyle(
-                              color: Color(0xFFE68C3A), // Jingga emas khas TrimaJadi
+                              color: Color(0xFFE68C3A), 
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -415,19 +375,18 @@ class _ServiceListPageState extends State<ServiceListPage> {
                         ],
                       ),
                       SizedBox(
-                        height: 36, // Ukuran tombol yang pas dan proposional
+                        height: 36, 
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A237E), // Biru Utama sesuai tema
-                            foregroundColor: Colors.white, // Warna teks putih bersih
-                            elevation: 0, // Flat design modern
+                            backgroundColor: const Color(0xFF1A237E), 
+                            foregroundColor: Colors.white, 
+                            elevation: 0, 
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12), // Melengkung serasi dengan border card
+                              borderRadius: BorderRadius.circular(12), 
                             ),
                           ),
                           onPressed: () {
-                            // Memicu fungsi navigasi yang sama saat tombol diklik
                             Navigator.push(
                               context,
                               MaterialPageRoute(
@@ -444,25 +403,20 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           ),
                         ),
                       ),
+                    ],
+                  ),
                 ],
               ),
-          ],
-        ),
-      ),
+            ),
           ],
         ),
       ),
     );
   }
+
   Widget _divider() => Divider(
         height: 1,
         thickness: 1,
         color: Colors.grey.shade100,
       );
-}
-
-class CircleShape {
-  const CircleShape(
-
-  );
 }
