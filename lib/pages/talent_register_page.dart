@@ -201,32 +201,34 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
     );
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     final hasKtm = kIsWeb ? ktmImageBytes != null : ktmImage != null;
     final hasCv = kIsWeb ? cvPdfBytes != null : cvPdfFile != null;
 
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          // PERUBAHAN 1: Hapus padding: const EdgeInsets.all(20) dari sini agar header bisa full
-          padding: EdgeInsets.zero, 
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
+          ),
           child: Column(
             children: [
-              // HEADER GRADASI (Sekarang beneran full edge-to-edge!)
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 40, // Ditambah sedikit biar proporsional dan tinggi seperti halaman masuk
-                  horizontal: 24,
+                padding: EdgeInsets.only(
+                  top: MediaQuery.of(context).padding.top + 40,
+                  bottom: 40,
+                  left: 24,
+                  right: 24,
                 ),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Color(0xFF1A237E), // Deep Blue
-                      Color(0xFF283593), // Indigo
-                      Color(0xFF3949AB), // Light Indigo
+                      Color(0xFF1A237E),
+                      Color(0xFF283593),
+                      Color(0xFF3949AB),
                     ],
                     stops: [0.0, 0.5, 1.0],
                     begin: Alignment.topLeft,
@@ -243,45 +245,40 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                       'Daftar sebagai Talent',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 24, // Diperbesar sedikit biar makin tegas
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Langkah awal tunjukkan keahlian terbaikmu',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 13),
                     ),
                   ],
                 ),
               ),
-
-              // PERUBAHAN 2: Bungkus semua inputan di bawah header dengan Padding 20
               Padding(
-                padding: const EdgeInsets.all(20.0),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   children: [
                     const SizedBox(height: 10),
                     sectionTitle("Data Akun"),
                     const SizedBox(height: 15),
-
                     buildInputField(
                       label: "Nama Lengkap *",
                       icon: Icons.person_outline,
                       controller: nameController,
                     ),
                     const SizedBox(height: 15),
-
                     buildInputField(
                       label: "E-mail *",
                       icon: Icons.email_outlined,
                       controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      note: 'Email tidak dapat diubah setelah pendaftaran.',
                     ),
                     const SizedBox(height: 15),
-
                     buildInputField(
                       label: "Password *",
                       icon: Icons.lock_outline,
@@ -289,19 +286,16 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                       isPassword: true,
                     ),
                     const SizedBox(height: 15),
-
                     buildInputField(
-                      label: "Nomor Telepon",
+                      label: "Nomor Telepon *",
                       icon: Icons.phone_outlined,
                       controller: phoneController,
+                      keyboardType: TextInputType.phone,
+                      note: 'Nomor telepon tidak dapat diubah setelah pendaftaran.',
                     ),
-
                     const SizedBox(height: 25),
-
                     sectionTitle("Dokumen Pendukung"),
                     const SizedBox(height: 15),
-
-                    // WIDGET UPLOAD FOTO KTM
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -318,37 +312,33 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                         decoration: BoxDecoration(
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: ktmImage != null ? Colors.transparent : Colors.grey.shade400,
-                            style: ktmImage != null ? BorderStyle.none : BorderStyle.solid,
-                          ),
+                          border: Border.all(color: Colors.grey.shade400),
                         ),
-                        child: ktmImage != null
+                        child: hasKtm
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(20),
-                                child: Image.file(
-                                  ktmImage!,
-                                  fit: BoxFit.cover,
-                                  width: double.infinity,
-                                ),
+                                child: kIsWeb
+                                    ? Image.memory(ktmImageBytes!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity)
+                                    : Image.file(ktmImage!,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity),
                               )
                             : Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.grey.shade500),
+                                  Icon(Icons.add_photo_alternate_outlined,
+                                      size: 40, color: Colors.grey.shade500),
                                   const SizedBox(height: 10),
-                                  Text(
-                                    "Ketuk untuk memilih foto",
-                                    style: TextStyle(color: Colors.grey.shade600),
-                                  ),
+                                  Text("Ketuk untuk memilih foto",
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600)),
                                 ],
                               ),
                       ),
                     ),
-
                     const SizedBox(height: 20),
-
-                    // WIDGET UPLOAD CV (PDF)
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -366,26 +356,33 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                           color: Colors.grey.shade200,
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: cvPdfFile != null ? Colors.blue : Colors.grey.shade400,
+                            color: hasCv ? Colors.blue : Colors.grey.shade400,
                           ),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              cvPdfFile != null ? Icons.picture_as_pdf : Icons.upload_file, 
-                              size: 40, 
-                              color: cvPdfFile != null ? Colors.red : Colors.grey.shade500
+                              hasCv ? Icons.picture_as_pdf : Icons.upload_file,
+                              size: 40,
+                              color: hasCv ? Colors.red : Colors.grey.shade500,
                             ),
                             const SizedBox(height: 10),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 10),
                               child: Text(
-                                cvPdfFile != null ? cvFileName! : "Ketuk untuk memilih file PDF",
+                                hasCv
+                                    ? cvFileName!
+                                    : "Ketuk untuk memilih file PDF",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
-                                  color: cvPdfFile != null ? Colors.black87 : Colors.grey.shade600,
-                                  fontWeight: cvPdfFile != null ? FontWeight.bold : FontWeight.normal,
+                                  color: hasCv
+                                      ? Colors.black87
+                                      : Colors.grey.shade600,
+                                  fontWeight: hasCv
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
                                 ),
                               ),
                             ),
@@ -393,10 +390,7 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 40),
-
-                    // TOMBOL DAFTAR
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -406,47 +400,33 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                           backgroundColor: const Color(0xFFE88A2F),
                           disabledBackgroundColor: Colors.grey,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
+                              borderRadius: BorderRadius.circular(30)),
                         ),
                         child: isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
-                                ),
+                                    color: Colors.white, strokeWidth: 2),
                               )
-                            : const Text(
-                                'Daftar',
+                            : const Text('Daftar',
                                 style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold)),
                       ),
                     ),
-
                     const SizedBox(height: 15),
-
-                    // LOGIN ACCOUNT TRIGGER
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text('Sudah punya akun? '),
                         GestureDetector(
-                          onTap: () {
-                            Navigator.pop(context);
-                          },
-                          child: const Text(
-                            'Masuk',
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          onTap: () => Navigator.pop(context),
+                          child: const Text('Masuk',
+                              style: TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
@@ -456,8 +436,8 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
               ),
             ],
           ),
-        
+        ),
       ),
-    ));
-    
-  }}
+    );
+  }
+}

@@ -10,118 +10,115 @@ class OnboardingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              bottomLeft: Radius.elliptical(250, 100),
-              bottomRight: Radius.elliptical(250, 100),
-            ),
-            child: Image.asset(
-              "assets/images/onboarding.png",
-              height: 380,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
+      body: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.of(context).size.height,
           ),
-
-          const SizedBox(height: 30),
-
-          const Text(
-            "Mulai dari Skill,\nJadi Penghasilan",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: Text(
-              "TrimaJadi menghubungkan kamu dengan peluang nyata. "
-              "Tawarkan keahlianmu, temukan bantuan yang kamu butuhkan, "
-              "dan selesaikan semuanya dengan mudah dan aman.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // BUTTON SELLER / TALENT
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE67E22),
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              onPressed: () {
-                // simpan role untuk flow login/register
-                UserData.role = "talent";
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const LoginTalentPage(),
+          child: IntrinsicHeight(
+            child: Column(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.elliptical(300, 60),
+                    bottomRight: Radius.elliptical(300, 60),
                   ),
-                );
-              },
-              child: const Text(
-                "Mulai sebagai Talent",
-                style: TextStyle(
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          // BUTTON CLIENT
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 30),
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(
-                  color: Color(0xFFE67E22),
-                ),
-                minimumSize: const Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
-              ),
-              onPressed: () {
-                // simpan role untuk flow login/register
-                UserData.role = "client";
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const LoginClientPage(),
+                  child: Image.asset(
+                    "assets/images/onboarding.png",
+                    height: 400,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
                   ),
-                );
-              },
-              child: const Text(
-                "Mulai sebagai Client",
-                style: TextStyle(
-                  color: Color(0xFFE67E22),
                 ),
-              ),
+
+                const SizedBox(height: 60),
+
+                const Text(
+                  "Mulai dari Skill,\nJadi Penghasilan",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: Text(
+                    "TrimaJadi menghubungkan kamu dengan peluang nyata. "
+                    "Tawarkan keahlianmu, temukan bantuan yang kamu butuhkan, "
+                    "dan selesaikan semuanya dengan mudah dan aman.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+
+                const Spacer(),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFE67E22),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    onPressed: () {
+                      UserData.role = "talent";
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LoginTalentPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Mulai sebagai Talent",
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
+
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFFE67E22)),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    onPressed: () {
+                      UserData.role = "client";
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const LoginClientPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Mulai sebagai Client",
+                      style: TextStyle(color: Color(0xFFE67E22)),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+              ],
             ),
           ),
-
-          const SizedBox(height: 25),
-        ],
+        ),
       ),
     );
   }
