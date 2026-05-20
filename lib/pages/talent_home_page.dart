@@ -120,6 +120,7 @@ class _HomepageTalentState extends State<HomepageTalent> {
             bottomLeft: Radius.circular(40),
             bottomRight: Radius.circular(40),
           ),
+          ),
           child: SafeArea(
             child: Padding(
               padding: const EdgeInsets.only(left: 25, right: 25, top: 30),
