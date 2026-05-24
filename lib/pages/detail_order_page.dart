@@ -700,6 +700,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 1,
+        centerTitle: true,
         leading: const BackButton(color: Colors.black),
         title: const Text('Detail Order',
             style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -753,6 +754,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                   const SizedBox(height: 15),
                                   SizedBox(
                                     width: double.infinity,
+                                    height: 48,
                                     child: ElevatedButton(
                                       style: _orangeButton(),
                                       onPressed: () {
@@ -995,8 +997,14 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     if (!widget.isTalent && paymentStatus == 'unpaid') {
       return SizedBox(
         width: double.infinity,
+        height: 50,
         child: ElevatedButton(
-          style: _blueButton(),
+          style: ElevatedButton.styleFrom(
+           backgroundColor: const Color(0xFF1A237E),
+           padding: const EdgeInsets.symmetric(vertical: 12),
+           shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14)),
+          ),
           onPressed: _isProcessingPayment ? null : _handlePayment,
           child: _isProcessingPayment
               ? _loading()
@@ -1007,44 +1015,57 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
 
     // CLIENT: menunggu konfirmasi pembayaran
-    if (!widget.isTalent && paymentStatus == 'pending') {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            'Menunggu konfirmasi pembayaran...',
-            style: TextStyle(color: Colors.orange, fontSize: 13),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25)),
+    if (!widget.isTalent && paymentStatus == 'unpaid') {
+    return Column(
+      mainAxisSize: MainAxisSize.min, // Agar column pas dengan ukuran kontennya
+      children: [
+        // 1. TOMBOL UTAMA: BAYAR SEKARANG (Solid Blue)
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
+            ),
+            onPressed: _isProcessingPayment ? null : _handlePayment,
+            child: _isProcessingPayment
+                ? _loading()
+                : const Text(
+                    'Bayar Sekarang',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  onPressed: _isProcessingPayment ? null : _handlePayment,
-                  child: const Text('Bayar Ulang'),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton(
-                  style: _blueButton(),
-                  onPressed:
-                      _isProcessingPayment ? null : _checkPaymentStatus,
-                  child: _isProcessingPayment
-                      ? _loading()
-                      : const Text('Cek Status',
-                          style: TextStyle(color: Colors.white)),
-                ),
-              ),
-            ],
           ),
-        ],
-      );
-    }
+        ),
+        
+        const SizedBox(height: 8), // Jarak tipis antar tombol sesuai kaidah UX
+
+        // 2. TOMBOL SEKUNDER: BATALKAN PESANAN (Text Button / Plain Red)
+        SizedBox(
+          width: double.infinity,
+          height: 44, // Sedikit lebih tipis dari tombol utama
+          child: TextButton(
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red.shade700, // Warna merah penanda aksi destruktif
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: _isProcessingPayment ? null : _handleCancelOrder, // Buat fungsi handling pembatalannya
+            child: const Text(
+              'Batalkan Pesanan',
+              style: TextStyle(
+                fontWeight: FontWeight.bold, 
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
     // CLIENT: bayar gagal
     if (!widget.isTalent && paymentStatus == 'failed') {
@@ -1320,7 +1341,9 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
   ButtonStyle _orangeButton() => ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFFE68C3A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14)),
       );
 
   ButtonStyle _blueButton() => ElevatedButton.styleFrom(
@@ -1328,4 +1351,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       );
+}
+
+void _handleCancelOrder() {
+  // Tambahkan konfirmasi dialog (ShowDialog) di sini sebelum hapus/update status ke Supabase
 }

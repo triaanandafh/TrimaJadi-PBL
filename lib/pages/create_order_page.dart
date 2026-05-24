@@ -300,12 +300,12 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                     padding: const EdgeInsets.all(16),
                                     decoration: BoxDecoration(
                                       color: isSelected
-                                          ? const Color(0xFF2C4A6E)
+                                          ? const Color(0xFF1A237E)
                                           : Colors.white,
                                       borderRadius: BorderRadius.circular(14),
                                       border: Border.all(
                                         color: isSelected
-                                            ? const Color(0xFF2C4A6E)
+                                            ? const Color(0xFF1A237E)
                                             : Colors.grey[200]!,
                                         width: isSelected ? 2 : 1,
                                       ),
@@ -374,7 +374,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                             fontSize: 14,
                                             color: isSelected
                                                 ? Colors.white
-                                                : const Color(0xFF2C4A6E),
+                                                : const Color(0xFF1A237E),
                                           ),
                                         ),
                                       ],
@@ -491,7 +491,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: Color(0xFF2C4A6E),
+                                    color: Color(0xFF1A237E),
                                   ),
                                 ),
                               ],
@@ -499,12 +499,13 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                           const SizedBox(height: 10),
                           SizedBox(
                             width: double.infinity,
+                            height: 50,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2C4A6E),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                backgroundColor: const Color(0xFF1A237E),
+                                padding: const EdgeInsets.symmetric(vertical: 12),
                                 shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12)),
+                                    borderRadius: BorderRadius.circular(14)),
                               ),
                               onPressed: _isSubmitting ? null : _submitOrder,
                               child: _isSubmitting
@@ -513,7 +514,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
                                       child: CircularProgressIndicator(
                                           color: Colors.white, strokeWidth: 2))
                                   : const Text(
-                                      'Pesan & Lanjut Bayar',
+                                      'Pesan sekarang',
                                       style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
