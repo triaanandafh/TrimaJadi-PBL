@@ -30,6 +30,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
   }
 
   Future<void> _fetchServices() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _isSearching = false;
@@ -45,14 +46,15 @@ class _ServiceListPageState extends State<ServiceListPage> {
           ''')
           .eq('category_id', widget.categoryId);
 
-      setState(() {
-        _services = List<Map<String, dynamic>>.from(response);
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-
       if (mounted) {
+        setState(() {
+          _services = List<Map<String, dynamic>>.from(response);
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memuat layanan: $e')),
         );
@@ -72,7 +74,6 @@ class _ServiceListPageState extends State<ServiceListPage> {
     });
 
     try {
-      // Cari berdasarkan judul layanan
       final byTitle = await _supabase
           .from('services')
           .select('''
@@ -83,7 +84,6 @@ class _ServiceListPageState extends State<ServiceListPage> {
           .eq('category_id', widget.categoryId)
           .ilike('title', '%$query%');
 
-      // Cari berdasarkan nama talent
       final talentMatch = await _supabase
           .from('users')
           .select('id')
@@ -108,21 +108,20 @@ class _ServiceListPageState extends State<ServiceListPage> {
         byTalent = List<Map<String, dynamic>>.from(byTalentResponse);
       }
 
-      // Gabungkan hasil tanpa duplikat
       final Map<String, Map<String, dynamic>> combined = {};
-
       for (final s in [...byTitle, ...byTalent]) {
         combined[s['id']] = s;
       }
 
-      setState(() {
-        _services = combined.values.toList();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-
       if (mounted) {
+        setState(() {
+          _services = combined.values.toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal mencari layanan: $e')),
         );
@@ -132,125 +131,159 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
   String _getMinPrice(List<dynamic> packages) {
     if (packages.isEmpty) return 'Belum ada harga';
-
     final prices = packages
         .where((p) => p['price'] != null)
         .map((p) => (p['price'] as num).toDouble())
         .toList();
 
     if (prices.isEmpty) return 'Belum ada harga';
-
     prices.sort();
-
     final min = prices.first;
-    return min.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return min.toStringAsFixed(0).replaceAllMapped(
+        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
-      appBar: AppBar(
-        title: Text(
-          widget.categoryName,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        leading: Padding(
-          padding: const EdgeInsets.all(6.0),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white.withOpacity(0.15), 
-            ),
-          ),
-        ),
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF1A237E), // Deep Blue
-                Color(0xFF283593), // Indigo
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
-      body: Column(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Stack(
         children: [
-          // SEARCH BAR
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  )
-                ],
+          // ── KETERANGAN 1: CONTAINER BACKGROUND BIRU SEKARANG JADI ELEMEN AWAL STACK ──
+          Container(
+            height: 120,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
+              Color(0xFF283593), // Indigo yang lebih terang
+              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+            ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-              child: TextField(
-                onChanged: _searchServices,
-                decoration: InputDecoration(
-                  hintText: "Cari layanan atau nama talent...",
-                  hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
-                  prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                  suffixIcon: _isSearching
-                      ? IconButton(
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          onPressed: () {
-                            _searchServices('');
-                          },
-                        )
-                      : null,
-                  border: InputBorder.none,
-                  focusedBorder: InputBorder.none, // Dihapus OutlineInputBorder-nya supaya tidak tabrakan dengan Container
-                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.15), 
+                      ),
+                    ),
+                    Text(
+                      widget.categoryName,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 48), // Penyeimbang letak teks agar simetris di tengah
+                  ],
                 ),
               ),
             ),
           ),
 
-          // LIST AREA
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _services.isEmpty
-                    ? const Center(child: Text('Belum ada layanan di kategori ini'))
-                    : RefreshIndicator(
-                        onRefresh: _fetchServices,
-                        child: ListView.builder(
-                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                          itemCount: _services.length,
-                          itemBuilder: (context, index) {
-                            final service = _services[index];
-                            final packages = service['service_packages'] as List<dynamic>? ?? [];
-                            final talentName = service['users']?['name'] ?? 'Talent';
-                            final talentAvatar = service['users']?['avatar_url']?.toString() ?? '';
-                            final minPrice = _getMinPrice(packages);
+          // ── KETERANGAN 2: AREA LAYER KONTEN UTAMA DIBUNGKUS AMAN DI DALAM SAFEAREA + COLUMN ──
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 90), // Jarak dorong agar Search bar melayang memotong batas lengkungan header
 
-                            return _serviceCard(
-                              service: service,
-                              talentName: talentName,
-                              talentAvatar: talentAvatar,
-                              minPrice: minPrice,
-                            );
-                          },
+                // SEARCH BAR
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: TextField(
+                      onChanged: _searchServices,
+                      decoration: InputDecoration(
+                        hintText: "Cari layanan atau nama talent...",
+                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
+                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        suffixIcon: _isSearching
+                            ? IconButton(
+                                icon: const Icon(Icons.close, color: Colors.grey),
+                                onPressed: () {
+                                  _searchServices('');
+                                },
+                              )
+                            : null,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
                         ),
                       ),
-          ),
-        ],
-      ),
-    );
+                    ),
+                  ),
+                ),
+
+                // LIST KARTU LAYANAN
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _services.isEmpty
+                          ? const Center(child: Text('Belum ada layanan di kategori ini'))
+                          : RefreshIndicator(
+                              onRefresh: _fetchServices,
+                              color: const Color(0xFF1A237E),
+                              child: ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+                                itemCount: _services.length,
+                                itemBuilder: (context, index) {
+                                  final service = _services[index];
+                                  final packages = service['service_packages'] as List<dynamic>? ?? [];
+                                  final talentName = service['users']?['name'] ?? 'Talent';
+                                  final talentAvatar = service['users']?['avatar_url']?.toString() ?? '';
+                                  final minPrice = _getMinPrice(packages);
+
+                                  return _serviceCard(
+                                    service: service,
+                                    talentName: talentName,
+                                    talentAvatar: talentAvatar,
+                                    minPrice: minPrice,
+                                  );
+                                },
+                              ),
+                            ),
+                ),
+              ], // Penutup children Column Utama
+            ), // Penutup Column Utama
+          ), // Penutup SafeArea
+        ], // Penutup children Stack
+      ), // Penutup Stack
+    ); // Penutup Scaffold
   }
 
   Widget _serviceCard({
@@ -269,40 +302,39 @@ class _ServiceListPageState extends State<ServiceListPage> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 15),
+        margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
+              blurRadius: 15,
+              offset: const Offset(0, 6),
             )
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // GAMBAR
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
               child: service['image_url'] != null
                   ? Image.network(
                       service['image_url'],
-                      height: 150,
+                      height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
                   : Container(
-                      height: 150,
+                      height: 160,
                       width: double.infinity,
-                      color: const Color(0xFFE8F0FF),
-                      child: const Icon(Icons.image, size: 50, color: Color(0xFF1A43BF)),
+                      color: const Color(0xFFE8EAF6),
+                      child: const Icon(Icons.image, size: 50, color: Color(0xFF3F51B5)),
                     ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -343,22 +375,21 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       height: 1.3,
                     ),
                   ),
-                  
                   const SizedBox(height: 14),
                   _divider(),
                   const SizedBox(height: 12),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Mulai Dari",
+                            "MULAI DARI",
                             style: TextStyle(
-                              color: Color(0xFF9EA8B5),
-                              fontSize: 12,
+                              color: Color(0xFF94A3B8),
+                              fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.5,
                             ),
@@ -367,7 +398,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           Text(
                             minPrice == 'Belum ada harga' ? 'Belum ada harga' : 'Rp $minPrice',
                             style: const TextStyle(
-                              color: Color(0xFFE68C3A), 
+                              color: Color(0xFFE68C3A),
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -375,15 +406,15 @@ class _ServiceListPageState extends State<ServiceListPage> {
                         ],
                       ),
                       SizedBox(
-                        height: 36, 
+                        height: 36,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A237E), 
-                            foregroundColor: Colors.white, 
-                            elevation: 0, 
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            backgroundColor: const Color(0xFF1A237E),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12), 
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                           onPressed: () {
@@ -396,10 +427,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           },
                           child: const Text(
                             "Lihat Detail",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 13,
-                            ),
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                           ),
                         ),
                       ),

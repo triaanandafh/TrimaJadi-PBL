@@ -70,84 +70,130 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(title,
-            style: const TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold)),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_none_outlined,
-                color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-
-                  // ── Info Talent ──────────────────────────────────
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.grey[200],
-                        backgroundImage: avatarUrl != null
-                            ? NetworkImage(avatarUrl as String)
-                            : null,
-                        child: avatarUrl == null
-                            ? const Icon(Icons.person, color: Colors.grey)
-                            : null,
+          // ── UBAHAN UTAMA 1: CONTAINER GRADASI LENGKUNG SEPERTI HOMEPAGE & LIST PAGE ──
+          Container(
+            height: 90, // Tinggi proposional untuk area detail tanpa search bar melayang
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
+              Color(0xFF283593), // Indigo yang lebih terang
+              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+            ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),  // Lengkungan kiri bawah
+                bottomRight: Radius.circular(30), // Lengkungan kanan bawah
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20), // Padding 20 biar lurus vertikal
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Tombol Back Semi Transparan Bulat
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.white),
+                      onPressed: () => Navigator.pop(context),
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.15),
+                        shape: const CircleBorder(),
                       ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Nama + verified badge
-                            Row(
-                              children: [
-                                Text(talentName,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 15)),
-                                if (isVerified) ...[
-                                  const SizedBox(width: 6),
-                                  const VerifiedBadge(
-                                      fontSize: 10, iconSize: 11),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 3),
-                            // Rating
-                            if (_ratingSummary != null)
-                              RatingChip(
-                                rating: _ratingSummary!.averageRating,
-                                reviewCount: _ratingSummary!.reviewCount,
-                              )
-                            else
-                              const SizedBox(
-                                height: 16,
-                                width: 16,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 1.5),
-                              ),
-                          ],
+                    ),
+                    
+                    // Judul Layanan di Tengah Header
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Text(
+                          title,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    
+                    // Spasi dummy 48px agar posisi judul presisi di tengah (seimbang dengan tombol back)
+                    const SizedBox(width: 48), 
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // ── UBAHAN UTAMA 2: AREA KONTEN SEKARANG DIBAWAH HEADER MENGGUNAKAN PADDING TOP ──
+          SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 90), // Memberikan jarak agar konten tidak menabrak kelengkungan header biru
+
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // ── Info Talent ──────────────────────────────────
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 22,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage: avatarUrl != null
+                                  ? NetworkImage(avatarUrl as String)
+                                  : null,
+                              child: avatarUrl == null
+                                  ? const Icon(Icons.person, color: Colors.grey)
+                                  : null,
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(talentName,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 15)),
+                                      if (isVerified) ...[
+                                        const SizedBox(width: 6),
+                                        const VerifiedBadge(
+                                            fontSize: 10, iconSize: 11),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 3),
+                                  if (_ratingSummary != null)
+                                    RatingChip(
+                                      rating: _ratingSummary!.averageRating,
+                                      reviewCount: _ratingSummary!.reviewCount,
+                                    )
+                                  else
+                                    const SizedBox(
+                                      height: 16,
+                                      width: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 1.5),
+                                    ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
 
                   const SizedBox(height: 20),
 
@@ -299,7 +345,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                         );
                       },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A43BF),
+                  backgroundColor: const Color(0xFF1A237E),
                   disabledBackgroundColor: Colors.grey[300],
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15)),
@@ -314,6 +360,9 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
               ),
             ),
           ),
+        ],
+      ),
+      ),
         ],
       ),
     );
