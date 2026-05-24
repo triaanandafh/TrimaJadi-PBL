@@ -141,46 +141,80 @@ class _LayananPageState extends State<LayananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text("Layanan Saya",
-            style:
-                TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        centerTitle: false,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _services.isEmpty
-              ? const Center(child: Text('Belum ada layanan'))
-              : RefreshIndicator(
-                  onRefresh: _fetchServices,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(20),
-                    itemCount: _services.length,
-                    itemBuilder: (context, index) {
-                      final service = _services[index];
-                      final categoryName =
-                          service['categories']?['name'] ?? 'Kategori';
-                      final packages =
-                          service['service_packages'] as List<dynamic>? ?? [];
-
-                      final basic = _getPackage(packages, 'basic');
-                      final standard = _getPackage(packages, 'standard');
-                      final premium = _getPackage(packages, 'premium');
-
-                      return _serviceItem(
-                        context,
-                        service: service,
-                        categoryName: categoryName,
-                        basic: basic,
-                        standard: standard,
-                        premium: premium,
-                      );
-                    },
+      backgroundColor: const Color(0xFFF5F6F9),
+      body: Stack(
+        children: [
+          // Header biru
+          Container(
+            height: 150,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF1A237E),
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
+                ],
+                stops: [0.0, 0.5, 1.0],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
+              ),
+            ),
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(25, 20, 25, 0),
+                child: const Text(
+                  'Layanan Saya',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
+              ),
+            ),
+          ),
+
+          // Konten list
+          Padding(
+            padding: const EdgeInsets.only(top: 100),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _services.isEmpty
+                    ? const Center(child: Text('Belum ada layanan'))
+                    : RefreshIndicator(
+                        onRefresh: _fetchServices,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 10, 20, 100),
+                          itemCount: _services.length,
+                          itemBuilder: (context, index) {
+                            final service = _services[index];
+                            final categoryName =
+                                service['categories']?['name'] ?? 'Kategori';
+                            final packages =
+                                service['service_packages'] as List<dynamic>? ?? [];
+                            final basic = _getPackage(packages, 'basic');
+                            final standard = _getPackage(packages, 'standard');
+                            final premium = _getPackage(packages, 'premium');
+
+                            return _serviceItem(
+                              context,
+                              service: service,
+                              categoryName: categoryName,
+                              basic: basic,
+                              standard: standard,
+                              premium: premium,
+                            );
+                          },
+                        ),
+                      ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: const Color(0xFFE68C3A),
         onPressed: () async {

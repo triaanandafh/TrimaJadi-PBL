@@ -239,7 +239,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
   // ===== CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING =====
   Future<void> _handleTerimaHasil() async {
-    final totalPrice = (orderData!['total_price'] as num?)?.toInt() ?? 0;
+    final totalPrice  = (orderData!['total_price'] as num?)?.toInt() ?? 0;
     final platformFee = (totalPrice * 0.1).toInt();
     final talentReceives = totalPrice - platformFee;
 
@@ -307,14 +307,12 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       final talentId = orderData!['talent_id']?.toString();
       if (talentId == null) throw Exception('Talent ID tidak ditemukan');
 
-      // 1. Tandai order selesai
       await supabase.from('orders').update({
-        'work_status': 'accepted',
-        'platform_fee': platformFee,
+        'work_status'   : 'accepted',
+        'platform_fee'  : platformFee,
         'talent_earning': talentReceives,
       }).eq('id', widget.orderId);
 
-      // 2. Upsert wallet talent: tambah saldo 90%
       final walletRes = await supabase
           .from('wallets')
           .select('balance')
@@ -333,21 +331,19 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         }).eq('user_id', talentId);
       }
 
-      // 3. Catat riwayat transaksi
       await supabase.from('wallet_transactions').insert({
-        'user_id'    : talentId,
-        'order_id'   : widget.orderId,
-        'type'       : 'credit',
-        'amount'     : talentReceives,
+        'user_id'     : talentId,
+        'order_id'    : widget.orderId,
+        'type'        : 'credit',
+        'amount'      : talentReceives,
         'platform_fee': platformFee,
-        'note'       : 'Pendapatan dari order: ${orderData!['service_name'] ?? ''}',
+        'note'        : 'Pendapatan dari order: ${orderData!['service_name'] ?? ''}',
       });
 
       setState(() => orderData!['work_status'] = 'accepted');
       _showSnackBar(
           'Order selesai! Dana ${_formatRupiah(talentReceives)} telah dikirim ke saldo talent.');
 
-      // 4. Navigasi ke halaman rating talent
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) {
@@ -355,10 +351,10 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
             context,
             MaterialPageRoute(
               builder: (_) => ReviewPage(
-                orderId     : widget.orderId,
-                talentId    : talentId,
-                talentName  : otherUserData?['name']?.toString() ?? 'Talent',
-                serviceName : orderData!['service_name']?.toString() ?? '',
+                orderId    : widget.orderId,
+                talentId   : talentId,
+                talentName : otherUserData?['name']?.toString() ?? 'Talent',
+                serviceName: orderData!['service_name']?.toString() ?? '',
               ),
             ),
           );
@@ -432,8 +428,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
               decoration: InputDecoration(
                 labelText: 'Catatan Revisi *',
                 hintText: 'Tuliskan detail revisi yang diinginkan...',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide:
@@ -662,6 +658,17 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     return 'Rp $buffer';
   }
 
+  String _formatDateTime(String? isoString) {
+    if (isoString == null || isoString.isEmpty) return '-';
+    try {
+      final dt  = DateTime.parse(isoString).toLocal();
+      final pad = (int n) => n.toString().padLeft(2, '0');
+      return '${dt.day}/${pad(dt.month)}/${dt.year} ${pad(dt.hour)}:${pad(dt.minute)}';
+    } catch (_) {
+      return isoString;
+    }
+  }
+
   String _capitalize(String s) =>
       s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
@@ -757,7 +764,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                         widget.isTalent
                                             ? 'Hubungi Client'
                                             : 'Hubungi Talent',
-                                        style: const TextStyle(color: Colors.white),
+                                        style: const TextStyle(
+                                            color: Colors.white),
                                       ),
                                     ),
                                   ),
@@ -790,6 +798,11 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       _labelPaymentStatus(orderData!['payment_status'])),
                                   _row('Status Pengerjaan',
                                       _labelWorkStatus(orderData!['work_status'])),
+                                  // ===== WAKTU PESAN =====
+                                  _row(
+                                    'Waktu Pesan',
+                                    _formatDateTime(orderData!['created_at']?.toString()),
+                                  ),
                                   if ((orderData!['duitku_reference'] ?? '')
                                       .toString()
                                       .isNotEmpty)
@@ -814,7 +827,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                           padding: const EdgeInsets.all(6),
                                           decoration: BoxDecoration(
                                             color: Colors.green.shade50,
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: const Icon(Icons.task_alt,
                                               color: Colors.green, size: 18),
@@ -829,18 +843,21 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                     InkWell(
                                       onTap: () async {
                                         final url = Uri.tryParse(
-                                            orderData!['result_link'].toString());
+                                            orderData!['result_link']
+                                                .toString());
                                         if (url != null &&
                                             await canLaunchUrl(url)) {
                                           await launchUrl(url,
-                                              mode: LaunchMode.externalApplication);
+                                              mode: LaunchMode
+                                                  .externalApplication);
                                         }
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.all(12),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFE8F0FF),
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                           border: Border.all(
                                               color: const Color(0xFF1A43BF)
                                                   .withOpacity(0.3)),
@@ -848,11 +865,13 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                         child: Row(
                                           children: [
                                             const Icon(Icons.link,
-                                                color: Color(0xFF1A43BF), size: 18),
+                                                color: Color(0xFF1A43BF),
+                                                size: 18),
                                             const SizedBox(width: 8),
                                             Expanded(
                                               child: Text(
-                                                orderData!['result_link'].toString(),
+                                                orderData!['result_link']
+                                                    .toString(),
                                                 style: const TextStyle(
                                                   color: Color(0xFF1A43BF),
                                                   decoration:
@@ -860,11 +879,13 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                                   fontSize: 13,
                                                 ),
                                                 maxLines: 2,
-                                                overflow: TextOverflow.ellipsis,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
                                               ),
                                             ),
                                             const Icon(Icons.open_in_new,
-                                                color: Color(0xFF1A43BF), size: 16),
+                                                color: Color(0xFF1A43BF),
+                                                size: 16),
                                           ],
                                         ),
                                       ),
@@ -881,7 +902,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       const SizedBox(height: 4),
                                       Text(
                                           orderData!['result_notes'].toString(),
-                                          style: const TextStyle(fontSize: 13)),
+                                          style:
+                                              const TextStyle(fontSize: 13)),
                                     ],
 
                                     if ((orderData!['revision_notes'] ?? '')
@@ -892,7 +914,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                         padding: const EdgeInsets.all(10),
                                         decoration: BoxDecoration(
                                           color: Colors.orange.shade50,
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Row(
                                           crossAxisAlignment:
@@ -910,12 +933,14 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                                     'Permintaan Revisi:',
                                                     style: TextStyle(
                                                         color: Colors.orange,
-                                                        fontWeight: FontWeight.w600,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                         fontSize: 12),
                                                   ),
                                                   const SizedBox(height: 2),
                                                   Text(
-                                                      orderData!['revision_notes']
+                                                      orderData![
+                                                              'revision_notes']
                                                           .toString(),
                                                       style: const TextStyle(
                                                           fontSize: 13)),
@@ -1088,7 +1113,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // CLIENT: order selesai — tampilkan tombol beri rating jika belum di-review
+    // CLIENT: order selesai
     if (!widget.isTalent && workStatus == 'accepted') {
       final isReviewed = orderData!['is_reviewed'] == true;
       return Column(
@@ -1125,7 +1150,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                       borderRadius: BorderRadius.circular(25)),
                 ),
                 onPressed: () {
-                  final talentId = orderData!['talent_id']?.toString() ?? '';
+                  final talentId =
+                      orderData!['talent_id']?.toString() ?? '';
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -1322,7 +1348,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
   ButtonStyle _blueButton() => ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF2C4A6E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       );
 }
 
