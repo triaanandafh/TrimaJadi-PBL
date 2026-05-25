@@ -4,8 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/rating_service.dart';
 import '../widgets/rating_widgets.dart';
 
-/// Halaman daftar ulasan untuk satu talent.
-/// Jika [talentId] null → tampilkan ulasan talent yang sedang login.
 class TalentReviewsPage extends StatefulWidget {
   final String? talentId;
   final String? talentName;
@@ -19,7 +17,7 @@ class TalentReviewsPage extends StatefulWidget {
 class _TalentReviewsPageState extends State<TalentReviewsPage> {
   final _supabase = Supabase.instance.client;
 
-  bool   _isLoading = true;
+  bool _isLoading = true;
   List<Map<String, dynamic>> _reviews = [];
   RatingSummary? _summary;
 
@@ -35,17 +33,39 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
   Future<void> _fetchReviews() async {
     setState(() => _isLoading = true);
     try {
+      // Query reviews seperti semula
       final res = await _supabase
           .from('reviews')
           .select()
           .eq('talent_id', _talentId)
           .order('created_at', ascending: false);
 
+      final reviews = List<Map<String, dynamic>>.from(res);
+
+      // Fetch nama client satu per satu
+      for (int i = 0; i < reviews.length; i++) {
+        final clientId = reviews[i]['client_id']?.toString();
+        if (clientId != null) {
+          try {
+            final user = await _supabase
+                .from('users')
+                .select('name')
+                .eq('id', clientId)
+                .single();
+            reviews[i]['client_name'] = user['name']?.toString() ?? 'Klien';
+          } catch (_) {
+            reviews[i]['client_name'] = 'Klien';
+          }
+        } else {
+          reviews[i]['client_name'] = 'Klien';
+        }
+      }
+
       final summary = await RatingService.getSummary(_talentId);
 
       setState(() {
-        _reviews   = List<Map<String, dynamic>>.from(res);
-        _summary   = summary;
+        _reviews = reviews;
+        _summary = summary;
         _isLoading = false;
       });
     } catch (_) {
@@ -53,9 +73,16 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     }
   }
 
-  // ──────────────────────────────────────────────
-  // Build
-  // ──────────────────────────────────────────────
+  String _sensorName(String name) {
+    return name.split(' ').map((word) {
+      if (word.length <= 2) return word;
+      final first = word[0];
+      final last = word[word.length - 1];
+      final stars = '*' * (word.length - 2);
+      return '$first$stars$last';
+    }).join(' ');
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = widget.talentName != null
@@ -104,7 +131,6 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     );
   }
 
-  // ── Kartu ringkasan rating ───────────────────────────────────────────
   Widget _buildSummaryCard() {
     final s = _summary!;
     return Container(
@@ -163,7 +189,9 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   ],
                 ),
                 const SizedBox(height: 6),
-                StarRow(rating: s.averageRating, size: 20,
+                StarRow(
+                    rating: s.averageRating,
+                    size: 20,
                     color: const Color(0xFFFFB800)),
               ],
             ),
@@ -184,7 +212,6 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     );
   }
 
-  // ── Progress menuju Verified Badge ─────────────────────────────────
   Widget _buildVerifiedProgress() {
     final s = _summary!;
 
@@ -225,7 +252,7 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     }
 
     final countOk = s.reviewCount >= 7;
-    final avgOk   = s.averageRating >= 4.5;
+    final avgOk = s.averageRating >= 4.5;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -250,8 +277,6 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
             ],
           ),
           const SizedBox(height: 12),
-
-          // Syarat 1: jumlah ulasan
           _criteriaRow(
             met: countOk,
             label: 'Minimal 7 ulasan (${s.reviewCount}/7)',
@@ -268,8 +293,6 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Syarat 2: rata-rata bintang
           _criteriaRow(
             met: avgOk,
             label:
@@ -299,11 +322,12 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
     );
   }
 
-  // ── Kartu ulasan ────────────────────────────────────────────────────
   Widget _buildReviewCard(Map<String, dynamic> review) {
-    final rating  = (review['rating'] as num?)?.toInt() ?? 0;
+    final rating = (review['rating'] as num?)?.toInt() ?? 0;
     final comment = review['comment']?.toString() ?? '';
-    final date    = _formatDate(review['created_at']?.toString());
+    final date = _formatDate(review['created_at']?.toString());
+    final rawName = review['client_name']?.toString() ?? 'Klien';
+    final clientName = _sensorName(rawName);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -337,8 +361,8 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Klien',
-                          style: TextStyle(
+                      Text(clientName,
+                          style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               color: Color(0xFF213E60))),
@@ -356,7 +380,9 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
             const SizedBox(height: 12),
             Text(comment,
                 style: TextStyle(
-                    fontSize: 13, color: Colors.grey[700], height: 1.5)),
+                    fontSize: 13,
+                    color: Colors.grey[700],
+                    height: 1.5)),
           ],
         ],
       ),
@@ -383,10 +409,10 @@ class _TalentReviewsPageState extends State<TalentReviewsPage> {
   String _formatDate(String? iso) {
     if (iso == null) return '-';
     try {
-      final dt  = DateTime.parse(iso).toLocal();
+      final dt = DateTime.parse(iso).toLocal();
       const mon = [
-        'Jan','Feb','Mar','Apr','Mei','Jun',
-        'Jul','Agt','Sep','Okt','Nov','Des'
+        'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
+        'Jul', 'Agt', 'Sep', 'Okt', 'Nov', 'Des'
       ];
       return '${dt.day} ${mon[dt.month - 1]} ${dt.year}';
     } catch (_) {

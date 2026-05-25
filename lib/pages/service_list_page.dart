@@ -18,10 +18,9 @@ class ServiceListPage extends StatefulWidget {
 
 class _ServiceListPageState extends State<ServiceListPage> {
   final _supabase = Supabase.instance.client;
-
   List<Map<String, dynamic>> _services = [];
   bool _isLoading = true;
-  bool _isSearching = false;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -30,31 +29,27 @@ class _ServiceListPageState extends State<ServiceListPage> {
   }
 
   Future<void> _fetchServices() async {
-    if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-      _isSearching = false;
-    });
-
+    setState(() => _isLoading = true);
     try {
       final response = await _supabase
           .from('services')
           .select('''
-            id, title, description, image_url,
+            id, title, description, image_url, is_featured, featured_order,
             users(name, avatar_url),
             service_packages(package_type, price, package_description)
           ''')
-          .eq('category_id', widget.categoryId);
+          .eq('category_id', widget.categoryId)
+          .or('title.ilike.%$_searchQuery%,talent_name.ilike.%$_searchQuery%')
+          .order('featured_order', ascending: true, nullsFirst: false)
+          .order('created_at', ascending: false);
 
-      if (mounted) {
-        setState(() {
-          _services = List<Map<String, dynamic>>.from(response);
-          _isLoading = false;
-        });
-      }
+      setState(() {
+        _services = List<Map<String, dynamic>>.from(response);
+        _isLoading = false;
+      });
     } catch (e) {
+      setState(() => _isLoading = false);
       if (mounted) {
-        setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Gagal memuat layanan: $e')),
         );
@@ -62,71 +57,15 @@ class _ServiceListPageState extends State<ServiceListPage> {
     }
   }
 
-  Future<void> _searchServices(String query) async {
-    if (query.trim().isEmpty) {
-      _fetchServices();
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-      _isSearching = true;
-    });
-
-    try {
-      final byTitle = await _supabase
-          .from('services')
-          .select('''
-            id, title, description, image_url,
-            users(name, avatar_url),
-            service_packages(package_type, price, package_description)
-          ''')
-          .eq('category_id', widget.categoryId)
-          .ilike('title', '%$query%');
-
-      final talentMatch = await _supabase
-          .from('users')
-          .select('id')
-          .ilike('name', '%$query%')
-          .eq('role', 'talent');
-
-      List<Map<String, dynamic>> byTalent = [];
-
-      if (talentMatch.isNotEmpty) {
-        final talentIds = talentMatch.map((t) => t['id']).toList();
-
-        final byTalentResponse = await _supabase
-            .from('services')
-            .select('''
-              id, title, description, image_url,
-              users(name, avatar_url),
-              service_packages(package_type, price, package_description)
-            ''')
-            .eq('category_id', widget.categoryId)
-            .inFilter('user_id', talentIds);
-
-        byTalent = List<Map<String, dynamic>>.from(byTalentResponse);
-      }
-
-      final Map<String, Map<String, dynamic>> combined = {};
-      for (final s in [...byTitle, ...byTalent]) {
-        combined[s['id']] = s;
-      }
-
-      if (mounted) {
-        setState(() {
-          _services = combined.values.toList();
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Gagal mencari layanan: $e')),
-        );
-      }
-    }
+  List<Map<String, dynamic>> get _filteredServices {
+    if (_searchQuery.isEmpty) return _services;
+    return _services.where((s) {
+      final title = (s['title'] ?? '').toString().toLowerCase();
+      final talentName =
+          (s['users']?['name'] ?? '').toString().toLowerCase();
+      return title.contains(_searchQuery.toLowerCase()) ||
+          talentName.contains(_searchQuery.toLowerCase());
+    }).toList();
   }
 
   String _getMinPrice(List<dynamic> packages) {
@@ -135,76 +74,75 @@ class _ServiceListPageState extends State<ServiceListPage> {
         .where((p) => p['price'] != null)
         .map((p) => (p['price'] as num).toDouble())
         .toList();
-
     if (prices.isEmpty) return 'Belum ada harga';
     prices.sort();
     final min = prices.first;
-    return min.toStringAsFixed(0).replaceAllMapped(
-        RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.');
+    return 'Rp ${min.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF5F7FB),
       body: Stack(
         children: [
-          // ── KETERANGAN 1: CONTAINER BACKGROUND BIRU SEKARANG JADI ELEMEN AWAL STACK ──
+          // Header biru
           Container(
-            height: 120,
+            height: 130,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
-              Color(0xFF283593), // Indigo yang lebih terang
-              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
-            ],
+                colors: [
+                  Color(0xFF1A237E),
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
+                ],
+                stops: [0.0, 0.5, 1.0],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+                bottomLeft: Radius.circular(40),
+                bottomRight: Radius.circular(40),
               ),
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.15), 
+                        backgroundColor: Colors.white.withOpacity(0.2),
                       ),
                     ),
-                    Text(
-                      widget.categoryName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.categoryName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 48), // Penyeimbang letak teks agar simetris di tengah
                   ],
                 ),
               ),
             ),
           ),
 
-          // ── KETERANGAN 2: AREA LAYER KONTEN UTAMA DIBUNGKUS AMAN DI DALAM SAFEAREA + COLUMN ──
-          SafeArea(
+          // Konten
+          Padding(
+            padding: const EdgeInsets.only(top: 100),
             child: Column(
               children: [
-                const SizedBox(height: 90), // Jarak dorong agar Search bar melayang memotong batas lengkungan header
-
-                // SEARCH BAR
+                // Search Bar
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
+                  padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -213,85 +151,79 @@ class _ServiceListPageState extends State<ServiceListPage> {
                         BoxShadow(
                           color: Colors.black.withOpacity(0.06),
                           blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        )
+                          offset: const Offset(0, 3),
+                        ),
                       ],
                     ),
                     child: TextField(
-                      onChanged: _searchServices,
-                      decoration: InputDecoration(
+                      onChanged: (val) =>
+                          setState(() => _searchQuery = val),
+                      decoration: const InputDecoration(
                         hintText: "Cari layanan atau nama talent...",
-                        hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                        suffixIcon: _isSearching
-                            ? IconButton(
-                                icon: const Icon(Icons.close, color: Colors.grey),
-                                onPressed: () {
-                                  _searchServices('');
-                                },
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide.none,
-                        ),
+                        prefixIcon: Icon(Icons.search, color: Colors.grey),
+                        border: InputBorder.none,
+                        contentPadding:
+                            EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
                 ),
 
-                // LIST KARTU LAYANAN
+                // List
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
-                      : _services.isEmpty
-                          ? const Center(child: Text('Belum ada layanan di kategori ini'))
+                      : _filteredServices.isEmpty
+                          ? const Center(
+                              child: Text(
+                                  'Belum ada layanan di kategori ini'))
                           : RefreshIndicator(
                               onRefresh: _fetchServices,
-                              color: const Color(0xFF1A237E),
                               child: ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
-                                itemCount: _services.length,
+                                padding: const EdgeInsets.fromLTRB(
+                                    20, 5, 20, 20),
+                                itemCount: _filteredServices.length,
                                 itemBuilder: (context, index) {
-                                  final service = _services[index];
-                                  final packages = service['service_packages'] as List<dynamic>? ?? [];
-                                  final talentName = service['users']?['name'] ?? 'Talent';
-                                  final talentAvatar = service['users']?['avatar_url']?.toString() ?? '';
-                                  final minPrice = _getMinPrice(packages);
+                                  final service =
+                                      _filteredServices[index];
+                                  final packages = service[
+                                          'service_packages']
+                                      as List<dynamic>? ??
+                                      [];
+                                  final talentName =
+                                      service['users']?['name'] ??
+                                          'Talent';
+                                  final minPrice =
+                                      _getMinPrice(packages);
+                                  final isFeatured =
+                                      service['is_featured'] == true;
 
                                   return _serviceCard(
                                     service: service,
                                     talentName: talentName,
-                                    talentAvatar: talentAvatar,
                                     minPrice: minPrice,
+                                    isFeatured: isFeatured,
                                   );
                                 },
                               ),
                             ),
                 ),
-              ], // Penutup children Column Utama
-            ), // Penutup Column Utama
-          ), // Penutup SafeArea
-        ], // Penutup children Stack
-      ), // Penutup Stack
-    ); // Penutup Scaffold
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _serviceCard({
     required Map<String, dynamic> service,
     required String talentName,
-    required String talentAvatar,
     required String minPrice,
+    required bool isFeatured,
   }) {
+    final avatarUrl = service['users']?['avatar_url']?.toString();
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -302,134 +234,118 @@ class _ServiceListPageState extends State<ServiceListPage> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 20),
+        margin: const EdgeInsets.only(bottom: 15),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 15,
-              offset: const Offset(0, 6),
-            )
+              blurRadius: 10,
+            ),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              child: service['image_url'] != null
-                  ? Image.network(
-                      service['image_url'],
-                      height: 160,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(
-                      height: 160,
-                      width: double.infinity,
-                      color: const Color(0xFFE8EAF6),
-                      child: const Icon(Icons.image, size: 50, color: Color(0xFF3F51B5)),
-                    ),
+            // Gambar + badge featured
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(15)),
+                  child: service['image_url'] != null
+                      ? Image.network(
+                          service['image_url'],
+                          height: 150,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          height: 150,
+                          width: double.infinity,
+                          color: const Color(0xFFE8F0FF),
+                          child: const Icon(Icons.image,
+                              size: 50, color: Color(0xFF1A43BF)),
+                        ),
+                ),
+              ],
             ),
+
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Avatar + Nama talent
                   Row(
                     children: [
                       CircleAvatar(
                         radius: 14,
-                        backgroundColor: const Color(0xFF1A237E).withOpacity(0.1),
-                        backgroundImage: talentAvatar.isNotEmpty ? NetworkImage(talentAvatar) : null,
-                        child: talentAvatar.isEmpty
-                            ? const Icon(Icons.person, size: 16, color: Color(0xFF1A237E))
+                        backgroundColor: const Color(0xFFE8EAF6),
+                        backgroundImage: avatarUrl != null
+                            ? NetworkImage(avatarUrl)
+                            : null,
+                        child: avatarUrl == null
+                            ? const Icon(Icons.person,
+                                size: 16, color: Color(0xFF3F51B5))
                             : null,
                       ),
                       const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          talentName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
+                      Text(talentName,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Color(0xFF213E60))),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    service['title'] ?? '',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF1E293B),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _divider(),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
+                  // Judul layanan
+                  Text(service['title'] ?? '',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  const SizedBox(height: 8),
+                  // Harga + tombol
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "MULAI DARI",
-                            style: TextStyle(
-                              color: Color(0xFF94A3B8),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            minPrice == 'Belum ada harga' ? 'Belum ada harga' : 'Rp $minPrice',
-                            style: const TextStyle(
-                              color: Color(0xFFE68C3A),
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
+                          const Text('MULAI DARI',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5)),
+                          Text(minPrice,
+                              style: const TextStyle(
+                                  color: Color(0xFFE68C3A),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15)),
                         ],
                       ),
-                      SizedBox(
-                        height: 36,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1A237E),
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  ServiceDetailPage(service: service),
                             ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ServiceDetailPage(service: service),
-                              ),
-                            );
-                          },
-                          child: const Text(
-                            "Lihat Detail",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-                          ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1A237E),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
                         ),
+                        child: const Text('Lihat Detail',
+                            style: TextStyle(
+                                color: Colors.white, fontSize: 12)),
                       ),
                     ],
                   ),
@@ -441,10 +357,4 @@ class _ServiceListPageState extends State<ServiceListPage> {
       ),
     );
   }
-
-  Widget _divider() => Divider(
-        height: 1,
-        thickness: 1,
-        color: Colors.grey.shade100,
-      );
 }
