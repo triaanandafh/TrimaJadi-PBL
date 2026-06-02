@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../services/rating_service.dart';
 
 /// Halaman pengiriman ulasan oleh client setelah order selesai.
@@ -28,6 +27,39 @@ class _ReviewPageState extends State<ReviewPage> {
 
   int  _rating      = 0;
   bool _isSubmitting = false;
+  
+  // Tambahan untuk mengecek apakah ulasan sudah pernah dibuat
+  bool _isLoadingCheck = true; 
+  bool _hasReviewed    = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkExistingReview();
+  }
+
+  // Pengecekan Ulasan yang Sudah Ada
+  Future<void> _checkExistingReview() async {
+    try {
+      final existingReview = await _supabase
+          .from('reviews')
+          .select('rating, comment')
+          .eq('order_id', widget.orderId)
+          .maybeSingle();
+
+      if (existingReview != null && mounted) {
+        setState(() {
+          _hasReviewed = true;
+          _rating = existingReview['rating'] ?? 0;
+          _commentCtrl.text = existingReview['comment'] ?? '';
+        });
+      }
+    } catch (e) {
+      debugPrint('Gagal mengecek review: $e');
+    } finally {
+      if (mounted) setState(() => _isLoadingCheck = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -35,10 +67,10 @@ class _ReviewPageState extends State<ReviewPage> {
     super.dispose();
   }
 
-  // ──────────────────────────────────────────────
   // Submit review
-  // ──────────────────────────────────────────────
   Future<void> _submitReview() async {
+    if (_hasReviewed) return; // Keamanan tambahan jika statusnya sudah diulas
+    
     if (_rating == 0) {
       _showSnackBar('Pilih bintang terlebih dahulu', isError: true);
       return;
@@ -48,6 +80,21 @@ class _ReviewPageState extends State<ReviewPage> {
     try {
       final clientId = _supabase.auth.currentUser?.id;
       if (clientId == null) throw Exception('Tidak terautentikasi');
+
+      final checkDouble = await _supabase
+          .from('reviews')
+          .select('id')
+          .eq('order_id', widget.orderId)
+          .maybeSingle();
+          
+      if (checkDouble != null) {
+        _showSnackBar('Kamu sudah memberikan ulasan untuk pesanan ini.', isError: true);
+        setState(() {
+          _hasReviewed = true;
+          _isSubmitting = false;
+        });
+        return;
+      }
 
       // 1. Simpan review
       await _supabase.from('reviews').insert({
@@ -67,7 +114,7 @@ class _ReviewPageState extends State<ReviewPage> {
       await RatingService.checkAndGrantBadge(widget.talentId);
 
       if (mounted) {
-        _showSnackBar('Ulasan berhasil dikirim! Terima kasih 🎉');
+        _showSnackBar('Ulasan berhasil dikirim! Terima kasih');
         await Future.delayed(const Duration(milliseconds: 800));
         if (mounted) Navigator.pop(context, true);
       }
@@ -103,11 +150,19 @@ class _ReviewPageState extends State<ReviewPage> {
     }
   }
 
-  // ──────────────────────────────────────────────
   // Build
-  // ──────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
+    // Tampilkan loading screen saat sedang mengecek ke database
+    if (_isLoadingCheck) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F2EF),
+        body: Center(
+          child: CircularProgressIndicator(color: Color(0xFF1E3A8A)),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F2EF),
       appBar: AppBar(
@@ -122,9 +177,31 @@ class _ReviewPageState extends State<ReviewPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 10),
+            // Banner Info Jika Sudah Diulas
+            if (_hasReviewed)
+              Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.green.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green.shade600),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Text(
+                        'Anda sudah memberikan ulasan untuk pesanan ini.',
+                        style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-            // ── Info Talent ──────────────────────────────────────────
+            // Info Talent
             _WhiteCard(
               child: Column(
                 children: [
@@ -154,7 +231,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
             const SizedBox(height: 24),
 
-            // ── Pilih Rating Bintang ─────────────────────────────────
+            // Pilih Rating Bintang 
             _WhiteCard(
               child: Column(
                 children: [
@@ -171,7 +248,8 @@ class _ReviewPageState extends State<ReviewPage> {
                     children: List.generate(5, (i) {
                       final star = i + 1;
                       return GestureDetector(
-                        onTap: () => setState(() => _rating = star),
+                        // Nonaktifkan tap jika sudah pernah direview
+                        onTap: _hasReviewed ? null : () => setState(() => _rating = star),
                         child: Padding(
                           padding:
                               const EdgeInsets.symmetric(horizontal: 6),
@@ -205,7 +283,7 @@ class _ReviewPageState extends State<ReviewPage> {
 
             const SizedBox(height: 16),
 
-            // ── Komentar ─────────────────────────────────────────────
+            // Komentar 
             _WhiteCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,9 +300,11 @@ class _ReviewPageState extends State<ReviewPage> {
                     controller: _commentCtrl,
                     maxLines: 4,
                     maxLength: 300,
+                    readOnly: _hasReviewed, // Buat Read-Only jika sudah di-review
                     decoration: InputDecoration(
-                      hintText:
-                          'Ceritakan pengalamanmu dengan talent ini...',
+                      hintText: _hasReviewed 
+                          ? 'Tidak ada komentar' 
+                          : 'Ceritakan pengalamanmu dengan talent ini...',
                       hintStyle: TextStyle(
                           color: Colors.grey[400], fontSize: 13),
                       border: OutlineInputBorder(
@@ -246,28 +326,32 @@ class _ReviewPageState extends State<ReviewPage> {
 
             const SizedBox(height: 28),
 
-            // ── Tombol Kirim ─────────────────────────────────────────
+            // Tombol Kirim / Kembali 
             SizedBox(
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1E3A8A),
+                  backgroundColor: _hasReviewed ? Colors.white : const Color(0xFF1E3A8A),
+                  side: _hasReviewed ? const BorderSide(color: Color(0xFF1E3A8A)) : null,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
                 ),
-                onPressed: _isSubmitting ? null : _submitReview,
+                // Ubah fungsi tombol jika sudah di-review menjadi "Kembali"
+                onPressed: _hasReviewed 
+                    ? () => Navigator.pop(context) 
+                    : (_isSubmitting ? null : _submitReview),
                 child: _isSubmitting
                     ? const SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
                             color: Colors.white, strokeWidth: 2))
-                    : const Text(
-                        'Kirim Ulasan',
+                    : Text(
+                        _hasReviewed ? 'Kembali' : 'Kirim Ulasan',
                         style: TextStyle(
-                            color: Colors.white,
+                            color: _hasReviewed ? const Color(0xFF1E3A8A) : Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold),
                       ),
@@ -282,9 +366,7 @@ class _ReviewPageState extends State<ReviewPage> {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // Helper widget – kartu putih dengan shadow
-// ──────────────────────────────────────────────────────────────────────────────
 class _WhiteCard extends StatelessWidget {
   final Widget child;
   const _WhiteCard({required this.child});

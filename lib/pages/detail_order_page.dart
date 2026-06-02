@@ -356,7 +356,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                 serviceName: orderData!['service_name']?.toString() ?? '',
               ),
             ),
-          );
+          ).then((_) => _fetchOrderDetails());
         }
       }
     } catch (e) {
@@ -488,6 +488,52 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     });
   }
 
+  // CLIENT: BATALKAN PESANAN
+  Future<void> _handleCancelOrder() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Batalkan Pesanan?',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text(
+            'Apakah kamu yakin ingin membatalkan pesanan ini? Aksi ini tidak dapat dikembalikan.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Tidak', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade600,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isProcessingPayment = true);
+    try {
+      await supabase.from('orders').update({
+        'payment_status': 'cancelled',
+        'work_status'   : 'cancelled',
+      }).eq('id', widget.orderId);
+
+      _showSnackBar('Pesanan berhasil dibatalkan.');
+      await _fetchOrderDetails(); 
+    } catch (e) {
+      _showSnackBar('Gagal membatalkan pesanan: $e', isError: true);
+    } finally {
+      if (mounted) setState(() => _isProcessingPayment = false);
+    }
+  }
+
   // PEMBAYARAN SIMULASI
   Future<void> _handlePayment() async {
     if (orderData == null) return;
@@ -509,7 +555,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       ),
     );
 
-    // Reload data order setelah kembali
     await _fetchOrderDetails();
   }
 
@@ -618,6 +663,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       case 'pending': return 'Menunggu Pembayaran';
       case 'paid':    return 'Lunas';
       case 'failed':  return 'Gagal';
+      case 'cancelled': return 'Dibatalkan';
       default:        return status?.toString() ?? '-';
     }
   }
@@ -628,6 +674,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       case 'progress': return 'Sedang Dikerjakan';
       case 'done':     return 'Menunggu Konfirmasi Client';
       case 'accepted': return 'Selesai';
+      case 'cancelled': return 'Dibatalkan';
       default:         return status?.toString() ?? '-';
     }
   }
@@ -662,7 +709,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                         padding: const EdgeInsets.all(16),
                         child: Column(
                           children: [
-
                             // INFO USER
                             _card(
                               child: Column(
@@ -724,8 +770,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                             Navigator.push(
                                               context, MaterialPageRoute(
                                                 builder: (context) => ChatPage(name: targetName))
-                                            
-                                          );
+                                            );
                                           }
                                       },
                                       child: Text(
@@ -961,79 +1006,56 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     final workStatus =
         orderData?['work_status']?.toString() ?? widget.status;
 
-    // CLIENT: belum bayar
+    // CLIENT: menunggu konfirmasi pembayaran (belum bayar)
     if (!widget.isTalent && paymentStatus == 'unpaid') {
-      return SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-           backgroundColor: const Color(0xFF1A237E),
-           padding: const EdgeInsets.symmetric(vertical: 12),
-           shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14)),
-          ),
-          onPressed: _isProcessingPayment ? null : _handlePayment,
-          child: _isProcessingPayment
-              ? _loading()
-              : const Text('Bayar Sekarang',
-                  style: TextStyle(color: Colors.white)),
-        ),
-      );
-    }
-
-    // CLIENT: menunggu konfirmasi pembayaran
-    if (!widget.isTalent && paymentStatus == 'unpaid') {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Agar column pas dengan ukuran kontennya
-      children: [
-        // 1. TOMBOL UTAMA: BAYAR SEKARANG (Solid Blue)
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1A237E),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A237E),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+                elevation: 0,
+              ),
+              onPressed: _isProcessingPayment ? null : _handlePayment,
+              child: _isProcessingPayment
+                  ? _loading()
+                  : const Text(
+                      'Bayar Sekarang',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
             ),
-            onPressed: _isProcessingPayment ? null : _handlePayment,
-            child: _isProcessingPayment
-                ? _loading()
-                : const Text(
-                    'Bayar Sekarang',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
           ),
-        ),
-        
-        const SizedBox(height: 8), // Jarak tipis antar tombol sesuai kaidah UX
+          
+          const SizedBox(height: 8),
 
-        // 2. TOMBOL SEKUNDER: BATALKAN PESANAN (Text Button / Plain Red)
-        SizedBox(
-          width: double.infinity,
-          height: 44, // Sedikit lebih tipis dari tombol utama
-          child: TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red.shade700, // Warna merah penanda aksi destruktif
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-            ),
-            onPressed: _isProcessingPayment ? null : _handleCancelOrder, // Buat fungsi handling pembatalannya
-            child: const Text(
-              'Batalkan Pesanan',
-              style: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 14,
+          SizedBox(
+            width: double.infinity,
+            height: 44, 
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _isProcessingPayment ? null : _handleCancelOrder, 
+              child: const Text(
+                'Batalkan Pesanan',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold, 
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    }
 
     // CLIENT: bayar gagal
     if (!widget.isTalent && paymentStatus == 'failed') {
@@ -1081,65 +1103,45 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // CLIENT: order selesai
+    // CLIENT: order selesai (TOMBOL ULASAN DI SINI)
     if (!widget.isTalent && workStatus == 'accepted') {
-      final isReviewed = orderData!['is_reviewed'] == true;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green[200]!),
+      bool isReviewed = orderData!['is_reviewed'] ?? false; 
+
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isReviewed ? Colors.grey[300] : const Color(0xFF1E3A8A),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle, color: Colors.green),
-                SizedBox(width: 8),
-                Text('Order Selesai',
-                    style: TextStyle(
-                        color: Colors.green, fontWeight: FontWeight.bold)),
-              ],
+            elevation: 0,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReviewPage(
+                  orderId: orderData!['id'],
+                  talentId: orderData!['talent_id'],
+                  talentName: orderData!['talent_name'] ?? otherUserData?['name'] ?? 'Talent', 
+                  serviceName: orderData!['service_name'],
+                ),
+              ),
+            ).then((_) {
+              _fetchOrderDetails(); 
+            });
+          },
+          child: Text(
+            isReviewed ? 'Lihat Ulasan' : 'Beri Ulasan',
+            style: TextStyle(
+              color: isReviewed ? Colors.black87 : Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          if (!isReviewed) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFB800),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: () {
-                  final talentId =
-                      orderData!['talent_id']?.toString() ?? '';
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReviewPage(
-                        orderId    : widget.orderId,
-                        talentId   : talentId,
-                        talentName : otherUserData?['name']?.toString() ?? 'Talent',
-                        serviceName: orderData!['service_name']?.toString() ?? '',
-                      ),
-                    ),
-                  ).then((_) => _fetchOrderDetails());
-                },
-                icon: const Icon(Icons.star, color: Colors.white),
-                label: const Text('Beri Rating Talent',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-            ),
-          ],
-        ],
+        ),
       );
     }
 
@@ -1252,6 +1254,29 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         ),
       );
     }
+    
+    // Status Dibatalkan (Jika diperlukan untuk client/talent)
+    if (workStatus == 'cancelled') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.red[200]!),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cancel, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Order Dibatalkan',
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      );
+    }
 
     return const SizedBox();
   }
@@ -1319,8 +1344,4 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         shape:
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
       );
-}
-
-void _handleCancelOrder() {
-  // Tambahkan konfirmasi dialog (ShowDialog) di sini sebelum hapus/update status ke Supabase
 }
