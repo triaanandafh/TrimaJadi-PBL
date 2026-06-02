@@ -6,10 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'review_page.dart';
 import 'chat_page.dart';
+import 'payment_page.dart'; // Halaman pembayaran simulasi
 
-// ============================================================
 // KONFIGURASI DUITKU
-// ============================================================
 class _DuitkuConfig {
   static const String merchantCode = 'DS30597';
   static const String apiKey       = '6826f8de299f58979d82e49a6a1dbae1';
@@ -17,7 +16,6 @@ class _DuitkuConfig {
   static const String callbackUrl  = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
   static const String returnUrl    = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
 }
-// ============================================================
 
 class DetailOrderPage extends StatefulWidget {
   final String orderId;
@@ -91,7 +89,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
   }
 
-  // ===== TALENT: SUBMIT HASIL =====
+  // TALENT: SUBMIT HASIL
   Future<void> _showSubmitResultDialog() async {
     final linkCtrl  = TextEditingController();
     final notesCtrl = TextEditingController();
@@ -238,7 +236,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     });
   }
 
-  // ===== CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING =====
+  // CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING
   Future<void> _handleTerimaHasil() async {
     final totalPrice  = (orderData!['total_price'] as num?)?.toInt() ?? 0;
     final platformFee = (totalPrice * 0.1).toInt();
@@ -387,7 +385,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     );
   }
 
-  // ===== CLIENT: AJUKAN REVISI =====
+  // CLIENT: AJUKAN REVISI
   Future<void> _handleRevisi() async {
     final notesCtrl = TextEditingController();
 
@@ -490,91 +488,32 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     });
   }
 
-  // ===== DUITKU: BUAT TRANSAKSI =====
+  // PEMBAYARAN SIMULASI
   Future<void> _handlePayment() async {
-    setState(() => _isProcessingPayment = true);
+    if (orderData == null) return;
 
-    try {
-      final int    amount      = (orderData!['total_price'] as num).toInt();
-      final String productName = orderData!['service_name']?.toString() ?? 'Pembayaran Layanan';
-      final String email       = supabase.auth.currentUser?.email ??
-          otherUserData?['email']?.toString() ?? 'user@email.com';
-      final String name        = otherUserData?['name']?.toString() ?? 'Client';
-      final String merchantOrderId = 'TJ${DateTime.now().millisecondsSinceEpoch}';
+    final int    amount      = (orderData!['total_price'] as num).toInt();
+    final String serviceName = orderData!['service_name']?.toString() ?? 'Pembayaran Layanan';
+    final String clientName  = otherUserData?['name']?.toString() ??
+        supabase.auth.currentUser?.email ?? 'Client';
 
-      final rawSig    = '${_DuitkuConfig.merchantCode}$amount$merchantOrderId${_DuitkuConfig.apiKey}';
-      final signature = md5.convert(utf8.encode(rawSig)).toString();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChoosePaymentPage(
+          orderId    : widget.orderId,
+          totalPrice : amount,
+          serviceName: serviceName,
+          clientName : clientName,
+        ),
+      ),
+    );
 
-      final body = jsonEncode({
-        'merchantCode'   : _DuitkuConfig.merchantCode,
-        'paymentAmount'  : amount,
-        'paymentMethod'  : 'VC',
-        'merchantOrderId': merchantOrderId,
-        'productDetails' : productName,
-        'customerVaName' : name,
-        'email'          : email,
-        'callbackUrl'    : _DuitkuConfig.callbackUrl,
-        'returnUrl'      : _DuitkuConfig.returnUrl,
-        'expiryPeriod'   : 1440,
-        'signature'      : signature,
-      });
-
-      final httpResponse = await http.post(
-        Uri.parse('${_DuitkuConfig.baseUrl}/createInvoice'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept'      : 'application/json',
-        },
-        body: body,
-      ).timeout(const Duration(seconds: 30));
-
-      final response = httpResponse.body;
-      debugPrint('DUITKU RAW RESPONSE: $response');
-
-      final data       = jsonDecode(response) as Map<String, dynamic>;
-      final statusCode = data['statusCode']?.toString() ?? '';
-
-      if (statusCode == '00') {
-        final reference = (data['reference']
-            ?? data['Reference']
-            ?? data['merchantOrderId']
-            ?? data['MerchantOrderId']
-            ?? '').toString();
-
-        await supabase.from('orders').update({
-          'payment_status'   : 'pending',
-          'duitku_reference' : reference,
-          'merchant_order_id': merchantOrderId,
-        }).eq('id', widget.orderId);
-
-        setState(() {
-          orderData!['payment_status']    = 'pending';
-          orderData!['duitku_reference']  = reference;
-          orderData!['merchant_order_id'] = merchantOrderId;
-        });
-
-        final paymentUrl =
-            (data['paymentUrl'] ?? data['PaymentUrl'] ?? '').toString();
-        if (paymentUrl.isNotEmpty) {
-          final url = Uri.parse(paymentUrl);
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          } else {
-            _showSnackBar('Tidak bisa membuka browser', isError: true);
-          }
-        }
-      } else {
-        final msg = data['statusMessage']?.toString() ?? 'Terjadi kesalahan';
-        _showSnackBar('Pembayaran gagal: $msg', isError: true);
-      }
-    } catch (e) {
-      _showSnackBar('Error: $e', isError: true);
-    } finally {
-      if (mounted) setState(() => _isProcessingPayment = false);
-    }
+    // Reload data order setelah kembali
+    await _fetchOrderDetails();
   }
 
-  // ===== DUITKU: CEK STATUS =====
+  // DUITKU: CEK STATUS
   Future<void> _checkPaymentStatus() async {
     setState(() => _isProcessingPayment = true);
 
@@ -634,7 +573,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
   }
 
-  // ===== HELPERS =====
+  // HELPERS
   void _showSnackBar(String msg, {bool isError = false}) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -677,7 +616,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     switch (status?.toString()) {
       case 'unpaid':  return 'Belum Dibayar';
       case 'pending': return 'Menunggu Pembayaran';
-      case 'paid':    return 'Lunas ✓';
+      case 'paid':    return 'Lunas';
       case 'failed':  return 'Gagal';
       default:        return status?.toString() ?? '-';
     }
@@ -688,12 +627,12 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       case 'pending':  return 'Menunggu Pembayaran';
       case 'progress': return 'Sedang Dikerjakan';
       case 'done':     return 'Menunggu Konfirmasi Client';
-      case 'accepted': return 'Selesai ✓';
+      case 'accepted': return 'Selesai';
       default:         return status?.toString() ?? '-';
     }
   }
 
-  // ===== BUILD =====
+  // BUILD
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -724,7 +663,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                         child: Column(
                           children: [
 
-                            // ===== INFO USER =====
+                            // INFO USER
                             _card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -804,7 +743,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
                             const SizedBox(height: 15),
 
-                            // ===== DETAIL LAYANAN =====
+                            // DETAIL LAYANAN
                             _card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -827,7 +766,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       _labelPaymentStatus(orderData!['payment_status'])),
                                   _row('Status Pengerjaan',
                                       _labelWorkStatus(orderData!['work_status'])),
-                                  // ===== WAKTU PESAN =====
+                                  // WAKTU PESAN
                                   _row(
                                     'Waktu Pesan',
                                     _formatDateTime(orderData!['created_at']?.toString()),
@@ -841,7 +780,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                               ),
                             ),
 
-                            // ===== HASIL PEKERJAAN =====
+                            // HASIL PEKERJAAN
                             if ((orderData!['result_link'] ?? '')
                                 .toString()
                                 .isNotEmpty) ...[
@@ -987,7 +926,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
                             const SizedBox(height: 15),
 
-                            // ===== DESKRIPSI =====
+                            // DESKRIPSI
                             _card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1004,7 +943,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                       ),
                     ),
 
-                    // ===== BOTTOM BUTTON =====
+                    // BOTTOM BUTTON
                     Container(
                       padding: const EdgeInsets.all(16),
                       color: Colors.white,
@@ -1015,7 +954,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     );
   }
 
-  // ===== BOTTOM BUTTON DINAMIS =====
+  // BOTTOM BUTTON DINAMIS
   Widget _buildBottomButton() {
     final paymentStatus =
         orderData?['payment_status']?.toString() ?? 'unpaid';
@@ -1161,7 +1100,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
               children: [
                 Icon(Icons.check_circle, color: Colors.green),
                 SizedBox(width: 8),
-                Text('Order Selesai ✓',
+                Text('Order Selesai',
                     style: TextStyle(
                         color: Colors.green, fontWeight: FontWeight.bold)),
               ],
@@ -1317,7 +1256,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     return const SizedBox();
   }
 
-  // ===== COMPONENTS =====
+  // COMPONENTS
   Widget _loading() => const SizedBox(
         height: 20, width: 20,
         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
