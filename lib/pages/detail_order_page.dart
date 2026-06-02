@@ -488,16 +488,19 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     });
   }
 
-  // CLIENT: BATALKAN PESANAN
+  // BATALKAN PESANAN (CLIENT & TALENT)
   Future<void> _handleCancelOrder() async {
+    final String confirmTitle = 'Batalkan Pesanan?';
+    final String confirmDesc  = widget.isTalent 
+        ? 'Apakah kamu yakin ingin membatalkan pesanan ini? Jika batal, kamu dapat memberitahu client via obrolan mengenai kendala atau kesibukanmu.'
+        : 'Apakah kamu yakin ingin membatalkan pesanan ini? Aksi ini tidak dapat dikembalikan.';
+
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Batalkan Pesanan?',
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: const Text(
-            'Apakah kamu yakin ingin membatalkan pesanan ini? Aksi ini tidak dapat dikembalikan.'),
+        title: Text(confirmTitle, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(confirmDesc),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -679,6 +682,50 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
   }
 
+// WIDGET ICON BERDASARKAN TIPE/KATEGORI
+  Widget _buildCategoryIcon(String? categoryOrServiceName) {
+    final cat = (categoryOrServiceName ?? '').toLowerCase();
+    
+    IconData iconData;
+    Color iconColor;
+    Color bgColor;
+
+    if (cat.contains('desain') || cat.contains('design') || cat.contains('foto')) {
+      iconData = Icons.palette;
+      iconColor = Colors.blue;
+      bgColor = Colors.blue.shade50;
+    } else if (cat.contains('web') || cat.contains('pemrograman') || cat.contains('coding')) {
+      iconData = Icons.code;
+      iconColor = Colors.orange;
+      bgColor = Colors.orange.shade50;
+    } else if (cat.contains('edukasi') || cat.contains('tutor') || cat.contains('belajar')) {
+      iconData = Icons.school;
+      iconColor = Colors.purple;
+      bgColor = Colors.purple.shade50;
+    } else if (cat.contains('visual') || cat.contains('audio') || cat.contains('video') || cat.contains('voice over')) {
+      iconData = Icons.music_note;
+      iconColor = Colors.teal;
+      bgColor = Colors.teal.shade50;
+    } else if (cat.contains('penulisan') || cat.contains('penerjemahan') || cat.contains('translating') || cat.contains('translate')) {
+      iconData = Icons.translate;
+      iconColor = Colors.green;
+      bgColor = Colors.green.shade50;
+    } else {
+      iconData = Icons.business_center;
+      iconColor = Colors.grey;
+      bgColor = Colors.grey.shade100;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(iconData, color: iconColor, size: 20),
+    );
+  }
+
   // BUILD
   @override
   Widget build(BuildContext context) {
@@ -788,12 +835,22 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
                             const SizedBox(height: 15),
 
-                            // DETAIL LAYANAN
+                            // DETAIL LAYANAN DENGAN IKON DINAMIS
                             _card(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('Detail Layanan', style: _titleStyle()),
+                                  Row(
+                                    children: [
+                                      // Cek field category atau ambil dari service_name
+                                      _buildCategoryIcon(
+                                        orderData!['category']?.toString() ?? 
+                                        orderData!['service_name']?.toString()
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text('Detail Layanan', style: _titleStyle()),
+                                    ],
+                                  ),
                                   const SizedBox(height: 15),
                                   _row('Nama Layanan',
                                       orderData!['service_name']?.toString() ?? '-'),
@@ -811,7 +868,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       _labelPaymentStatus(orderData!['payment_status'])),
                                   _row('Status Pengerjaan',
                                       _labelWorkStatus(orderData!['work_status'])),
-                                  // WAKTU PESAN
                                   _row(
                                     'Waktu Pesan',
                                     _formatDateTime(orderData!['created_at']?.toString()),
@@ -1145,55 +1201,91 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // TALENT: menunggu pembayaran client
+    // TALENT: menunggu pembayaran client + TOMBOL BATAL
     if (widget.isTalent &&
         (paymentStatus == 'unpaid' || paymentStatus == 'pending')) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.orange[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange[200]!),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
-            SizedBox(width: 8),
-            Text('Menunggu Pembayaran Client',
-                style: TextStyle(color: Colors.orange)),
-          ],
-        ),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              color: Colors.orange[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange[200]!),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
+                SizedBox(width: 8),
+                Text('Menunggu Pembayaran Client',
+                    style: TextStyle(color: Colors.orange)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _isProcessingPayment ? null : _handleCancelOrder,
+              child: const Text('Batalkan Pesanan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
+          ),
+        ],
       );
     }
 
-    // TALENT: sedang mengerjakan → tombol Submit Hasil
+    // TALENT: sedang mengerjakan → tombol Submit Hasil + TOMBOL BATAL
     if (widget.isTalent && workStatus == 'progress') {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2C4A6E),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25)),
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2C4A6E),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
+              ),
+              onPressed: _isSubmitting ? null : _showSubmitResultDialog,
+              icon: _isSubmitting
+                  ? const SizedBox(
+                      height: 18, width: 18,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                  : const Icon(Icons.upload_file, color: Colors.white, size: 18),
+              label: Text(
+                _isSubmitting ? 'Mengirim...' : 'Submit Hasil',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15),
+              ),
+            ),
           ),
-          onPressed: _isSubmitting ? null : _showSubmitResultDialog,
-          icon: _isSubmitting
-              ? const SizedBox(
-                  height: 18, width: 18,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.upload_file, color: Colors.white, size: 18),
-          label: Text(
-            _isSubmitting ? 'Mengirim...' : 'Submit Hasil',
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: _isProcessingPayment ? null : _handleCancelOrder,
+              child: const Text('Batalkan Pesanan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            ),
           ),
-        ),
+        ],
       );
     }
 
