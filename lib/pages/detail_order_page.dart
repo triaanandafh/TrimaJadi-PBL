@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'review_page.dart';
+import 'chat_page.dart';
 
 // ============================================================
 // KONFIGURASI DUITKU
@@ -757,8 +758,36 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                     height: 48,
                                     child: ElevatedButton(
                                       style: _orangeButton(),
-                                      onPressed: () {
-                                        // TODO: navigasi ke ChatPage
+                                      onPressed: () async {
+                                        final targetName = otherUserData?['name']?.toString() ?? 'User';
+                                        final targetId = widget.isTalent
+                                            ? orderData!['client_id']?.toString()
+                                            : orderData!['talent_id']?.toString();
+
+                                          if (targetId == null) return;
+
+                                          try {
+                                            final currentUserId = supabase.auth.currentUser?.id;
+                                            if (currentUserId != null) {
+                                              await supabase.from('chats').upsert({
+                                                'user_id'   : currentUserId,
+                                                'name' : targetName,
+                                                'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
+                                                'time': DateTime.now().toIso8601String(),
+                                                'unread': 0,
+                                              }, onConflict: 'user_id, name');
+                                            }
+                                          } catch (e) {
+                                            debugPrint('Error inserting chat message: $e');
+                                          }
+
+                                          if (mounted) {
+                                            Navigator.push(
+                                              context, MaterialPageRoute(
+                                                builder: (context) => ChatPage(name: targetName))
+                                            
+                                          );
+                                          }
                                       },
                                       child: Text(
                                         widget.isTalent
