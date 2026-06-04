@@ -286,62 +286,124 @@ class _ProfilePageState extends State<ProfilePage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Keluar Akun',
-            style: TextStyle(fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center),
-        content: const Text(
-          'Apakah kamu yakin ingin keluar dari akun ini?',
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white, // Menjaga dialog tetap berwarna putih bersih di Material 3
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), // Sudut lengkungan lebih melingkar sesuai mockup
+        contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
+        
+        title: const Text(
+          'Keluar Akun',
           textAlign: TextAlign.center,
-          style: TextStyle(color: Colors.grey),
-        ),
-        actionsAlignment: MainAxisAlignment.center,
-        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () => Navigator.pop(ctx),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF1A237E)),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              child: const Text('Batal',
-                  style: TextStyle(
-                      color: Color(0xFF1A237E),
-                      fontWeight: FontWeight.w600)),
-            ),
+          style: TextStyle(
+            color: Colors.black87,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await AuthService.logout();
-                UserData.clear();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const OnboardingPage()),
-                    (_) => false,
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+        // ── REVISI KONTEN: MENGHAPUS TITLE & MERENDEER TEXT BERTUMPUK ──
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Apakah kamu yakin ingin keluar dari akun ini?',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF4A5568), // Warna teks utama abu-abu gelap elegan
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                height: 1.3,
               ),
-              child: const Text('Keluar',
-                  style: TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w600)),
             ),
+            const SizedBox(height: 6),
+            const Text(
+              'Kamu perlu login kembali untuk mengakses aplikasi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF718096), // Warna sub-keterangan sesuai target mockup kamu
+                fontSize: 13,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+        
+        // ── REVISI ACTIONS: MERUBAH SUSUNAN MENJADI HORIZONTAL (KIRI-KANAN) ──
+        actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        actions: [
+          Row(
+            children: [
+              // --- TOMBOL BATAL (SISI KIRI) ---
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: OutlinedButton.styleFrom(
+                    // Menggunakan warna border abu-abu soft pudar penyeimbang desain target
+                    side: BorderSide(color: Colors.grey.shade200, width: 1.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20), // Bentuk elips rounded penuh
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Batal',
+                    style: TextStyle(
+                      color: Colors.black87, // Teks batal warna hitam netral soft
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12), // Jarak horizontal antar tombol
+              
+              // --- TOMBOL KELUAR (SISI KANAN) ---
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      // Efek bayangan merah lembut tipis di bawah tombol Keluar
+                      BoxShadow(
+                        color: Colors.red.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      Navigator.pop(ctx);
+                      await AuthService.logout();
+                      UserData.clear();
+                      if (context.mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OnboardingPage()),
+                          (_) => false,
+                        );
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFF34949), // Warna merah coral soft khas mockup kamu
+                      shadowColor: Colors.transparent, // Matikan shadow default agar digantikan BoxShadow kustom kita
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                    child: const Text(
+                      'Keluar',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
