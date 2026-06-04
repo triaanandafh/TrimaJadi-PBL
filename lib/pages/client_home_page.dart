@@ -3,11 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import 'service_list_page.dart';
 import 'service_detail_page.dart';
+import 'search_service_page.dart';
 
 class HomepageClient extends StatefulWidget {
   final VoidCallback onTapSearch;
+  final VoidCallback onViewAll; 
 
-  const HomepageClient({super.key, required this.onTapSearch});
+  const HomepageClient({super.key, required this.onTapSearch, required this.onViewAll,});
 
   @override
   State<HomepageClient> createState() => _HomepageClientState();
@@ -110,19 +112,20 @@ class _HomepageClientState extends State<HomepageClient> {
       final response = await _supabase
           .from('services')
           .select('''
-            id, title, image_url,
-            orders(id)
-          ''');
+            id, title, image_url, description,
+            orders(id),
+            users(id, name, avatar_url, is_verified),
+            categories(name),
+            service_packages(package_type, price, package_description)
+          '''); // ← tambah relasi yang dibutuhkan ServiceDetailPage
 
       final services = List<Map<String, dynamic>>.from(response);
 
-      // Hitung total order per layanan
       final withCount = services.map((s) {
         final orders = s['orders'] as List<dynamic>? ?? [];
         return {...s, 'order_count': orders.length};
       }).toList();
 
-      // Urutkan dari terbanyak, ambil top 10
       withCount.sort((a, b) =>
           (b['order_count'] as int).compareTo(a['order_count'] as int));
 
@@ -264,7 +267,10 @@ class _HomepageClientState extends State<HomepageClient> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Kategori Populer
-                    _buildSectionTitle("Kategori Populer"),
+                    _buildSectionTitle(
+                      "Kategori Populer",
+                      onTap: widget.onViewAll,
+                    ),
                     const SizedBox(height: 20),
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
@@ -312,7 +318,10 @@ class _HomepageClientState extends State<HomepageClient> {
                     const SizedBox(height: 35),
 
                     // Layanan Populer
-                    _buildSectionTitle("Layanan Populer"),
+                    _buildSectionTitle(
+                      "Layanan Populer",
+                      onTap: widget.onViewAll,
+                    ),
                     const SizedBox(height: 15),
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
@@ -341,7 +350,7 @@ class _HomepageClientState extends State<HomepageClient> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {VoidCallback? onTap}) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -352,12 +361,15 @@ class _HomepageClientState extends State<HomepageClient> {
               fontWeight: FontWeight.bold,
               color: Color(0xFF213E60)),
         ),
-        const Text(
-          "Lihat Semua",
-          style: TextStyle(
-              fontSize: 13,
-              color: Color(0xFF94B6EF),
-              fontWeight: FontWeight.w600),
+        GestureDetector(
+          onTap: onTap,
+          child: const Text(
+            "Lihat Semua",
+            style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF94B6EF),
+                fontWeight: FontWeight.w600),
+          ),
         ),
       ],
     );

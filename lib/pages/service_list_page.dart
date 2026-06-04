@@ -35,9 +35,9 @@ class _ServiceListPageState extends State<ServiceListPage> {
           .from('services')
           .select('''
             id, title, description, image_url, is_featured, featured_order,
-            users(name, avatar_url),
+            users(id, name, avatar_url, is_verified),
             service_packages(package_type, price, package_description)
-          ''')
+          ''') // ← tambah id dan is_verified di users
           .eq('category_id', widget.categoryId)
           .or('title.ilike.%$_searchQuery%,talent_name.ilike.%$_searchQuery%')
           .order('featured_order', ascending: true, nullsFirst: false)
