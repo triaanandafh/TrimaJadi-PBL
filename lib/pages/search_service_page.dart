@@ -176,7 +176,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 130), 
+                const SizedBox(height: 110), 
 
                 // Floating Search Bar & Filter Button
                 Padding(

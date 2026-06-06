@@ -155,7 +155,7 @@ class _HomepageClientState extends State<HomepageClient> {
                 clipBehavior: Clip.none,
                 children: [
                   Container(
-                    height: 125,
+                    height: 150,
                     width: double.infinity,
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(

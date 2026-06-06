@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'create_order_page.dart';
 import '../services/rating_service.dart';
 import '../widgets/rating_widgets.dart';
+import 'chat_page.dart';
 
 /// Halaman detail layanan dengan paket Basic / Standard / Premium
 /// dan rating talent yang diambil dari database.
@@ -324,40 +324,85 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
             ),
           ),
 
-          // ── Tombol Lanjutkan ─────────────────────────────────────
+          // ── Tombol Chat Talent + Lanjutkan ──────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
-            child: SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton(
-                onPressed: pkg == null || pkg['price'] == null
-                    ? null
-                    : () {
-                        final serviceId =
-                            widget.service['id']?.toString() ?? '';
+            child: Row(
+              children: [
+                // Tombol Chat Talent
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final talentName = widget.service['users']?['name'] ?? 'Talent';
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) =>
-                                CreateOrderPage(serviceId: serviceId),
+                            builder: (_) => ChatPage(name: talentName),
                           ),
                         );
                       },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A237E),
-                  disabledBackgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15)),
+                      icon: const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 18,
+                        color: Color(0xFF1A237E),
+                      ),
+                      label: const Text(
+                        'Chat Talent',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1A237E),
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFF1A237E), width: 1.5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                child: const Text(
-                  'Lanjutkan',
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+
+                const SizedBox(width: 12),
+
+                // Tombol Lanjutkan
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: pkg == null || pkg['price'] == null
+                          ? null
+                          : () {
+                              final serviceId =
+                                  widget.service['id']?.toString() ?? '';
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      CreateOrderPage(serviceId: serviceId),
+                                ),
+                              );
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF1A237E),
+                        disabledBackgroundColor: Colors.grey[300],
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15)),
+                      ),
+                      child: const Text(
+                        'Lanjutkan',
+                        style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],
