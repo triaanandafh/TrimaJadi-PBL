@@ -224,139 +224,133 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
         else if (_portfolios.isEmpty)
           _emptyState(Icons.image_not_supported_outlined, 'Belum ada portofolio')
         else
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _portfolios.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (context, index) {
-              final item = _portfolios[index];
-              final imgUrl = item['image_url'] as String?;
-              final itemTitle = item['title'] as String? ?? '';
-              final desc = item['description'] as String? ?? '';
-              final year = item['year']?.toString() ?? '';
+          SizedBox(
+            height: 230,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _portfolios.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final item = _portfolios[index];
+                final imgUrl = item['image_url'] as String?;
+                final itemTitle = item['title'] as String? ?? '';
+                final year = item['year']?.toString() ?? '';
 
-              return GestureDetector(
-                onTap: () => _showPortfolioDetail(item),
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFDDE3FF)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1A237E).withOpacity(0.06),
-                        blurRadius: 10,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Gambar portofolio
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(16)),
-                        child: imgUrl != null && imgUrl.isNotEmpty
-                            ? Image.network(
-                                imgUrl,
-                                height: 180,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    _portfolioImagePlaceholder(),
-                              )
-                            : _portfolioImagePlaceholder(),
-                      ),
-                      // Info teks
-                      Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                return GestureDetector(
+                  onTap: () => _showPortfolioDetail(item),
+                  child: Container(
+                    width: 180,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFFDDE3FF)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1A237E).withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Gambar
+                        ClipRRect(
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
+                          child: imgUrl != null && imgUrl.isNotEmpty
+                              ? Image.network(
+                                  imgUrl,
+                                  height: 130,
+                                  width: 180,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _portfolioImagePlaceholder(height: 130, width: 180),
+                                )
+                              : _portfolioImagePlaceholder(height: 130, width: 180),
+                        ),
+                        // Info
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(
-                                  child: Text(
-                                    itemTitle,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                      color: Color(0xFF1A237E),
-                                    ),
-                                  ),
-                                ),
-                                if (year.isNotEmpty)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8EEFF),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      year,
-                                      style: const TextStyle(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1A237E),
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        itemTitle,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: Color(0xFF1A237E),
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                  ),
+                                    if (year.isNotEmpty) ...[
+                                      const SizedBox(width: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE8EEFF),
+                                          borderRadius: BorderRadius.circular(5),
+                                        ),
+                                        child: Text(
+                                          year,
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF1A237E),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const Spacer(),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.arrow_forward_ios,
+                                        size: 10, color: Color(0xFF1A43BF)),
+                                    const SizedBox(width: 3),
+                                    Text(
+                                      'Lihat detail',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: Color(0xFF1A43BF),
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
                             ),
-                            if (desc.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                desc,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[700],
-                                  height: 1.4,
-                                ),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                            const SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Lihat selengkapnya',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: const Color(0xFF1A43BF),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.arrow_forward_ios,
-                                    size: 11, color: Color(0xFF1A43BF)),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
       ],
     );
   }
 
-  Widget _portfolioImagePlaceholder() {
+  Widget _portfolioImagePlaceholder({double height = 180, double? width}) {
     return Container(
-      height: 180,
-      width: double.infinity,
+      height: height,
+      width: width ?? double.infinity,
       color: const Color(0xFFE8F0FF),
       child: const Icon(Icons.image_outlined,
-          size: 50, color: Color(0xFF1A43BF)),
+          size: 40, color: Color(0xFF1A43BF)),
     );
   }
 
@@ -665,8 +659,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
   Widget build(BuildContext context) {
     final talentName = widget.service['users']?['name'] ?? 'Talent';
     final avatarUrl = widget.service['users']?['avatar_url'];
-    final isVerified = widget.service['users']?['is_verified'] == true ||
-        (_ratingSummary?.isVerified ?? false);
+    final isVerified = _ratingSummary?.hasVerifiedBadge ?? false;
     final title = widget.service['title'] ?? '';
     final imageUrl = widget.service['image_url'];
     final selectedType = _tabs[_selectedTab].toLowerCase();
