@@ -408,6 +408,10 @@ class _HomepageTalentState extends State<HomepageTalent> {
         } else if (workStatus == 'accepted') {
           statusLabel = 'Selesai';
           statusColor = Colors.green;
+        } else if (workStatus == 'cancelled' ||
+            paymentStatus == 'cancelled') {
+          statusLabel = 'Dibatalkan';
+          statusColor = Colors.red;
         } else {
           statusLabel = workStatus;
           statusColor = Colors.grey;
