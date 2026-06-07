@@ -34,7 +34,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
       final response = await _supabase
           .from('services')
           .select('''
-            id, title, description, image_url, is_featured, featured_order,
+            id, title, description, image_url, is_featured, featured_order, user_id,
             users(id, name, avatar_url, is_verified),
             service_packages(package_type, price, package_description)
           ''')
