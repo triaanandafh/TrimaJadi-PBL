@@ -2267,160 +2267,60 @@ class _DetailOrderPageState
 
     // TALENT: menunggu pembayaran client + TOMBOL BATAL
     if (widget.isTalent &&
-        (paymentStatus ==
-                'unpaid' ||
-            paymentStatus ==
-                'pending')) {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(
-              vertical: 14,
+        (paymentStatus == 'unpaid' || paymentStatus == 'pending')) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: Colors.orange[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.orange[200]!),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Menunggu Pembayaran Client',
+              style: TextStyle(color: Colors.orange),
             ),
-            decoration: BoxDecoration(
-              color: Colors.orange[50],
-              borderRadius: BorderRadius.circular(
-                12,
-              ),
-              border: Border.all(
-                color: Colors.orange[200]!,
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.hourglass_empty,
-                  color: Colors.orange,
-                  size: 18,
-                ),
-                SizedBox(
-                  width: 8,
-                ),
-                Text(
-                  'Menunggu Pembayaran Client',
-                  style: TextStyle(
-                    color: Colors.orange,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red.shade700,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    14,
-                  ),
-                ),
-              ),
-              onPressed: _isProcessingPayment
-                  ? null
-                  : _handleCancelOrder,
-              child: const Text(
-                'Batalkan Pesanan',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     // TALENT: sedang mengerjakan → tombol Submit Hasil + TOMBOL BATAL
-    if (widget.isTalent &&
-        workStatus ==
-            'progress') {
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(
-                  0xFF2C4A6E,
-                ),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    25,
-                  ),
-                ),
-              ),
-              onPressed: _isSubmitting
-                  ? null
-                  : _showSubmitResultDialog,
-              icon: _isSubmitting
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Icon(
-                      Icons.upload_file,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-              label: Text(
-                _isSubmitting
-                    ? 'Mengirim...'
-                    : 'Submit Hasil',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                ),
-              ),
-            ),
+  if (widget.isTalent && workStatus == 'progress') {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2C4A6E),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
           ),
-          const SizedBox(
-            height: 8,
+        ),
+        onPressed: _isSubmitting ? null : _showSubmitResultDialog,
+        icon: _isSubmitting
+            ? const SizedBox(
+                height: 18, width: 18,
+                child: CircularProgressIndicator(
+                  color: Colors.white, strokeWidth: 2),
+              )
+            : const Icon(Icons.upload_file, color: Colors.white, size: 18),
+        label: Text(
+          _isSubmitting ? 'Mengirim...' : 'Submit Hasil',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
           ),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: TextButton(
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red.shade700,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(
-                    14,
-                  ),
-                ),
-              ),
-              onPressed: _isProcessingPayment
-                  ? null
-                  : _handleCancelOrder,
-              child: const Text(
-                'Batalkan Pesanan',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-        ],
-      );
-    }
+        ),
+      ),
+    );
+  }
 
     // TALENT: sudah submit, menunggu konfirmasi client
     if (widget.isTalent &&
