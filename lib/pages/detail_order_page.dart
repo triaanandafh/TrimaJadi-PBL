@@ -365,8 +365,9 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       if (mounted) {
         await Future.delayed(const Duration(milliseconds: 600));
         if (mounted) {
-          Navigator.push(
-            context,
+          // ignore: use_build_context_synchronously
+          final nav = Navigator.of(context);
+          nav.push(
             MaterialPageRoute(
               builder: (_) => ReviewPage(
                 orderId: widget.orderId,
@@ -591,6 +592,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         supabase.auth.currentUser?.email ??
         'Client';
 
+    // ignore: use_build_context_synchronously
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -846,19 +848,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                               _row('Nama', otherUserData?['name']?.toString() ?? '-'),
                               _row('Nomor Telepon', otherUserData?['phone']?.toString() ?? '-'),
                               _row('Email', otherUserData?['email']?.toString() ?? '-'),
-                              if (widget.isTalent) ...[
-                                const SizedBox(height: 10),
-                                Row(
-                                  children: List.generate(
-                                    5,
-                                    (_) => const Icon(
-                                      Icons.star,
-                                      color: Colors.amber,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
                               const SizedBox(height: 15),
                               SizedBox(
                                 width: double.infinity,
@@ -875,8 +864,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                     if (targetId == null) return;
 
                                     try {
-                                      final currentUserId =
-                                          supabase.auth.currentUser?.id;
+                                      final currentUserId = supabase.auth.currentUser?.id;
                                       if (currentUserId != null) {
                                         await supabase.from('chats').upsert(
                                           {
@@ -894,15 +882,17 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       debugPrint('Error inserting chat message: $e');
                                     }
 
-                                    if (mounted) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              ChatPage(name: targetName, receiverId: '',),
+                                    if (!mounted) return;
+                                    // ignore: use_build_context_synchronously
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ChatPage(
+                                          name: targetName,
+                                          receiverId: targetId,
                                         ),
-                                      );
-                                    }
+                                      ),
+                                    );
                                   },
                                   child: Text(
                                     widget.isTalent ? 'Hubungi Client' : 'Hubungi Talent',
@@ -1021,7 +1011,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                       color: const Color(0xFFE8F0FF),
                                       borderRadius: BorderRadius.circular(10),
                                       border: Border.all(
-                                        color: const Color(0xFF1A43BF).withOpacity(0.3),
+                                        // FIX: withOpacity → withValues
+                                        color: const Color(0xFF1A43BF).withValues(alpha: 0.3),
                                       ),
                                     ),
                                     child: Row(
@@ -1249,9 +1240,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                     ),
             ),
           ),
-
           const SizedBox(height: 8),
-
           SizedBox(
             width: double.infinity,
             height: 44,
@@ -1358,7 +1347,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // TALENT: menunggu pembayaran client + TOMBOL BATAL
+    // TALENT: menunggu pembayaran client
     if (widget.isTalent &&
         (paymentStatus == 'unpaid' || paymentStatus == 'pending')) {
       return Container(
@@ -1383,7 +1372,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // TALENT: sedang mengerjakan → tombol Submit Hasil + TOMBOL BATAL
+    // TALENT: sedang mengerjakan → tombol Submit Hasil
     if (widget.isTalent && workStatus == 'progress') {
       return SizedBox(
         width: double.infinity,
@@ -1477,7 +1466,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // Status Dibatalkan (Jika diperlukan untuk client/talent)
+    // Status Dibatalkan
     if (workStatus == 'cancelled') {
       return Container(
         width: double.infinity,
@@ -1520,7 +1509,8 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            // FIX: withOpacity → withValues
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
