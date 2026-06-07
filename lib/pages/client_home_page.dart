@@ -4,6 +4,7 @@ import '../models/user_model.dart';
 import 'service_list_page.dart';
 import 'service_detail_page.dart';
 import 'search_service_page.dart';
+import 'notification_page.dart';
 
 class HomepageClient extends StatefulWidget {
   final VoidCallback onTapSearch;
@@ -206,7 +207,16 @@ class _HomepageClientState extends State<HomepageClient> {
                                 ),
                               ],
                             ),
-                            Container(
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationPage(),
+                                  ),
+                                );
+                              },
+                            child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(
                                 color: Colors.white,
@@ -214,6 +224,7 @@ class _HomepageClientState extends State<HomepageClient> {
                               ),
                               child: const Icon(Icons.notifications_none,
                                   color: Color(0xFFE68C3A), size: 26),
+                              ),
                             ),
                           ],
                         ),
