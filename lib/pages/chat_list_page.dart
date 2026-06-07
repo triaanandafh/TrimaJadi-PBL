@@ -21,8 +21,9 @@ class _ChatListPageState extends State<ChatListPage> {
   String formatChatTime(String? timestampStr) {
     // Logika sederhana untuk memformat waktu (bisa dikembangkan lebih lanjut)
     if (timestampStr == null) return "";
+     
     try{
-      DateTime date =DateTime.parse(timestampStr).toLocal();
+      DateTime date =DateTime.parse(timestampStr);
       DateTime now = DateTime.now();
       DateTime today = DateTime(now.year, now.month, now.day);
       DateTime chatDay = DateTime(date.year, date.month, date.day);
@@ -219,6 +220,7 @@ class _ChatListPageState extends State<ChatListPage> {
                             separatorBuilder: (context, index) => const Divider(height: 1, indent: 80),
                             itemBuilder: (context, index) {
                               final chat = filteredChatList[index];
+                              debugPrint(chat.toString());
                               return ChatItem(
                                 name: chat['name'] as String,
                                 lastMessage: chat['last_message'] as String,
@@ -226,6 +228,7 @@ class _ChatListPageState extends State<ChatListPage> {
                                 unread: chat['unread'] as int,
                               );
                             },
+                            
                           );
                         },
                       ),

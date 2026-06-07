@@ -42,6 +42,7 @@ class MainScreenState extends State<MainScreen> {
           ? HomepageTalent(onViewAll: () => goToIndex(1))
           : HomepageClient(
               onTapSearch: () => goToIndex(2),
+              onViewAll: () => goToIndex(2),
             ),
 
       // 1: AKTIVITAS

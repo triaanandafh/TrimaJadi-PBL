@@ -289,11 +289,15 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
           // CHAT LIST
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
-              stream: supabase
-                  .from('chat_messages')
-                  .stream(primaryKey: ['id'])
-                  .eq('chat_partner_name', widget.name)
-                  .order('created_at', ascending: true),
+              // Ganti StreamBuilder stream-nya dengan ini
+              stream: Stream.periodic(const Duration(seconds: 2))
+                  .asyncMap((_) => supabase
+                      .from('chat_messages')
+                      .select()
+                      .eq('sender_id', myId)
+                      .eq('chat_partner_name', widget.name)
+                      .order('created_at', ascending: true)
+                  ).map((data) => List<Map<String, dynamic>>.from(data)),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
