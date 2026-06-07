@@ -46,14 +46,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
       final profile = await _supabase
           .from('users')
-          .select('is_verified')
+          .select('has_verified_badge')
           .eq('id', userId)
           .maybeSingle();
 
       if (mounted) {
         setState(() {
           _balance    = (wallet?['balance'] as num?)?.toInt() ?? 0;
-          _isVerified = profile?['is_verified'] == true;
+          _isVerified = profile?['has_verified_badge'] == true;
         });
       }
     } catch (_) {}

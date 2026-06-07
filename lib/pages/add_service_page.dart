@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:typed_data';
 import 'dart:io';
+import '../models/user_model.dart';
 
 class AddServicePage extends StatefulWidget {
   const AddServicePage({super.key});
@@ -127,6 +128,11 @@ class _AddServicePageState extends State<AddServicePage> {
   }
 
   Future<void> saveService() async {
+    // Blokir jika guest
+    if (!UserData.isVerified) {
+      _showGuestDialog();
+      return;
+    }
     try {
       if (selectedCategoryId == null) throw Exception("Pilih kategori terlebih dahulu");
       if (titleController.text.trim().isEmpty) throw Exception("Judul layanan wajib diisi");
@@ -418,6 +424,36 @@ class _AddServicePageState extends State<AddServicePage> {
                     hint: "Masukkan harga paket $title (Rp)"),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showGuestDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Akun Belum Diverifikasi',
+            textAlign: TextAlign.center,
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Fitur ini hanya tersedia untuk talent yang sudah diverifikasi oleh admin. Harap tunggu proses verifikasi.',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey, fontSize: 13),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Mengerti',
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

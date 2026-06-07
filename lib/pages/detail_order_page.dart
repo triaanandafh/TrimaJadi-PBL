@@ -6,22 +6,22 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'review_page.dart';
 import 'chat_page.dart';
+import 'payment_page.dart'; // Halaman pembayaran simulasi
 
-// ============================================================
 // KONFIGURASI DUITKU
-// ============================================================
 class _DuitkuConfig {
   static const String merchantCode = 'DS30597';
-  static const String apiKey       = '6826f8de299f58979d82e49a6a1dbae1';
-  static const String baseUrl      = 'https://sandbox.duitku.com/webapi/api/merchant';
-  static const String callbackUrl  = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
-  static const String returnUrl    = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
+  static const String apiKey = '6826f8de299f58979d82e49a6a1dbae1';
+  static const String baseUrl = 'https://sandbox.duitku.com/webapi/api/merchant';
+  static const String callbackUrl = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
+  static const String returnUrl = 'https://cbzpffxxllkllgirepcz.supabase.co/functions/v1/duitku-callback';
 }
-// ============================================================
 
-class DetailOrderPage extends StatefulWidget {
+class DetailOrderPage
+    extends
+        StatefulWidget {
   final String orderId;
-  final bool   isTalent;
+  final bool isTalent;
   final String status;
 
   const DetailOrderPage({
@@ -32,17 +32,32 @@ class DetailOrderPage extends StatefulWidget {
   });
 
   @override
-  State<DetailOrderPage> createState() => _DetailOrderPageState();
+  State<
+    DetailOrderPage
+  >
+  createState() => _DetailOrderPageState();
 }
 
-class _DetailOrderPageState extends State<DetailOrderPage> {
+class _DetailOrderPageState
+    extends
+        State<
+          DetailOrderPage
+        > {
   final supabase = Supabase.instance.client;
 
-  Map<String, dynamic>? orderData;
-  Map<String, dynamic>? otherUserData;
-  bool isLoading            = true;
+  Map<
+    String,
+    dynamic
+  >?
+  orderData;
+  Map<
+    String,
+    dynamic
+  >?
+  otherUserData;
+  bool isLoading = true;
   bool _isProcessingPayment = false;
-  bool _isSubmitting        = false;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -51,54 +66,96 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
   }
 
   // ===== FETCH DATA =====
-  Future<void> _fetchOrderDetails() async {
-    setState(() => isLoading = true);
+  Future<
+    void
+  >
+  _fetchOrderDetails() async {
+    setState(
+      () => isLoading = true,
+    );
     try {
       final orderResponse = await supabase
-          .from('orders')
+          .from(
+            'orders',
+          )
           .select()
-          .eq('id', widget.orderId)
+          .eq(
+            'id',
+            widget.orderId,
+          )
           .single();
 
       final otherUserId = widget.isTalent
           ? orderResponse['client_id']
           : orderResponse['talent_id'];
 
-      Map<String, dynamic> userResponse = {
-        'name' : '-',
+      Map<
+        String,
+        dynamic
+      >
+      userResponse = {
+        'name': '-',
         'phone': '-',
-        'email': supabase.auth.currentUser?.email ?? 'test@email.com',
+        'email':
+            supabase.auth.currentUser?.email ??
+            'test@email.com',
       };
 
       try {
         userResponse = await supabase
-            .from('users')
-            .select('name, phone, email')
-            .eq('id', otherUserId)
+            .from(
+              'users',
+            )
+            .select(
+              'name, phone, email',
+            )
+            .eq(
+              'id',
+              otherUserId,
+            )
             .single();
-      } catch (_) {}
+      } catch (
+        _
+      ) {}
 
-      setState(() {
-        orderData     = orderResponse;
-        otherUserData = userResponse;
-        isLoading     = false;
-      });
-    } catch (e) {
+      setState(
+        () {
+          orderData = orderResponse;
+          otherUserData = userResponse;
+          isLoading = false;
+        },
+      );
+    } catch (
+      e
+    ) {
       if (mounted) {
-        _showSnackBar('Gagal memuat data: $e', isError: true);
-        setState(() => isLoading = false);
+        _showSnackBar(
+          'Gagal memuat data: $e',
+          isError: true,
+        );
+        setState(
+          () => isLoading = false,
+        );
       }
     }
   }
 
-  // ===== TALENT: SUBMIT HASIL =====
-  Future<void> _showSubmitResultDialog() async {
-    final linkCtrl  = TextEditingController();
+  // TALENT: SUBMIT HASIL
+  Future<
+    void
+  >
+  _showSubmitResultDialog() async {
+    final linkCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
 
-    if ((orderData!['result_link'] ?? '').toString().isNotEmpty) {
-      linkCtrl.text  = orderData!['result_link'].toString();
-      notesCtrl.text = orderData!['result_notes']?.toString() ?? '';
+    if ((orderData!['result_link'] ??
+            '')
+        .toString()
+        .isNotEmpty) {
+      linkCtrl.text = orderData!['result_link'].toString();
+      notesCtrl.text =
+          orderData!['result_notes']?.toString() ??
+          '';
     }
 
     await showModalBottomSheet(
@@ -106,289 +163,569 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(
+            20,
+          ),
+        ),
       ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            left: 20, right: 20, top: 24,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40, height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Submit Hasil Pekerjaan',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Bagikan link hasil kerja (Google Drive, Dropbox, dll) dan catatan untuk client.',
-                style: TextStyle(color: Colors.grey[500], fontSize: 13),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                controller: linkCtrl,
-                keyboardType: TextInputType.url,
-                decoration: InputDecoration(
-                  labelText: 'Link Hasil Pekerjaan *',
-                  hintText: 'https://drive.google.com/...',
-                  prefixIcon: const Icon(Icons.link, color: Color(0xFF2C4A6E)),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF2C4A6E), width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: notesCtrl,
-                maxLines: 3,
-                decoration: InputDecoration(
-                  labelText: 'Catatan untuk Client (opsional)',
-                  hintText: 'Tuliskan catatan pengerjaan...',
-                  prefixIcon: const Padding(
-                    padding: EdgeInsets.only(bottom: 40),
-                    child: Icon(Icons.notes, color: Color(0xFF2C4A6E)),
-                  ),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                        const BorderSide(color: Color(0xFF2C4A6E), width: 1.5),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2C4A6E),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25)),
-                  ),
-                  onPressed: () {
-                    final link = linkCtrl.text.trim();
-                    if (link.isEmpty) {
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        const SnackBar(
-                          content: Text('Link hasil pekerjaan wajib diisi'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.pop(ctx, {
-                      'link' : link,
-                      'notes': notesCtrl.text.trim(),
-                    });
-                  },
-                  child: const Text(
-                    'Kirim Hasil',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    ).then((result) async {
-      if (result == null) return;
-      setState(() => _isSubmitting = true);
-      try {
-        await supabase.from('orders').update({
-          'work_status' : 'done',
-          'result_link' : result['link'],
-          'result_notes': result['notes'],
-        }).eq('id', widget.orderId);
-
-        setState(() {
-          orderData!['work_status']  = 'done';
-          orderData!['result_link']  = result['link'];
-          orderData!['result_notes'] = result['notes'];
-        });
-
-        _showSnackBar('Hasil pekerjaan berhasil dikirim ke client!');
-      } catch (e) {
-        _showSnackBar('Gagal mengirim hasil: $e', isError: true);
-      } finally {
-        if (mounted) setState(() => _isSubmitting = false);
-      }
-    });
-  }
-
-  // ===== CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING =====
-  Future<void> _handleTerimaHasil() async {
-    final totalPrice  = (orderData!['total_price'] as num?)?.toInt() ?? 0;
-    final platformFee = (totalPrice * 0.1).toInt();
-    final talentReceives = totalPrice - platformFee;
-
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Terima Hasil?',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Pastikan Anda sudah memeriksa hasil pekerjaan sebelum menerima.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF0F4FF),
-                borderRadius: BorderRadius.circular(10),
+      builder:
+          (
+            ctx,
+          ) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 24,
+                bottom:
+                    MediaQuery.of(
+                      ctx,
+                    ).viewInsets.bottom +
+                    24,
               ),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _dialogRow('Total Bayar', _formatRupiah(totalPrice)),
-                  _dialogRow('Biaya Platform (10%)',
-                      '- ${_formatRupiah(platformFee)}',
-                      valueColor: Colors.red[400]!),
-                  const Divider(height: 16),
-                  _dialogRow('Talent Menerima',
-                      _formatRupiah(talentReceives),
-                      valueColor: Colors.green[700]!,
-                      bold: true),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  const Text(
+                    'Submit Hasil Pekerjaan',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 6,
+                  ),
+                  Text(
+                    'Bagikan link hasil kerja (Google Drive, Dropbox, dll) dan catatan untuk client.',
+                    style: TextStyle(
+                      color: Colors.grey[500],
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  TextField(
+                    controller: linkCtrl,
+                    keyboardType: TextInputType.url,
+                    decoration: InputDecoration(
+                      labelText: 'Link Hasil Pekerjaan *',
+                      hintText: 'https://drive.google.com/...',
+                      prefixIcon: const Icon(
+                        Icons.link,
+                        color: Color(
+                          0xFF2C4A6E,
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ),
+                        borderSide: const BorderSide(
+                          color: Color(
+                            0xFF2C4A6E,
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 14,
+                  ),
+                  TextField(
+                    controller: notesCtrl,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      labelText: 'Catatan untuk Client (opsional)',
+                      hintText: 'Tuliskan catatan pengerjaan...',
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.only(
+                          bottom: 40,
+                        ),
+                        child: Icon(
+                          Icons.notes,
+                          color: Color(
+                            0xFF2C4A6E,
+                          ),
+                        ),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          12,
+                        ),
+                        borderSide: const BorderSide(
+                          color: Color(
+                            0xFF2C4A6E,
+                          ),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 20,
+                  ),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(
+                          0xFF2C4A6E,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            25,
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        final link = linkCtrl.text.trim();
+                        if (link.isEmpty) {
+                          ScaffoldMessenger.of(
+                            ctx,
+                          ).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Link hasil pekerjaan wajib diisi',
+                              ),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          return;
+                        }
+                        Navigator.pop(
+                          ctx,
+                          {
+                            'link': link,
+                            'notes': notesCtrl.text.trim(),
+                          },
+                        );
+                      },
+                      child: const Text(
+                        'Kirim Hasil',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actionsAlignment: MainAxisAlignment.spaceEvenly,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2C4A6E),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
-            ),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Ya, Terima',
-                style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-    if (confirm != true) return;
+            );
+          },
+    ).then(
+      (
+        result,
+      ) async {
+        if (result ==
+            null)
+          return;
+        setState(
+          () => _isSubmitting = true,
+        );
+        try {
+          await supabase
+              .from(
+                'orders',
+              )
+              .update(
+                {
+                  'work_status': 'done',
+                  'result_link': result['link'],
+                  'result_notes': result['notes'],
+                },
+              )
+              .eq(
+                'id',
+                widget.orderId,
+              );
 
-    setState(() => _isProcessingPayment = true);
+          setState(
+            () {
+              orderData!['work_status'] = 'done';
+              orderData!['result_link'] = result['link'];
+              orderData!['result_notes'] = result['notes'];
+            },
+          );
+
+          _showSnackBar(
+            'Hasil pekerjaan berhasil dikirim ke client!',
+          );
+        } catch (
+          e
+        ) {
+          _showSnackBar(
+            'Gagal mengirim hasil: $e',
+            isError: true,
+          );
+        } finally {
+          if (mounted)
+            setState(
+              () => _isSubmitting = false,
+            );
+        }
+      },
+    );
+  }
+
+  // CLIENT: TERIMA HASIL + LEPAS DANA KE TALENT + MINTA RATING
+  Future<
+    void
+  >
+  _handleTerimaHasil() async {
+    final totalPrice =
+        (orderData!['total_price']
+                as num?)
+            ?.toInt() ??
+        0;
+    final platformFee =
+        (totalPrice *
+                0.1)
+            .toInt();
+    final talentReceives =
+        totalPrice -
+        platformFee;
+
+    final confirm =
+        await showDialog<
+          bool
+        >(
+          context: context,
+          builder:
+              (
+                ctx,
+              ) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    16,
+                  ),
+                ),
+                title: const Text(
+                  'Terima Hasil?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Pastikan Anda sudah memeriksa hasil pekerjaan sebelum menerima.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 16,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(
+                        12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(
+                          0xFFF0F4FF,
+                        ),
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          _dialogRow(
+                            'Total Bayar',
+                            _formatRupiah(
+                              totalPrice,
+                            ),
+                          ),
+                          _dialogRow(
+                            'Biaya Platform (10%)',
+                            '- ${_formatRupiah(platformFee)}',
+                            valueColor: Colors.red[400]!,
+                          ),
+                          const Divider(
+                            height: 16,
+                          ),
+                          _dialogRow(
+                            'Talent Menerima',
+                            _formatRupiah(
+                              talentReceives,
+                            ),
+                            valueColor: Colors.green[700]!,
+                            bold: true,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                actionsAlignment: MainAxisAlignment.spaceEvenly,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(
+                      ctx,
+                      false,
+                    ),
+                    child: const Text(
+                      'Batal',
+                      style: TextStyle(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(
+                        0xFF2C4A6E,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(
+                      ctx,
+                      true,
+                    ),
+                    child: const Text(
+                      'Ya, Terima',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        );
+    if (confirm !=
+        true)
+      return;
+
+    setState(
+      () => _isProcessingPayment = true,
+    );
     try {
       final talentId = orderData!['talent_id']?.toString();
-      if (talentId == null) throw Exception('Talent ID tidak ditemukan');
+      if (talentId ==
+          null)
+        throw Exception(
+          'Talent ID tidak ditemukan',
+        );
 
-      await supabase.from('orders').update({
-        'work_status'   : 'accepted',
-        'platform_fee'  : platformFee,
-        'talent_earning': talentReceives,
-      }).eq('id', widget.orderId);
+      await supabase
+          .from(
+            'orders',
+          )
+          .update(
+            {
+              'work_status': 'accepted',
+              'platform_fee': platformFee,
+              'talent_earning': talentReceives,
+            },
+          )
+          .eq(
+            'id',
+            widget.orderId,
+          );
 
       final walletRes = await supabase
-          .from('wallets')
-          .select('balance')
-          .eq('user_id', talentId)
+          .from(
+            'wallets',
+          )
+          .select(
+            'balance',
+          )
+          .eq(
+            'user_id',
+            talentId,
+          )
           .maybeSingle();
 
-      if (walletRes == null) {
-        await supabase.from('wallets').insert({
-          'user_id': talentId,
-          'balance': talentReceives,
-        });
+      if (walletRes ==
+          null) {
+        await supabase
+            .from(
+              'wallets',
+            )
+            .insert(
+              {
+                'user_id': talentId,
+                'balance': talentReceives,
+              },
+            );
       } else {
-        final currentBalance = (walletRes['balance'] as num?)?.toInt() ?? 0;
-        await supabase.from('wallets').update({
-          'balance': currentBalance + talentReceives,
-        }).eq('user_id', talentId);
+        final currentBalance =
+            (walletRes['balance']
+                    as num?)
+                ?.toInt() ??
+            0;
+        await supabase
+            .from(
+              'wallets',
+            )
+            .update(
+              {
+                'balance':
+                    currentBalance +
+                    talentReceives,
+              },
+            )
+            .eq(
+              'user_id',
+              talentId,
+            );
       }
 
-      await supabase.from('wallet_transactions').insert({
-        'user_id'     : talentId,
-        'order_id'    : widget.orderId,
-        'type'        : 'credit',
-        'amount'      : talentReceives,
-        'platform_fee': platformFee,
-        'note'        : 'Pendapatan dari order: ${orderData!['service_name'] ?? ''}',
-      });
+      await supabase
+          .from(
+            'wallet_transactions',
+          )
+          .insert(
+            {
+              'user_id': talentId,
+              'order_id': widget.orderId,
+              'type': 'credit',
+              'amount': talentReceives,
+              'platform_fee': platformFee,
+              'note': 'Pendapatan dari order: ${orderData!['service_name'] ?? ''}',
+            },
+          );
 
-      setState(() => orderData!['work_status'] = 'accepted');
+      setState(
+        () => orderData!['work_status'] = 'accepted',
+      );
       _showSnackBar(
-          'Order selesai! Dana ${_formatRupiah(talentReceives)} telah dikirim ke saldo talent.');
+        'Order selesai! Dana ${_formatRupiah(talentReceives)} telah dikirim ke saldo talent.',
+      );
 
       if (mounted) {
-        await Future.delayed(const Duration(milliseconds: 600));
+        await Future.delayed(
+          const Duration(
+            milliseconds: 600,
+          ),
+        );
         if (mounted) {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => ReviewPage(
-                orderId    : widget.orderId,
-                talentId   : talentId,
-                talentName : otherUserData?['name']?.toString() ?? 'Talent',
-                serviceName: orderData!['service_name']?.toString() ?? '',
-              ),
+              builder:
+                  (
+                    _,
+                  ) => ReviewPage(
+                    orderId: widget.orderId,
+                    talentId: talentId,
+                    talentName:
+                        otherUserData?['name']?.toString() ??
+                        'Talent',
+                    serviceName:
+                        orderData!['service_name']?.toString() ??
+                        '',
+                  ),
             ),
+          ).then(
+            (
+              _,
+            ) => _fetchOrderDetails(),
           );
         }
       }
-    } catch (e) {
-      _showSnackBar('Gagal memproses: $e', isError: true);
+    } catch (
+      e
+    ) {
+      _showSnackBar(
+        'Gagal memproses: $e',
+        isError: true,
+      );
     } finally {
-      if (mounted) setState(() => _isProcessingPayment = false);
+      if (mounted)
+        setState(
+          () => _isProcessingPayment = false,
+        );
     }
   }
 
-  Widget _dialogRow(String label, String value,
-      {Color? valueColor, bool bold = false}) {
+  Widget _dialogRow(
+    String label,
+    String value, {
+    Color? valueColor,
+    bool bold = false,
+  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        vertical: 3,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: TextStyle(fontSize: 13, color: Colors.grey[600])),
-          Text(value,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: bold ? FontWeight.bold : FontWeight.w500,
-                  color: valueColor ?? const Color(0xFF213E60))),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.grey[600],
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: bold
+                  ? FontWeight.bold
+                  : FontWeight.w500,
+              color:
+                  valueColor ??
+                  const Color(
+                    0xFF213E60,
+                  ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // ===== CLIENT: AJUKAN REVISI =====
-  Future<void> _handleRevisi() async {
+  // CLIENT: AJUKAN REVISI
+  Future<
+    void
+  >
+  _handleRevisi() async {
     final notesCtrl = TextEditingController();
 
     await showModalBottomSheet(
@@ -396,310 +733,726 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       isScrollControlled: true,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          left: 20, right: 20, top: 24,
-          bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(
+            20,
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40, height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+      ),
+      builder:
+          (
+            ctx,
+          ) => Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 24,
+              bottom:
+                  MediaQuery.of(
+                    ctx,
+                  ).viewInsets.bottom +
+                  24,
             ),
-            const SizedBox(height: 20),
-            const Text('Ajukan Revisi',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 6),
-            Text('Jelaskan bagian mana yang perlu direvisi oleh talent.',
-                style: TextStyle(color: Colors.grey[500], fontSize: 13)),
-            const SizedBox(height: 20),
-            TextField(
-              controller: notesCtrl,
-              maxLines: 4,
-              decoration: InputDecoration(
-                labelText: 'Catatan Revisi *',
-                hintText: 'Tuliskan detail revisi yang diinginkan...',
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: Color(0xFF2C4A6E), width: 1.5),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: () {
-                  final notes = notesCtrl.text.trim();
-                  if (notes.isEmpty) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      const SnackBar(
-                        content: Text('Catatan revisi wajib diisi'),
-                        backgroundColor: Colors.red,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(
+                        10,
                       ),
-                    );
-                    return;
-                  }
-                  Navigator.pop(ctx, notes);
-                },
-                child: const Text('Kirim Permintaan Revisi',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                const Text(
+                  'Ajukan Revisi',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(
+                  height: 6,
+                ),
+                Text(
+                  'Jelaskan bagian mana yang perlu direvisi oleh talent.',
+                  style: TextStyle(
+                    color: Colors.grey[500],
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                TextField(
+                  controller: notesCtrl,
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: 'Catatan Revisi *',
+                    hintText: 'Tuliskan detail revisi yang diinginkan...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(
+                        12,
+                      ),
+                      borderSide: const BorderSide(
+                        color: Color(
+                          0xFF2C4A6E,
+                        ),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  height: 20,
+                ),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          25,
+                        ),
+                      ),
+                    ),
+                    onPressed: () {
+                      final notes = notesCtrl.text.trim();
+                      if (notes.isEmpty) {
+                        ScaffoldMessenger.of(
+                          ctx,
+                        ).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Catatan revisi wajib diisi',
+                            ),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                        return;
+                      }
+                      Navigator.pop(
+                        ctx,
+                        notes,
+                      );
+                    },
+                    child: const Text(
+                      'Kirim Permintaan Revisi',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
-    ).then((notes) async {
-      if (notes == null) return;
-      setState(() => _isProcessingPayment = true);
-      try {
-        await supabase.from('orders').update({
-          'work_status'   : 'progress',
-          'revision_notes': notes,
-        }).eq('id', widget.orderId);
-        setState(() {
-          orderData!['work_status']    = 'progress';
-          orderData!['revision_notes'] = notes;
-        });
-        _showSnackBar('Permintaan revisi berhasil dikirim ke talent.');
-      } catch (e) {
-        _showSnackBar('Gagal mengirim revisi: $e', isError: true);
-      } finally {
-        if (mounted) setState(() => _isProcessingPayment = false);
-      }
-    });
+          ),
+    ).then(
+      (
+        notes,
+      ) async {
+        if (notes ==
+            null)
+          return;
+        setState(
+          () => _isProcessingPayment = true,
+        );
+        try {
+          await supabase
+              .from(
+                'orders',
+              )
+              .update(
+                {
+                  'work_status': 'progress',
+                  'revision_notes': notes,
+                },
+              )
+              .eq(
+                'id',
+                widget.orderId,
+              );
+          setState(
+            () {
+              orderData!['work_status'] = 'progress';
+              orderData!['revision_notes'] = notes;
+            },
+          );
+          _showSnackBar(
+            'Permintaan revisi berhasil dikirim ke talent.',
+          );
+        } catch (
+          e
+        ) {
+          _showSnackBar(
+            'Gagal mengirim revisi: $e',
+            isError: true,
+          );
+        } finally {
+          if (mounted)
+            setState(
+              () => _isProcessingPayment = false,
+            );
+        }
+      },
+    );
   }
 
-  // ===== DUITKU: BUAT TRANSAKSI =====
-  Future<void> _handlePayment() async {
-    setState(() => _isProcessingPayment = true);
+  // BATALKAN PESANAN (CLIENT & TALENT)
+  Future<
+    void
+  >
+  _handleCancelOrder() async {
+    final String confirmTitle = 'Batalkan Pesanan?';
+    final String confirmDesc = widget.isTalent
+        ? 'Apakah kamu yakin ingin membatalkan pesanan ini? Jika batal, kamu dapat memberitahu client via obrolan mengenai kendala atau kesibukanmu.'
+        : 'Apakah kamu yakin ingin membatalkan pesanan ini? Aksi ini tidak dapat dikembalikan.';
 
+    final confirm =
+        await showDialog<
+          bool
+        >(
+          context: context,
+          builder:
+              (
+                ctx,
+              ) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    16,
+                  ),
+                ),
+                title: Text(
+                  confirmTitle,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                content: Text(
+                  confirmDesc,
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(
+                      ctx,
+                      false,
+                    ),
+                    child: const Text(
+                      'Tidak',
+                      style: TextStyle(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade600,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                          10,
+                        ),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(
+                      ctx,
+                      true,
+                    ),
+                    child: const Text(
+                      'Ya, Batalkan',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+        );
+
+    if (confirm !=
+        true)
+      return;
+
+    setState(
+      () => _isProcessingPayment = true,
+    );
     try {
-      final int    amount      = (orderData!['total_price'] as num).toInt();
-      final String productName = orderData!['service_name']?.toString() ?? 'Pembayaran Layanan';
-      final String email       = supabase.auth.currentUser?.email ??
-          otherUserData?['email']?.toString() ?? 'user@email.com';
-      final String name        = otherUserData?['name']?.toString() ?? 'Client';
-      final String merchantOrderId = 'TJ${DateTime.now().millisecondsSinceEpoch}';
+      await supabase
+          .from(
+            'orders',
+          )
+          .update(
+            {
+              'payment_status': 'cancelled',
+              'work_status': 'cancelled',
+            },
+          )
+          .eq(
+            'id',
+            widget.orderId,
+          );
 
-      final rawSig    = '${_DuitkuConfig.merchantCode}$amount$merchantOrderId${_DuitkuConfig.apiKey}';
-      final signature = md5.convert(utf8.encode(rawSig)).toString();
-
-      final body = jsonEncode({
-        'merchantCode'   : _DuitkuConfig.merchantCode,
-        'paymentAmount'  : amount,
-        'paymentMethod'  : 'VC',
-        'merchantOrderId': merchantOrderId,
-        'productDetails' : productName,
-        'customerVaName' : name,
-        'email'          : email,
-        'callbackUrl'    : _DuitkuConfig.callbackUrl,
-        'returnUrl'      : _DuitkuConfig.returnUrl,
-        'expiryPeriod'   : 1440,
-        'signature'      : signature,
-      });
-
-      final httpResponse = await http.post(
-        Uri.parse('${_DuitkuConfig.baseUrl}/createInvoice'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept'      : 'application/json',
-        },
-        body: body,
-      ).timeout(const Duration(seconds: 30));
-
-      final response = httpResponse.body;
-      debugPrint('DUITKU RAW RESPONSE: $response');
-
-      final data       = jsonDecode(response) as Map<String, dynamic>;
-      final statusCode = data['statusCode']?.toString() ?? '';
-
-      if (statusCode == '00') {
-        final reference = (data['reference']
-            ?? data['Reference']
-            ?? data['merchantOrderId']
-            ?? data['MerchantOrderId']
-            ?? '').toString();
-
-        await supabase.from('orders').update({
-          'payment_status'   : 'pending',
-          'duitku_reference' : reference,
-          'merchant_order_id': merchantOrderId,
-        }).eq('id', widget.orderId);
-
-        setState(() {
-          orderData!['payment_status']    = 'pending';
-          orderData!['duitku_reference']  = reference;
-          orderData!['merchant_order_id'] = merchantOrderId;
-        });
-
-        final paymentUrl =
-            (data['paymentUrl'] ?? data['PaymentUrl'] ?? '').toString();
-        if (paymentUrl.isNotEmpty) {
-          final url = Uri.parse(paymentUrl);
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          } else {
-            _showSnackBar('Tidak bisa membuka browser', isError: true);
-          }
-        }
-      } else {
-        final msg = data['statusMessage']?.toString() ?? 'Terjadi kesalahan';
-        _showSnackBar('Pembayaran gagal: $msg', isError: true);
-      }
-    } catch (e) {
-      _showSnackBar('Error: $e', isError: true);
+      _showSnackBar(
+        'Pesanan berhasil dibatalkan.',
+      );
+      await _fetchOrderDetails();
+    } catch (
+      e
+    ) {
+      _showSnackBar(
+        'Gagal membatalkan pesanan: $e',
+        isError: true,
+      );
     } finally {
-      if (mounted) setState(() => _isProcessingPayment = false);
+      if (mounted)
+        setState(
+          () => _isProcessingPayment = false,
+        );
     }
   }
 
-  // ===== DUITKU: CEK STATUS =====
-  Future<void> _checkPaymentStatus() async {
-    setState(() => _isProcessingPayment = true);
+  // PEMBAYARAN SIMULASI
+  Future<
+    void
+  >
+  _handlePayment() async {
+    if (orderData ==
+        null)
+      return;
+
+    final int amount =
+        (orderData!['total_price']
+                as num)
+            .toInt();
+    final String serviceName =
+        orderData!['service_name']?.toString() ??
+        'Pembayaran Layanan';
+    final String clientName =
+        otherUserData?['name']?.toString() ??
+        supabase.auth.currentUser?.email ??
+        'Client';
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder:
+            (
+              _,
+            ) => ChoosePaymentPage(
+              orderId: widget.orderId,
+              totalPrice: amount,
+              serviceName: serviceName,
+              clientName: clientName,
+            ),
+      ),
+    );
+
+    await _fetchOrderDetails();
+  }
+
+  // DUITKU: CEK STATUS
+  Future<
+    void
+  >
+  _checkPaymentStatus() async {
+    setState(
+      () => _isProcessingPayment = true,
+    );
 
     try {
       final String merchantOrderId =
-          orderData?['merchant_order_id']?.toString() ?? widget.orderId;
+          orderData?['merchant_order_id']?.toString() ??
+          widget.orderId;
 
-      final rawSig    = '${_DuitkuConfig.merchantCode}$merchantOrderId${_DuitkuConfig.apiKey}';
-      final signature = md5.convert(utf8.encode(rawSig)).toString();
+      final rawSig = '${_DuitkuConfig.merchantCode}$merchantOrderId${_DuitkuConfig.apiKey}';
+      final signature = md5
+          .convert(
+            utf8.encode(
+              rawSig,
+            ),
+          )
+          .toString();
 
-      final body = jsonEncode({
-        'merchantCode'   : _DuitkuConfig.merchantCode,
-        'merchantOrderId': merchantOrderId,
-        'signature'      : signature,
-      });
-
-      final httpResponse = await http.post(
-        Uri.parse('${_DuitkuConfig.baseUrl}/transactionStatus'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept'      : 'application/json',
+      final body = jsonEncode(
+        {
+          'merchantCode': _DuitkuConfig.merchantCode,
+          'merchantOrderId': merchantOrderId,
+          'signature': signature,
         },
-        body: body,
-      ).timeout(const Duration(seconds: 30));
+      );
 
-      final response   = httpResponse.body;
-      debugPrint('DUITKU STATUS RESPONSE: $response');
+      final httpResponse = await http
+          .post(
+            Uri.parse(
+              '${_DuitkuConfig.baseUrl}/transactionStatus',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: body,
+          )
+          .timeout(
+            const Duration(
+              seconds: 30,
+            ),
+          );
 
-      final data       = jsonDecode(response) as Map<String, dynamic>;
-      final statusCode = data['statusCode']?.toString() ?? 'ERROR';
+      final response = httpResponse.body;
+      debugPrint(
+        'DUITKU STATUS RESPONSE: $response',
+      );
 
-      if (statusCode == '00') {
-        await supabase.from('orders').update({
-          'payment_status': 'paid',
-          'work_status'   : 'progress',
-        }).eq('id', widget.orderId);
+      final data =
+          jsonDecode(
+                response,
+              )
+              as Map<
+                String,
+                dynamic
+              >;
+      final statusCode =
+          data['statusCode']?.toString() ??
+          'ERROR';
 
-        setState(() {
-          orderData!['payment_status'] = 'paid';
-          orderData!['work_status']    = 'progress';
-        });
+      if (statusCode ==
+          '00') {
+        await supabase
+            .from(
+              'orders',
+            )
+            .update(
+              {
+                'payment_status': 'paid',
+                'work_status': 'progress',
+              },
+            )
+            .eq(
+              'id',
+              widget.orderId,
+            );
 
-        _showSnackBar('Pembayaran dikonfirmasi! Order sedang diproses.');
-      } else if (statusCode == '01') {
-        _showSnackBar('Pembayaran masih menunggu. Selesaikan pembayaran terlebih dahulu.');
+        setState(
+          () {
+            orderData!['payment_status'] = 'paid';
+            orderData!['work_status'] = 'progress';
+          },
+        );
+
+        _showSnackBar(
+          'Pembayaran dikonfirmasi! Order sedang diproses.',
+        );
+      } else if (statusCode ==
+          '01') {
+        _showSnackBar(
+          'Pembayaran masih menunggu. Selesaikan pembayaran terlebih dahulu.',
+        );
       } else {
-        _showSnackBar('Pembayaran gagal atau kadaluarsa.', isError: true);
-        await supabase.from('orders').update({
-          'payment_status': 'failed',
-        }).eq('id', widget.orderId);
-        setState(() => orderData!['payment_status'] = 'failed');
+        _showSnackBar(
+          'Pembayaran gagal atau kadaluarsa.',
+          isError: true,
+        );
+        await supabase
+            .from(
+              'orders',
+            )
+            .update(
+              {
+                'payment_status': 'failed',
+              },
+            )
+            .eq(
+              'id',
+              widget.orderId,
+            );
+        setState(
+          () => orderData!['payment_status'] = 'failed',
+        );
       }
-    } catch (e) {
-      _showSnackBar('Error: $e', isError: true);
+    } catch (
+      e
+    ) {
+      _showSnackBar(
+        'Error: $e',
+        isError: true,
+      );
     } finally {
-      if (mounted) setState(() => _isProcessingPayment = false);
+      if (mounted)
+        setState(
+          () => _isProcessingPayment = false,
+        );
     }
   }
 
-  // ===== HELPERS =====
-  void _showSnackBar(String msg, {bool isError = false}) {
+  // HELPERS
+  void _showSnackBar(
+    String msg, {
+    bool isError = false,
+  }) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(
       SnackBar(
-        content: Text(msg),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        duration: Duration(seconds: isError ? 5 : 3),
+        content: Text(
+          msg,
+        ),
+        backgroundColor: isError
+            ? Colors.red
+            : Colors.green,
+        duration: Duration(
+          seconds: isError
+              ? 5
+              : 3,
+        ),
       ),
     );
   }
 
-  String _formatRupiah(dynamic value) {
-    if (value == null) return '-';
+  String _formatRupiah(
+    dynamic value,
+  ) {
+    if (value ==
+        null)
+      return '-';
     final num amount =
-        value is num ? value : num.tryParse(value.toString()) ?? 0;
-    final str    = amount.toInt().toString();
+        value
+            is num
+        ? value
+        : num.tryParse(
+                value.toString(),
+              ) ??
+              0;
+    final str = amount.toInt().toString();
     final buffer = StringBuffer();
-    for (int i = 0; i < str.length; i++) {
-      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
-      buffer.write(str[i]);
+    for (
+      int i = 0;
+      i <
+          str.length;
+      i++
+    ) {
+      if (i >
+              0 &&
+          (str.length -
+                      i) %
+                  3 ==
+              0)
+        buffer.write(
+          '.',
+        );
+      buffer.write(
+        str[i],
+      );
     }
     return 'Rp $buffer';
   }
 
-  String _formatDateTime(String? isoString) {
-    if (isoString == null || isoString.isEmpty) return '-';
+  String _formatDateTime(
+    String? isoString,
+  ) {
+    if (isoString ==
+            null ||
+        isoString.isEmpty)
+      return '-';
     try {
-      final dt  = DateTime.parse(isoString).toLocal();
-      final pad = (int n) => n.toString().padLeft(2, '0');
+      final dt = DateTime.parse(
+        isoString,
+      ).toLocal();
+      final pad =
+          (
+            int n,
+          ) => n.toString().padLeft(
+            2,
+            '0',
+          );
       return '${dt.day}/${pad(dt.month)}/${dt.year} ${pad(dt.hour)}:${pad(dt.minute)}';
-    } catch (_) {
+    } catch (
+      _
+    ) {
       return isoString;
     }
   }
 
-  String _capitalize(String s) =>
-      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+  String
+  _capitalize(
+    String s,
+  ) => s.isEmpty
+      ? s
+      : s[0]
+                .toUpperCase() +
+            s.substring(
+              1,
+            );
 
-  String _labelPaymentStatus(dynamic status) {
+  String _labelPaymentStatus(
+    dynamic status,
+  ) {
     switch (status?.toString()) {
-      case 'unpaid':  return 'Belum Dibayar';
-      case 'pending': return 'Menunggu Pembayaran';
-      case 'paid':    return 'Lunas ✓';
-      case 'failed':  return 'Gagal';
-      case 'cancelled': return 'Dibatalkan';
-      default:        return status?.toString() ?? '-';
+      case 'unpaid':
+        return 'Belum Dibayar';
+      case 'pending':
+        return 'Menunggu Pembayaran';
+      case 'paid':
+        return 'Lunas';
+      case 'failed':
+        return 'Gagal';
+      case 'cancelled':
+        return 'Dibatalkan';
+      default:
+        return status?.toString() ??
+            '-';
     }
   }
 
-  String _labelWorkStatus(dynamic status) {
+  String _labelWorkStatus(
+    dynamic status,
+  ) {
     switch (status?.toString()) {
-      case 'pending':  return 'Menunggu Pembayaran';
-      case 'progress': return 'Sedang Dikerjakan';
-      case 'done':     return 'Menunggu Konfirmasi Client';
-      case 'accepted': return 'Selesai ✓';
-      case 'cancelled': return 'Dibatalkan';
-      default:         return status?.toString() ?? '-';
+      case 'pending':
+        return 'Menunggu Pembayaran';
+      case 'progress':
+        return 'Sedang Dikerjakan';
+      case 'done':
+        return 'Menunggu Konfirmasi Client';
+      case 'accepted':
+        return 'Selesai';
+      case 'cancelled':
+        return 'Dibatalkan';
+      default:
+        return status?.toString() ??
+            '-';
     }
   }
 
-  // ===== BUILD =====
+  // WIDGET ICON BERDASARKAN TIPE/KATEGORI
+  Widget _buildCategoryIcon(
+    String? categoryOrServiceName,
+  ) {
+    final cat =
+        (categoryOrServiceName ??
+                '')
+            .toLowerCase();
+
+    IconData iconData;
+    Color iconColor;
+    Color bgColor;
+
+    if (cat.contains(
+          'desain',
+        ) ||
+        cat.contains(
+          'design',
+        ) ||
+        cat.contains(
+          'foto',
+        )) {
+      iconData = Icons.palette;
+      iconColor = Colors.blue;
+      bgColor = Colors.blue.shade50;
+    } else if (cat.contains(
+          'web',
+        ) ||
+        cat.contains(
+          'pemrograman',
+        ) ||
+        cat.contains(
+          'coding',
+        )) {
+      iconData = Icons.code;
+      iconColor = Colors.orange;
+      bgColor = Colors.orange.shade50;
+    } else if (cat.contains(
+          'edukasi',
+        ) ||
+        cat.contains(
+          'tutor',
+        ) ||
+        cat.contains(
+          'belajar',
+        )) {
+      iconData = Icons.school;
+      iconColor = Colors.purple;
+      bgColor = Colors.purple.shade50;
+    } else if (cat.contains(
+          'visual',
+        ) ||
+        cat.contains(
+          'audio',
+        ) ||
+        cat.contains(
+          'video',
+        ) ||
+        cat.contains(
+          'voice over',
+        )) {
+      iconData = Icons.music_note;
+      iconColor = Colors.teal;
+      bgColor = Colors.teal.shade50;
+    } else if (cat.contains(
+          'penulisan',
+        ) ||
+        cat.contains(
+          'penerjemahan',
+        ) ||
+        cat.contains(
+          'translating',
+        ) ||
+        cat.contains(
+          'translate',
+        )) {
+      iconData = Icons.translate;
+      iconColor = Colors.green;
+      bgColor = Colors.green.shade50;
+    } else {
+      iconData = Icons.business_center;
+      iconColor = Colors.grey;
+      bgColor = Colors.grey.shade100;
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(
+        8,
+      ),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(
+          8,
+        ),
+      ),
+      child: Icon(
+        iconData,
+        color: iconColor,
+        size: 20,
+      ),
+    );
+  }
+
+  // BUILD
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+    BuildContext context,
+  ) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: const Color(
+        0xFFF7F7F7,
+      ),
       appBar: AppBar(
         backgroundColor: Colors.white,
         surfaceTintColor: Colors.white,
@@ -712,49 +1465,281 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
             style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(
+              Icons.refresh,
+              color: Colors.black,
+            ),
             onPressed: _fetchOrderDetails,
           ),
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : orderData == null
-              ? const Center(child: Text('Data pesanan tidak ditemukan'))
-              : Column(
-                  children: [
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : orderData ==
+                null
+          ? const Center(
+              child: Text(
+                'Data pesanan tidak ditemukan',
+              ),
+            )
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(
+                      16,
+                    ),
+                    child: Column(
+                      children: [
+                        // INFO USER
+                        _card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.isTalent
+                                    ? 'Informasi Client'
+                                    : 'Informasi Talent',
+                                style: _titleStyle(),
+                              ),
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              _row(
+                                'Nama',
+                                otherUserData?['name']?.toString() ??
+                                    '-',
+                              ),
+                              _row(
+                                'Nomor Telepon',
+                                otherUserData?['phone']?.toString() ??
+                                    '-',
+                              ),
+                              _row(
+                                'Email',
+                                otherUserData?['email']?.toString() ??
+                                    '-',
+                              ),
+                              if (widget.isTalent) ...[
+                                const SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: List.generate(
+                                    5,
+                                    (
+                                      _,
+                                    ) => const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 48,
+                                child: ElevatedButton(
+                                  style: _orangeButton(),
+                                  onPressed: () async {
+                                    final targetName =
+                                        otherUserData?['name']?.toString() ??
+                                        'User';
+                                    final targetId = widget.isTalent
+                                        ? orderData!['client_id']?.toString()
+                                        : orderData!['talent_id']?.toString();
 
-                            // ===== INFO USER =====
-                            _card(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
+                                    if (targetId ==
+                                        null)
+                                      return;
+
+                                    try {
+                                      final currentUserId = supabase.auth.currentUser?.id;
+                                      if (currentUserId !=
+                                          null) {
+                                        await supabase
+                                            .from(
+                                              'chats',
+                                            )
+                                            .upsert(
+                                              {
+                                                'user_id': currentUserId,
+                                                'name': targetName,
+                                                'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
+                                                'time': DateTime.now().toIso8601String(),
+                                                'unread': 0,
+                                              },
+                                              onConflict: 'user_id, name',
+                                            );
+                                      }
+                                    } catch (
+                                      e
+                                    ) {
+                                      debugPrint(
+                                        'Error inserting chat message: $e',
+                                      );
+                                    }
+
+                                    if (mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (
+                                                context,
+                                              ) => ChatPage(
+                                                name: targetName,
+                                              ),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  child: Text(
                                     widget.isTalent
-                                        ? 'Informasi Client'
-                                        : 'Informasi Talent',
+                                        ? 'Hubungi Client'
+                                        : 'Hubungi Talent',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(
+                          height: 15,
+                        ),
+
+                        // DETAIL LAYANAN DENGAN IKON DINAMIS
+                        _card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  // Cek field category atau ambil dari service_name
+                                  _buildCategoryIcon(
+                                    orderData!['category']?.toString() ??
+                                        orderData!['service_name']?.toString(),
+                                  ),
+                                  const SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    'Detail Layanan',
                                     style: _titleStyle(),
                                   ),
-                                  const SizedBox(height: 15),
-                                  _row('Nama',
-                                      otherUserData?['name']?.toString() ?? '-'),
-                                  _row('Nomor Telepon',
-                                      otherUserData?['phone']?.toString() ?? '-'),
-                                  _row('Email',
-                                      otherUserData?['email']?.toString() ?? '-'),
-                                  if (widget.isTalent) ...[
-                                    const SizedBox(height: 10),
-                                    Row(
-                                      children: List.generate(
-                                        5,
-                                        (_) => const Icon(Icons.star,
-                                            color: Colors.amber, size: 16),
+                                ],
+                              ),
+                              const SizedBox(
+                                height: 15,
+                              ),
+                              _row(
+                                'Nama Layanan',
+                                orderData!['service_name']?.toString() ??
+                                    '-',
+                              ),
+                              _row(
+                                'Paket',
+                                _capitalize(
+                                  orderData!['package_type']?.toString() ??
+                                      'basic',
+                                ),
+                              ),
+                              _row(
+                                'Durasi',
+                                '${orderData!['duration'] ?? '-'} hari',
+                              ),
+                              _row(
+                                'Tanggal Order',
+                                orderData!['order_date']?.toString() ??
+                                    '-',
+                              ),
+                              _row(
+                                'Deadline',
+                                orderData!['deadline']?.toString() ??
+                                    '-',
+                              ),
+                              _row(
+                                'Total Harga',
+                                _formatRupiah(
+                                  orderData!['total_price'],
+                                ),
+                              ),
+                              _row(
+                                'Status Pembayaran',
+                                _labelPaymentStatus(
+                                  orderData!['payment_status'],
+                                ),
+                              ),
+                              _row(
+                                'Status Pengerjaan',
+                                _labelWorkStatus(
+                                  orderData!['work_status'],
+                                ),
+                              ),
+                              _row(
+                                'Waktu Pesan',
+                                _formatDateTime(
+                                  orderData!['created_at']?.toString(),
+                                ),
+                              ),
+                              if ((orderData!['duitku_reference'] ??
+                                      '')
+                                  .toString()
+                                  .isNotEmpty)
+                                _row(
+                                  'Ref. Pembayaran',
+                                  orderData!['duitku_reference'].toString(),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                        // HASIL PEKERJAAN
+                        if ((orderData!['result_link'] ??
+                                '')
+                            .toString()
+                            .isNotEmpty) ...[
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          _card(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(
+                                        6,
                                       ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green.shade50,
+                                        borderRadius: BorderRadius.circular(
+                                          8,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.task_alt,
+                                        color: Colors.green,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    Text(
+                                      'Hasil Pekerjaan',
+                                      style: _titleStyle(),
                                     ),
                                   ],
                                   const SizedBox(height: 15),
@@ -803,475 +1788,485 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                             color: Colors.white),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            const SizedBox(height: 15),
-
-                            // ===== DETAIL LAYANAN =====
-                            _card(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Detail Layanan', style: _titleStyle()),
-                                  const SizedBox(height: 15),
-                                  _row('Nama Layanan',
-                                      orderData!['service_name']?.toString() ?? '-'),
-                                  _row('Paket',
-                                      _capitalize(orderData!['package_type']?.toString() ?? 'basic')),
-                                  _row('Durasi',
-                                      '${orderData!['duration'] ?? '-'} hari'),
-                                  _row('Tanggal Order',
-                                      orderData!['order_date']?.toString() ?? '-'),
-                                  _row('Deadline',
-                                      orderData!['deadline']?.toString() ?? '-'),
-                                  _row('Total Harga',
-                                      _formatRupiah(orderData!['total_price'])),
-                                  _row('Status Pembayaran',
-                                      _labelPaymentStatus(orderData!['payment_status'])),
-                                  _row('Status Pengerjaan',
-                                      _labelWorkStatus(orderData!['work_status'])),
-                                  // ===== WAKTU PESAN =====
-                                  _row(
-                                    'Waktu Pesan',
-                                    _formatDateTime(orderData!['created_at']?.toString()),
-                                  ),
-                                  if ((orderData!['duitku_reference'] ?? '')
-                                      .toString()
-                                      .isNotEmpty)
-                                    _row('Ref. Pembayaran',
-                                        orderData!['duitku_reference'].toString()),
-                                ],
-                              ),
-                            ),
-
-                            // ===== HASIL PEKERJAAN =====
-                            if ((orderData!['result_link'] ?? '')
-                                .toString()
-                                .isNotEmpty) ...[
-                              const SizedBox(height: 15),
-                              _card(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
+                                    child: Row(
                                       children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade50,
-                                            borderRadius:
-                                                BorderRadius.circular(8),
+                                        const Icon(
+                                          Icons.link,
+                                          color: Color(
+                                            0xFF1A43BF,
                                           ),
-                                          child: const Icon(Icons.task_alt,
-                                              color: Colors.green, size: 18),
+                                          size: 18,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text('Hasil Pekerjaan',
-                                            style: _titleStyle()),
+                                        const SizedBox(
+                                          width: 8,
+                                        ),
+                                        Expanded(
+                                          child: Text(
+                                            orderData!['result_link'].toString(),
+                                            style: const TextStyle(
+                                              color: Color(
+                                                0xFF1A43BF,
+                                              ),
+                                              decoration: TextDecoration.underline,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const Icon(
+                                          Icons.open_in_new,
+                                          color: Color(
+                                            0xFF1A43BF,
+                                          ),
+                                          size: 16,
+                                        ),
                                       ],
                                     ),
-                                    const SizedBox(height: 12),
+                                  ),
+                                ),
 
-                                    InkWell(
-                                      onTap: () async {
-                                        final url = Uri.tryParse(
-                                            orderData!['result_link']
-                                                .toString());
-                                        if (url != null &&
-                                            await canLaunchUrl(url)) {
-                                          await launchUrl(url,
-                                              mode: LaunchMode
-                                                  .externalApplication);
-                                        }
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(12),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFE8F0FF),
-                                          borderRadius:
-                                              BorderRadius.circular(10),
-                                          border: Border.all(
-                                              color: const Color(0xFF1A43BF)
-                                                  .withOpacity(0.3)),
+                                if ((orderData!['result_notes'] ??
+                                        '')
+                                    .toString()
+                                    .isNotEmpty) ...[
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Text(
+                                    'Catatan Talent:',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    height: 4,
+                                  ),
+                                  Text(
+                                    orderData!['result_notes'].toString(),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+
+                                if ((orderData!['revision_notes'] ??
+                                        '')
+                                    .toString()
+                                    .isNotEmpty) ...[
+                                  const SizedBox(
+                                    height: 10,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.all(
+                                      10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.orange.shade50,
+                                      borderRadius: BorderRadius.circular(
+                                        8,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Icon(
+                                          Icons.edit_note,
+                                          color: Colors.orange,
+                                          size: 18,
                                         ),
-                                        child: Row(
-                                          children: [
-                                            const Icon(Icons.link,
-                                                color: Color(0xFF1A43BF),
-                                                size: 18),
-                                            const SizedBox(width: 8),
-                                            Expanded(
-                                              child: Text(
-                                                orderData!['result_link']
-                                                    .toString(),
+                                        const SizedBox(
+                                          width: 6,
+                                        ),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Permintaan Revisi:',
+                                                style: TextStyle(
+                                                  color: Colors.orange,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                              const SizedBox(
+                                                height: 2,
+                                              ),
+                                              Text(
+                                                orderData!['revision_notes'].toString(),
                                                 style: const TextStyle(
-                                                  color: Color(0xFF1A43BF),
-                                                  decoration:
-                                                      TextDecoration.underline,
                                                   fontSize: 13,
                                                 ),
-                                                maxLines: 2,
-                                                overflow:
-                                                    TextOverflow.ellipsis,
                                               ),
-                                            ),
-                                            const Icon(Icons.open_in_new,
-                                                color: Color(0xFF1A43BF),
-                                                size: 16),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-
-                                    if ((orderData!['result_notes'] ?? '')
-                                        .toString()
-                                        .isNotEmpty) ...[
-                                      const SizedBox(height: 10),
-                                      Text('Catatan Talent:',
-                                          style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 12)),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                          orderData!['result_notes'].toString(),
-                                          style:
-                                              const TextStyle(fontSize: 13)),
-                                    ],
-
-                                    if ((orderData!['revision_notes'] ?? '')
-                                        .toString()
-                                        .isNotEmpty) ...[
-                                      const SizedBox(height: 10),
-                                      Container(
-                                        padding: const EdgeInsets.all(10),
-                                        decoration: BoxDecoration(
-                                          color: Colors.orange.shade50,
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            const Icon(Icons.edit_note,
-                                                color: Colors.orange, size: 18),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  const Text(
-                                                    'Permintaan Revisi:',
-                                                    style: TextStyle(
-                                                        color: Colors.orange,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        fontSize: 12),
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                      orderData![
-                                                              'revision_notes']
-                                                          .toString(),
-                                                      style: const TextStyle(
-                                                          fontSize: 13)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ],
-
-                            const SizedBox(height: 15),
-
-                            // ===== DESKRIPSI =====
-                            _card(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Deskripsi', style: _titleStyle()),
-                                  const SizedBox(height: 10),
-                                  Text(orderData!['description']?.toString() ??
-                                      'Tidak ada deskripsi.'),
-                                ],
-                              ),
-                            ),
-
-                            // ===== BATALKAN PESANAN (hanya client, belum bayar) =====
-                            if (!widget.isTalent &&
-                                (orderData!['payment_status']?.toString() == 'unpaid' ||
-                                 orderData!['payment_status']?.toString() == 'failed')) ...[
-                              const SizedBox(height: 15),
-                              _card(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.all(6),
-                                          decoration: BoxDecoration(
-                                            color: Colors.red.shade50,
-                                            borderRadius: BorderRadius.circular(8),
+                                            ],
                                           ),
-                                          child: Icon(Icons.cancel_outlined,
-                                              color: Colors.red.shade400, size: 18),
                                         ),
-                                        const SizedBox(width: 8),
-                                        Text('Batalkan Pesanan', style: _titleStyle()),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      'Pesanan yang dibatalkan tidak dapat dipulihkan kembali.',
-                                      style: TextStyle(
-                                          color: Colors.grey[500], fontSize: 12),
-                                    ),
-                                    const SizedBox(height: 14),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: 46,
-                                      child: OutlinedButton.icon(
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.red.shade600,
-                                          side: BorderSide(
-                                              color: Colors.red.shade300, width: 1.5),
-                                          shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.circular(14)),
-                                        ),
-                                        onPressed: _isProcessingPayment
-                                            ? null
-                                            : () => _handleCancelOrder(),
-                                        icon: Icon(Icons.delete_outline,
-                                            size: 18, color: Colors.red.shade600),
-                                        label: Text(
-                                          'Batalkan Pesanan',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.red.shade600),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(
+                          height: 15,
+                        ),
+
+                        // DESKRIPSI
+                        _card(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Deskripsi',
+                                style: _titleStyle(),
+                              ),
+                              const SizedBox(
+                                height: 10,
+                              ),
+                              Text(
+                                orderData!['description']?.toString() ??
+                                    'Tidak ada deskripsi.',
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // ===== BATALKAN PESANAN (hanya client, belum bayar) =====
+                        if (!widget.isTalent &&
+                            (orderData!['payment_status']?.toString() ==
+                                    'unpaid' ||
+                                orderData!['payment_status']?.toString() ==
+                                    'failed')) ...[
+                          const SizedBox(
+                            height: 15,
+                          ),
+                          _card(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(
+                                        6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(
+                                          8,
                                         ),
                                       ),
+                                      child: Icon(
+                                        Icons.cancel_outlined,
+                                        color: Colors.red.shade400,
+                                        size: 18,
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 8,
+                                    ),
+                                    Text(
+                                      'Batalkan Pesanan',
+                                      style: _titleStyle(),
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
-
-                          ],
-                        ),
-                      ),
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Text(
+                                  'Pesanan yang dibatalkan tidak dapat dipulihkan kembali.',
+                                  style: TextStyle(
+                                    color: Colors.grey[500],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(
+                                  height: 14,
+                                ),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 46,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red.shade600,
+                                      side: BorderSide(
+                                        color: Colors.red.shade300,
+                                        width: 1.5,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          14,
+                                        ),
+                                      ),
+                                    ),
+                                    onPressed: _isProcessingPayment
+                                        ? null
+                                        : () => _handleCancelOrder(),
+                                    icon: Icon(
+                                      Icons.delete_outline,
+                                      size: 18,
+                                      color: Colors.red.shade600,
+                                    ),
+                                    label: Text(
+                                      'Batalkan Pesanan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red.shade600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
-
-                    // ===== BOTTOM BUTTON =====
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: Colors.white,
-                      child: _buildBottomButton(),
-                    ),
-                  ],
+                  ),
                 ),
+
+                // BOTTOM BUTTON
+                Container(
+                  padding: const EdgeInsets.all(
+                    16,
+                  ),
+                  color: Colors.white,
+                  child: _buildBottomButton(),
+                ),
+              ],
+            ),
     );
   }
 
-  // ===== BOTTOM BUTTON DINAMIS =====
+  // BOTTOM BUTTON DINAMIS
   Widget _buildBottomButton() {
     final paymentStatus =
-        orderData?['payment_status']?.toString() ?? 'unpaid';
+        orderData?['payment_status']?.toString() ??
+        'unpaid';
     final workStatus =
-        orderData?['work_status']?.toString() ?? widget.status;
+        orderData?['work_status']?.toString() ??
+        widget.status;
 
-    // CLIENT: belum bayar
-    if (!widget.isTalent && paymentStatus == 'unpaid') {
-      return SizedBox(
-        width: double.infinity,
-        height: 50,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-           backgroundColor: const Color(0xFF1A237E),
-           padding: const EdgeInsets.symmetric(vertical: 12),
-           shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14)),
-          ),
-          onPressed: _isProcessingPayment ? null : _handlePayment,
-          child: _isProcessingPayment
-              ? _loading()
-              : const Text('Bayar Sekarang',
-                  style: TextStyle(color: Colors.white)),
-        ),
-      );
-    }
-
-    // CLIENT: menunggu konfirmasi pembayaran
-    if (!widget.isTalent && paymentStatus == 'unpaid') {
-    return Column(
-      mainAxisSize: MainAxisSize.min, // Agar column pas dengan ukuran kontennya
-      children: [
-        // 1. TOMBOL UTAMA: BAYAR SEKARANG (Solid Blue)
-        SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1A237E),
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
-              elevation: 0,
-            ),
-            onPressed: _isProcessingPayment ? null : _handlePayment,
-            child: _isProcessingPayment
-                ? _loading()
-                : const Text(
-                    'Bayar Sekarang',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+    // CLIENT: menunggu konfirmasi pembayaran (belum bayar)
+    if (!widget.isTalent &&
+        paymentStatus ==
+            'unpaid') {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(
+                  0xFF1A237E,
+                ),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    14,
                   ),
-          ),
-        ),
-        
-        const SizedBox(height: 8), // Jarak tipis antar tombol sesuai kaidah UX
-
-        // 2. TOMBOL SEKUNDER: BATALKAN PESANAN (Text Button / Plain Red)
-        SizedBox(
-          width: double.infinity,
-          height: 44, // Sedikit lebih tipis dari tombol utama
-          child: TextButton(
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.red.shade700, // Warna merah penanda aksi destruktif
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14)),
+                ),
+                elevation: 0,
+              ),
+              onPressed: _isProcessingPayment
+                  ? null
+                  : _handlePayment,
+              child: _isProcessingPayment
+                  ? _loading()
+                  : const Text(
+                      'Bayar Sekarang',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
             ),
-            onPressed: _isProcessingPayment ? null : _handleCancelOrder, // Buat fungsi handling pembatalannya
-            child: const Text(
-              'Batalkan Pesanan',
-              style: TextStyle(
-                fontWeight: FontWeight.bold, 
-                fontSize: 14,
+          ),
+
+          const SizedBox(
+            height: 8,
+          ),
+
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    14,
+                  ),
+                ),
+              ),
+              onPressed: _isProcessingPayment
+                  ? null
+                  : _handleCancelOrder,
+              child: const Text(
+                'Batalkan Pesanan',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    }
 
     // CLIENT: bayar gagal
-    if (!widget.isTalent && paymentStatus == 'failed') {
+    if (!widget.isTalent &&
+        paymentStatus ==
+            'failed') {
       return SizedBox(
         width: double.infinity,
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25)),
+              borderRadius: BorderRadius.circular(
+                25,
+              ),
+            ),
           ),
-          onPressed: _isProcessingPayment ? null : _handlePayment,
-          child: const Text('Coba Bayar Lagi',
-              style: TextStyle(color: Colors.white)),
+          onPressed: _isProcessingPayment
+              ? null
+              : _handlePayment,
+          child: const Text(
+            'Coba Bayar Lagi',
+            style: TextStyle(
+              color: Colors.white,
+            ),
+          ),
         ),
       );
     }
 
     // CLIENT: talent sudah submit hasil
-    if (!widget.isTalent && workStatus == 'done') {
+    if (!widget.isTalent &&
+        workStatus ==
+            'done') {
       return Row(
         children: [
           Expanded(
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25)),
+                  borderRadius: BorderRadius.circular(
+                    25,
+                  ),
+                ),
               ),
-              onPressed: _isProcessingPayment ? null : _handleRevisi,
-              child: const Text('Ajukan Revisi'),
+              onPressed: _isProcessingPayment
+                  ? null
+                  : _handleRevisi,
+              child: const Text(
+                'Ajukan Revisi',
+              ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(
+            width: 10,
+          ),
           Expanded(
             child: ElevatedButton(
               style: _blueButton(),
-              onPressed: _isProcessingPayment ? null : _handleTerimaHasil,
+              onPressed: _isProcessingPayment
+                  ? null
+                  : _handleTerimaHasil,
               child: _isProcessingPayment
                   ? _loading()
-                  : const Text('Terima Hasil',
-                      style: TextStyle(color: Colors.white)),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // CLIENT: order selesai
-    if (!widget.isTalent && workStatus == 'accepted') {
-      final isReviewed = orderData!['is_reviewed'] == true;
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green[200]!),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.check_circle, color: Colors.green),
-                SizedBox(width: 8),
-                Text('Order Selesai ✓',
-                    style: TextStyle(
-                        color: Colors.green, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
-          if (!isReviewed) ...[
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFFB800),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                ),
-                onPressed: () {
-                  final talentId =
-                      orderData!['talent_id']?.toString() ?? '';
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ReviewPage(
-                        orderId    : widget.orderId,
-                        talentId   : talentId,
-                        talentName : otherUserData?['name']?.toString() ?? 'Talent',
-                        serviceName: orderData!['service_name']?.toString() ?? '',
+                  : const Text(
+                      'Terima Hasil',
+                      style: TextStyle(
+                        color: Colors.white,
                       ),
                     ),
-                  ).then((_) => _fetchOrderDetails());
-                },
-                icon: const Icon(Icons.star, color: Colors.white),
-                label: const Text('Beri Rating Talent',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
             ),
-          ],
+          ),
         ],
       );
     }
 
-    // TALENT: menunggu pembayaran client
+    // CLIENT: order selesai (TOMBOL ULASAN DI SINI)
+    if (!widget.isTalent &&
+        workStatus ==
+            'accepted') {
+      bool isReviewed =
+          orderData!['is_reviewed'] ??
+          false;
+
+      return SizedBox(
+        width: double.infinity,
+        height: 52,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: isReviewed
+                ? Colors.grey[300]
+                : const Color(
+                    0xFF1E3A8A,
+                  ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                14,
+              ),
+            ),
+            elevation: 0,
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (
+                      context,
+                    ) => ReviewPage(
+                      orderId: orderData!['id'],
+                      talentId: orderData!['talent_id'],
+                      talentName:
+                          orderData!['talent_name'] ??
+                          otherUserData?['name'] ??
+                          'Talent',
+                      serviceName: orderData!['service_name'],
+                    ),
+              ),
+            ).then(
+              (
+                _,
+              ) {
+                _fetchOrderDetails();
+              },
+            );
+          },
+          child: Text(
+            isReviewed
+                ? 'Lihat Ulasan'
+                : 'Beri Ulasan',
+            style: TextStyle(
+              color: isReviewed
+                  ? Colors.black87
+                  : Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // TALENT: menunggu pembayaran client + TOMBOL BATAL
     if (widget.isTalent &&
         (paymentStatus == 'unpaid' || paymentStatus == 'pending')) {
       return Container(
@@ -1287,51 +2282,64 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
           children: [
             Icon(Icons.hourglass_empty, color: Colors.orange, size: 18),
             SizedBox(width: 8),
-            Text('Menunggu Pembayaran Client',
-                style: TextStyle(color: Colors.orange)),
+            Text(
+              'Menunggu Pembayaran Client',
+              style: TextStyle(color: Colors.orange),
+            ),
           ],
         ),
       );
     }
 
-    // TALENT: sedang mengerjakan → tombol Submit Hasil
-    if (widget.isTalent && workStatus == 'progress') {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2C4A6E),
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25)),
-          ),
-          onPressed: _isSubmitting ? null : _showSubmitResultDialog,
-          icon: _isSubmitting
-              ? const SizedBox(
-                  height: 18, width: 18,
-                  child: CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2))
-              : const Icon(Icons.upload_file, color: Colors.white, size: 18),
-          label: Text(
-            _isSubmitting ? 'Mengirim...' : 'Submit Hasil',
-            style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 15),
+    // TALENT: sedang mengerjakan → tombol Submit Hasil + TOMBOL BATAL
+  if (widget.isTalent && workStatus == 'progress') {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF2C4A6E),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
           ),
         ),
-      );
-    }
+        onPressed: _isSubmitting ? null : _showSubmitResultDialog,
+        icon: _isSubmitting
+            ? const SizedBox(
+                height: 18, width: 18,
+                child: CircularProgressIndicator(
+                  color: Colors.white, strokeWidth: 2),
+              )
+            : const Icon(Icons.upload_file, color: Colors.white, size: 18),
+        label: Text(
+          _isSubmitting ? 'Mengirim...' : 'Submit Hasil',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 15,
+          ),
+        ),
+      ),
+    );
+  }
 
     // TALENT: sudah submit, menunggu konfirmasi client
-    if (widget.isTalent && workStatus == 'done') {
+    if (widget.isTalent &&
+        workStatus ==
+            'done') {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
           color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.blue[200]!),
+          borderRadius: BorderRadius.circular(
+            12,
+          ),
+          border: Border.all(
+            color: Colors.blue[200]!,
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1339,19 +2347,36 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
             const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.pending_actions, color: Colors.blue, size: 18),
-                SizedBox(width: 8),
-                Text('Menunggu Konfirmasi Client',
-                    style: TextStyle(color: Colors.blue)),
+                Icon(
+                  Icons.pending_actions,
+                  color: Colors.blue,
+                  size: 18,
+                ),
+                SizedBox(
+                  width: 8,
+                ),
+                Text(
+                  'Menunggu Konfirmasi Client',
+                  style: TextStyle(
+                    color: Colors.blue,
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(
+              height: 8,
+            ),
             TextButton(
               onPressed: _showSubmitResultDialog,
-              child: const Text('Perbarui Hasil',
-                  style: TextStyle(
-                      color: Color(0xFF2C4A6E),
-                      decoration: TextDecoration.underline)),
+              child: const Text(
+                'Perbarui Hasil',
+                style: TextStyle(
+                  color: Color(
+                    0xFF2C4A6E,
+                  ),
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ],
         ),
@@ -1359,23 +2384,79 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     }
 
     // TALENT: order selesai
-    if (widget.isTalent && workStatus == 'accepted') {
+    if (widget.isTalent &&
+        workStatus ==
+            'accepted') {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
           color: Colors.green[50],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.green[200]!),
+          borderRadius: BorderRadius.circular(
+            12,
+          ),
+          border: Border.all(
+            color: Colors.green[200]!,
+          ),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.check_circle, color: Colors.green),
-            SizedBox(width: 8),
-            Text('Order Selesai ✓',
-                style: TextStyle(
-                    color: Colors.green, fontWeight: FontWeight.bold)),
+            Icon(
+              Icons.check_circle,
+              color: Colors.green,
+            ),
+            SizedBox(
+              width: 8,
+            ),
+            Text(
+              'Order Selesai ✓',
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Status Dibatalkan (Jika diperlukan untuk client/talent)
+    if (workStatus ==
+        'cancelled') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(
+          vertical: 14,
+        ),
+        decoration: BoxDecoration(
+          color: Colors.red[50],
+          borderRadius: BorderRadius.circular(
+            12,
+          ),
+          border: Border.all(
+            color: Colors.red[200]!,
+          ),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.cancel,
+              color: Colors.red,
+            ),
+            SizedBox(
+              width: 8,
+            ),
+            Text(
+              'Order Dibatalkan',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
       );
@@ -1384,24 +2465,39 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     return const SizedBox();
   }
 
-  // ===== COMPONENTS =====
+  // COMPONENTS
   Widget _loading() => const SizedBox(
-        height: 20, width: 20,
-        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-      );
+    height: 20,
+    width: 20,
+    child: CircularProgressIndicator(
+      color: Colors.white,
+      strokeWidth: 2,
+    ),
+  );
 
-  Widget _card({required Widget child}) {
+  Widget _card({
+    required Widget child,
+  }) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(
+        16,
+      ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(
+          15,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(
+              0.05,
+            ),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(
+              0,
+              4,
+            ),
           ),
         ],
       ),
@@ -1409,22 +2505,34 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     );
   }
 
-  Widget _row(String title, String value) {
+  Widget _row(
+    String title,
+    String value,
+  ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        vertical: 6,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             flex: 2,
-            child: Text(title, style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: Colors.grey[600],
+              ),
+            ),
           ),
           Expanded(
             flex: 3,
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -1432,15 +2540,24 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
     );
   }
 
-  TextStyle _titleStyle() =>
-      const TextStyle(fontWeight: FontWeight.bold, fontSize: 14);
+  TextStyle _titleStyle() => const TextStyle(
+    fontWeight: FontWeight.bold,
+    fontSize: 14,
+  );
 
   ButtonStyle _orangeButton() => ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFFE68C3A),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14)),
-      );
+    backgroundColor: const Color(
+      0xFFE68C3A,
+    ),
+    padding: const EdgeInsets.symmetric(
+      vertical: 12,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(
+        14,
+      ),
+    ),
+  );
 
   ButtonStyle _blueButton() => ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF2C4A6E),
@@ -1492,23 +2609,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
           ),
         ],
       ),
-    );
-
-    if (confirm != true) return;
-
-    setState(() => _isProcessingPayment = true);
-    try {
-      await supabase.from('orders').update({
-        'payment_status': 'cancelled',
-        'work_status'   : 'cancelled',
-      }).eq('id', widget.orderId);
-
-      _showSnackBar('Pesanan berhasil dibatalkan.');
-      if (mounted) Navigator.pop(context);
-    } catch (e) {
-      _showSnackBar('Gagal membatalkan pesanan: $e', isError: true);
-    } finally {
-      if (mounted) setState(() => _isProcessingPayment = false);
-    }
-  }
+    ),
+  );
 }

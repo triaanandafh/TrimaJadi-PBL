@@ -4,6 +4,7 @@ import '../models/user_model.dart';
 import 'service_list_page.dart';
 import 'service_detail_page.dart';
 import 'search_service_page.dart';
+import 'notification_page.dart';
 
 class HomepageClient extends StatefulWidget {
   final VoidCallback onTapSearch;
@@ -28,31 +29,26 @@ class _HomepageClientState extends State<HomepageClient> {
       'icon': Icons.palette,
       'bgColor': const Color(0xFFE3F2FD),
       'iconColor': Colors.blue,
-      'id': '34b4a9b2-2b77-4ce3-afc9-7a119212d6b3',
     },
     'Web & Pemrograman': {
       'icon': Icons.code,
       'bgColor': const Color(0xFFFFF3E0),
       'iconColor': Color(0xFFE68C3A),
-      'id': '631f54e5-5a7f-4626-8d11-e8a75efc1ac7',
     },
     'Edukasi': {
       'icon': Icons.school,
       'bgColor': const Color(0xFFF3E5F5),
       'iconColor': Colors.purple,
-      'id': 'ae281474-8aec-4ae5-94d8-edbaba273e6d',
     },
-    'Visual dan Audio': {
+    'Visual & Audio': {
       'icon': Icons.music_note,
       'bgColor': const Color(0xFFE0F2F1),
       'iconColor': Colors.teal,
-      'id': '6b09ddff-ae2e-437c-850b-b552a8ea3a0b',
     },
     'Penulisan & Penerjemahan': {
       'icon': Icons.translate,
       'bgColor': const Color(0xFFE8F5E9),
       'iconColor': Colors.green,
-      'id': 'c85598f9-c7f1-4127-8a13-b509a08a65c0',
     },
   };
 
@@ -136,7 +132,7 @@ class _HomepageClientState extends State<HomepageClient> {
   String _shortLabel(String name) {
     if (name == 'Web & Pemrograman') return 'Web & Pemr\nograman';
     if (name == 'Penulisan & Penerjemahan') return 'Penulisan';
-    if (name == 'Visual dan Audio') return 'Visual &\nAudio';
+    if (name == 'Visual & Audio') return 'Visual &\nAudio';
     return name;
   }
 
@@ -206,7 +202,16 @@ class _HomepageClientState extends State<HomepageClient> {
                                 ),
                               ],
                             ),
-                            Container(
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationPage(),
+                                  ),
+                                );
+                              },
+                            child: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: const BoxDecoration(
                                 color: Colors.white,
@@ -214,6 +219,7 @@ class _HomepageClientState extends State<HomepageClient> {
                               ),
                               child: const Icon(Icons.notifications_none,
                                   color: Color(0xFFE68C3A), size: 26),
+                              ),
                             ),
                           ],
                         ),
@@ -284,7 +290,6 @@ class _HomepageClientState extends State<HomepageClient> {
                                   'icon': Icons.category,
                                   'bgColor': const Color(0xFFE3F2FD),
                                   'iconColor': Colors.blue,
-                                  'id': cat['id'],
                                 };
                                 return _buildCategoryItem(
                                   _shortLabel(name),

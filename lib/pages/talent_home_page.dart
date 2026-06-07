@@ -7,7 +7,6 @@ import 'detail_order_page.dart';
 import '../models/user_model.dart';
 
 class HomepageTalent extends StatefulWidget {
-  /// Callback dipanggil saat user tap "Lihat Semua" → navigasi ke tab Aktivitas
   final VoidCallback? onViewAll;
 
   const HomepageTalent({super.key, this.onViewAll});
@@ -23,6 +22,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
   int  _totalOrder      = 0;
   int  _totalPendapatan = 0;
   List<Map<String, dynamic>> _recentOrders = [];
+
+  bool get _isGuest => !UserData.isVerified;
 
   @override
   void initState() {
@@ -48,7 +49,9 @@ class _HomepageTalentState extends State<HomepageTalent> {
       final pendapatan = list
           .where((o) => o['work_status'] == 'accepted')
           .fold<int>(
-              0, (sum, o) => sum + ((o['talent_earning'] as num?)?.toInt() ?? 0));
+              0,
+              (sum, o) =>
+                  sum + ((o['talent_earning'] as num?)?.toInt() ?? 0));
       final recent = list.take(5).toList();
 
       setState(() {
@@ -72,6 +75,56 @@ class _HomepageTalentState extends State<HomepageTalent> {
     return buffer.toString();
   }
 
+  void _showGuestDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'Akun Belum Diverifikasi',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.orange.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.lock_clock_outlined,
+                  color: Colors.orange.shade700, size: 40),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Kamu dalam mode tamu. Fitur ini hanya tersedia setelah akun diverifikasi oleh admin.',
+              textAlign: TextAlign.center,
+              style:
+                  TextStyle(color: Colors.grey, fontSize: 13, height: 1.5),
+            ),
+          ],
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1A237E),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+            ),
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Mengerti',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,6 +138,10 @@ class _HomepageTalentState extends State<HomepageTalent> {
             children: [
               _buildHeader(context),
               const SizedBox(height: 60),
+
+              // ── BANNER GUEST MODE ──
+              if (_isGuest) _buildGuestBanner(),
+
               _buildOnboardingCard(context),
               const SizedBox(height: 25),
               _buildRecentActivityHeader(context),
@@ -97,29 +154,74 @@ class _HomepageTalentState extends State<HomepageTalent> {
     );
   }
 
+  // ===== GUEST BANNER =====
+  Widget _buildGuestBanner() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(25, 0, 25, 20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.orange.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.lock_clock_outlined,
+                color: Colors.orange.shade700, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Akun Belum Diverifikasi',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color     : Colors.orange.shade800,
+                      fontSize  : 14,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Kamu dalam mode tamu. Fitur tambah jasa & terima order akan aktif setelah akun diverifikasi admin.',
+                    style: TextStyle(
+                        color   : Colors.orange.shade700,
+                        fontSize: 12,
+                        height  : 1.4),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ===== HEADER =====
   Widget _buildHeader(BuildContext context) {
-  return Stack(
-    clipBehavior: Clip.none,
-    children: [
-      // 1. Bagian Biru Header
-      Container(
-        height: 220,
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF1A237E), // Deep Blue (Profil kamu)
-              Color(0xFF283593), // Indigo yang lebih terang
-              Color(0xFF3949AB), // Light Indigo (Orderan kamu)
-            ],
-            stops: [0.0, 0.5, 1.0],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(40),
-            bottomRight: Radius.circular(40),
-          ),
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          height: 220,
+          width : double.infinity,
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFF1A237E),
+                Color(0xFF283593),
+                Color(0xFF3949AB),
+              ],
+              stops: [0.0, 0.5, 1.0],
+              begin: Alignment.topLeft,
+              end  : Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.only(
+              bottomLeft : Radius.circular(40),
+              bottomRight: Radius.circular(40),
+            ),
           ),
           child: SafeArea(
             child: Padding(
@@ -133,7 +235,7 @@ class _HomepageTalentState extends State<HomepageTalent> {
                       Row(
                         children: [
                           CircleAvatar(
-                            radius: 22,
+                            radius         : 22,
                             backgroundColor: Colors.white24,
                             backgroundImage: UserData.avatarUrl.isNotEmpty
                                 ? NetworkImage(UserData.avatarUrl)
@@ -147,8 +249,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
                           Text(
                             'Halo, ${UserData.name}!',
                             style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
+                              color     : Colors.white,
+                              fontSize  : 20,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -177,8 +279,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
                     'Orderan Kamu',
                     style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.white),
+                        fontSize  : 18,
+                        color     : Colors.white),
                   ),
                 ],
               ),
@@ -189,20 +291,21 @@ class _HomepageTalentState extends State<HomepageTalent> {
         // Card ringkasan
         Positioned(
           bottom: -35,
-          left: 25,
-          right: 25,
+          left  : 25,
+          right : 25,
           child: Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: const Color(0xFF94B6EF).withOpacity(0.5), width: 1.5),
+              color        : Colors.white,
+              borderRadius : BorderRadius.circular(20),
+              border       : Border.all(
+                  color: const Color(0xFF94B6EF).withOpacity(0.5),
+                  width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
+                  color     : Colors.black.withOpacity(0.08),
                   blurRadius: 10,
-                  offset: const Offset(0, 4),
+                  offset    : const Offset(0, 4),
                 ),
               ],
             ),
@@ -210,7 +313,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
                 ? const Center(
                     child: Padding(
                       padding: EdgeInsets.all(8),
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      child:
+                          CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
                 : Row(
@@ -219,18 +323,18 @@ class _HomepageTalentState extends State<HomepageTalent> {
                         Icons.account_balance_wallet_outlined,
                         'Pendapatan',
                         'Rp ${_formatRupiah(_totalPendapatan)}',
-                        bgColor: const Color(0xFFFFF7ED),
+                        bgColor  : const Color(0xFFFFF7ED),
                         iconColor: const Color(0xFFEA580C),
                       ),
                       Container(
                           height: 45,
-                          width: 1,
-                          color: const Color(0xFF94B6EF).withOpacity(0.3)),
+                          width : 1,
+                          color : const Color(0xFF94B6EF).withOpacity(0.3)),
                       _buildSummaryItem(
                         Icons.description_outlined,
                         'Total Order',
                         '$_totalOrder',
-                        bgColor: const Color(0xFFEFF6FF),
+                        bgColor  : const Color(0xFFEFF6FF),
                         iconColor: const Color(0xFF2563EB),
                       ),
                     ],
@@ -243,8 +347,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
 
   Widget _buildSummaryItem(
     IconData icon,
-    String label,
-    String value, {
+    String   label,
+    String   value, {
     required Color bgColor,
     required Color iconColor,
   }) {
@@ -253,10 +357,10 @@ class _HomepageTalentState extends State<HomepageTalent> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding   : const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(12),
+              color        : bgColor,
+              borderRadius : BorderRadius.circular(12),
             ),
             child: Icon(icon, color: iconColor, size: 24),
           ),
@@ -267,15 +371,15 @@ class _HomepageTalentState extends State<HomepageTalent> {
               children: [
                 Text(label,
                     style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                        fontSize  : 12,
+                        color     : Colors.grey[600],
                         fontWeight: FontWeight.w500)),
                 const SizedBox(height: 4),
                 Text(value,
                     style: const TextStyle(
-                        fontSize: 16,
+                        fontSize  : 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF213E60)),
+                        color     : Color(0xFF213E60)),
                     overflow: TextOverflow.ellipsis),
               ],
             ),
@@ -290,11 +394,11 @@ class _HomepageTalentState extends State<HomepageTalent> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 25),
       child: Container(
-        padding: const EdgeInsets.all(22),
+        padding   : const EdgeInsets.all(22),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(15),
-          border: Border.all(
+          color        : Colors.white,
+          borderRadius : BorderRadius.circular(15),
+          border       : Border.all(
               color: const Color(0xFF94B6EF).withOpacity(0.2)),
         ),
         child: Column(
@@ -306,13 +410,28 @@ class _HomepageTalentState extends State<HomepageTalent> {
                   fontSize: 15, color: Color(0xFF213E60), height: 1.4),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const AddServicePage()),
-              ),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Blokir jika guest
+                if (_isGuest) {
+                  _showGuestDialog();
+                  return;
+                }
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const AddServicePage()),
+                );
+              },
+              icon : _isGuest
+                  ? const Icon(Icons.lock, size: 16, color: Colors.white)
+                  : const SizedBox.shrink(),
+              label: const Text('Tambah Jasa',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE68C3A),
+                backgroundColor: _isGuest
+                    ? Colors.grey.shade400
+                    : const Color(0xFFE68C3A),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                     horizontal: 25, vertical: 12),
@@ -320,8 +439,6 @@ class _HomepageTalentState extends State<HomepageTalent> {
                     borderRadius: BorderRadius.circular(25)),
                 elevation: 0,
               ),
-              child: const Text('Tambah Jasa',
-                  style: TextStyle(fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -339,9 +456,9 @@ class _HomepageTalentState extends State<HomepageTalent> {
           const Text(
             'Aktivitas Terakhir',
             style: TextStyle(
-                fontSize: 18,
+                fontSize  : 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF213E60)),
+                color     : Color(0xFF213E60)),
           ),
           TextButton(
             onPressed: widget.onViewAll,
@@ -383,9 +500,9 @@ class _HomepageTalentState extends State<HomepageTalent> {
 
     return ListView.builder(
       shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 25),
-      itemCount: _recentOrders.length,
+      physics   : const NeverScrollableScrollPhysics(),
+      padding   : const EdgeInsets.symmetric(horizontal: 25),
+      itemCount : _recentOrders.length,
       itemBuilder: (ctx, index) {
         final order         = _recentOrders[index];
         final workStatus    = order['work_status']    ?? 'pending';
@@ -408,6 +525,10 @@ class _HomepageTalentState extends State<HomepageTalent> {
         } else if (workStatus == 'accepted') {
           statusLabel = 'Selesai';
           statusColor = Colors.green;
+        } else if (workStatus == 'cancelled' ||
+            paymentStatus == 'cancelled') {
+          statusLabel = 'Dibatalkan';
+          statusColor = Colors.red;
         } else {
           statusLabel = workStatus;
           statusColor = Colors.grey;
@@ -415,7 +536,7 @@ class _HomepageTalentState extends State<HomepageTalent> {
 
         return OrderCard(
           title      : serviceName,
-          subTitle   : clientName,   // ← nama client, bukan tanggal
+          subTitle   : clientName,
           status     : statusLabel,
           statusColor: statusColor,
           onTap: () async {
