@@ -12,11 +12,11 @@ class LoginTalentPage extends StatefulWidget {
 }
 
 class _LoginTalentPageState extends State<LoginTalentPage> {
-  final emailController = TextEditingController();
+  final emailController    = TextEditingController();
   final passwordController = TextEditingController();
 
   bool obscurePassword = true;
-  bool isLoading = false;
+  bool isLoading       = false;
 
   @override
   void dispose() {
@@ -29,9 +29,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
     if (emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Email dan password wajib diisi"),
-        ),
+        const SnackBar(content: Text("Email dan password wajib diisi")),
       );
       return;
     }
@@ -40,61 +38,49 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
       setState(() => isLoading = true);
 
       bool success = await AuthService.login(
-        email: emailController.text.trim(),
+        email   : emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      if (!success) {
-        throw Exception("Login gagal");
-      }
+      if (!success) throw Exception("Login gagal");
 
       final role = await AuthService.getCurrentRole();
 
       if (role != "talent") {
         await AuthService.logout();
-
         if (!context.mounted) return;
-
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Akun ini bukan talent"),
-          ),
+          const SnackBar(content: Text("Akun ini bukan talent")),
         );
         return;
       }
 
       final userData = await AuthService.getCurrentUserData();
-      UserData.name = userData?['name'] ?? '';
-      UserData.email = userData?['email'] ?? '';
-      UserData.role = userData?['role'] ?? '';
-      UserData.avatarUrl = userData?['avatar_url'] ?? '';
+      UserData.name       = userData?['name']        ?? '';
+      UserData.email      = userData?['email']       ?? '';
+      UserData.role       = userData?['role']        ?? '';
+      UserData.avatarUrl  = userData?['avatar_url']  ?? '';
+      UserData.isVerified = userData?['is_verified'] == true; // ← simpan status verifikasi
 
       if (!context.mounted) return;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (context) => const MainScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const MainScreen()),
       );
     } catch (e) {
       if (!context.mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-        ),
+        SnackBar(content: Text(e.toString())),
       );
     } finally {
-      if (mounted) {
-        setState(() => isLoading = false);
-      }
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   Widget buildInputField({
-    required String label,
-    required IconData icon,
+    required String               label,
+    required IconData             icon,
     required TextEditingController controller,
     bool isPassword = false,
   }) {
@@ -110,11 +96,8 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
             prefixIcon: Icon(icon, color: Colors.grey),
             suffixIcon: isPassword
                 ? IconButton(
-                    onPressed: () {
-                      setState(() {
-                        obscurePassword = !obscurePassword;
-                      });
-                    },
+                    onPressed: () =>
+                        setState(() => obscurePassword = !obscurePassword),
                     icon: Icon(
                       obscurePassword
                           ? Icons.visibility_outlined
@@ -138,9 +121,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
   Future<void> _goToRegister() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const RegisterTalentPage(),
-      ),
+      MaterialPageRoute(builder: (context) => const RegisterTalentPage()),
     );
 
     if (!context.mounted) return;
@@ -148,31 +129,21 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
     if (result == true) {
       showDialog(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              "Berhasil",
-              textAlign: TextAlign.center,
-            ),
-            content: const Text(
-              "Akun berhasil terdaftar",
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK"),
-                ),
+        builder: (context) => AlertDialog(
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20)),
+          title: const Text("Berhasil", textAlign: TextAlign.center),
+          content:
+              const Text("Akun berhasil terdaftar", textAlign: TextAlign.center),
+          actions: [
+            Center(
+              child: TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("OK"),
               ),
-            ],
-          );
-        },
+            ),
+          ],
+        ),
       );
     }
   }
@@ -183,19 +154,18 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: ConstrainedBox(
-          constraints: BoxConstraints(
-            minHeight: MediaQuery.of(context).size.height,
-          ),
+          constraints:
+              BoxConstraints(minHeight: MediaQuery.of(context).size.height),
           child: IntrinsicHeight(
             child: Column(
               children: [
                 Container(
                   width: double.infinity,
                   padding: EdgeInsets.only(
-                    top: MediaQuery.of(context).padding.top + 40,
+                    top   : MediaQuery.of(context).padding.top + 40,
                     bottom: 40,
-                    left: 24,
-                    right: 24,
+                    left  : 24,
+                    right : 24,
                   ),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
@@ -209,7 +179,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                       end: Alignment.bottomRight,
                     ),
                     borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(35),
+                      bottomLeft : Radius.circular(35),
                       bottomRight: Radius.circular(35),
                     ),
                   ),
@@ -218,16 +188,16 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                       Text(
                         'Masuk sebagai Talent',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
+                            color: Colors.white,
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold),
                       ),
                       SizedBox(height: 8),
                       Text(
                         'Masuk untuk melihat pesanan dan pekerjaanmu',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        style:
+                            TextStyle(color: Colors.white70, fontSize: 13),
                       ),
                     ],
                   ),
@@ -238,14 +208,14 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                   child: Column(
                     children: [
                       buildInputField(
-                        label: "E-mail",
-                        icon: Icons.email_outlined,
+                        label     : "E-mail",
+                        icon      : Icons.email_outlined,
                         controller: emailController,
                       ),
                       const SizedBox(height: 20),
                       buildInputField(
-                        label: "Password",
-                        icon: Icons.lock_outline,
+                        label     : "Password",
+                        icon      : Icons.lock_outline,
                         controller: passwordController,
                         isPassword: true,
                       ),
@@ -258,7 +228,7 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                   child: Column(
                     children: [
                       SizedBox(
-                        width: double.infinity,
+                        width : double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           onPressed: isLoading ? null : _login,
@@ -268,7 +238,8 @@ class _LoginTalentPageState extends State<LoginTalentPage> {
                                 borderRadius: BorderRadius.circular(30)),
                           ),
                           child: isLoading
-                              ? const CircularProgressIndicator(color: Colors.white)
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white)
                               : const Text("Masuk",
                                   style: TextStyle(color: Colors.white)),
                         ),
