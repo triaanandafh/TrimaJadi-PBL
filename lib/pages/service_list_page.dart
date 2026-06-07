@@ -37,7 +37,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
             id, title, description, image_url, is_featured, featured_order,
             users(id, name, avatar_url, is_verified),
             service_packages(package_type, price, package_description)
-          ''') // ← tambah id dan is_verified di users
+          ''')
           .eq('category_id', widget.categoryId)
           .or('title.ilike.%$_searchQuery%,talent_name.ilike.%$_searchQuery%')
           .order('featured_order', ascending: true, nullsFirst: false)
@@ -61,8 +61,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
     if (_searchQuery.isEmpty) return _services;
     return _services.where((s) {
       final title = (s['title'] ?? '').toString().toLowerCase();
-      final talentName =
-          (s['users']?['name'] ?? '').toString().toLowerCase();
+      final talentName = (s['users']?['name'] ?? '').toString().toLowerCase();
       return title.contains(_searchQuery.toLowerCase()) ||
           talentName.contains(_searchQuery.toLowerCase());
     }).toList();
@@ -88,7 +87,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
         children: [
           // Header biru
           Container(
-            height: 130,
+            height: 110,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -102,33 +101,47 @@ class _ServiceListPageState extends State<ServiceListPage> {
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(40),
-                bottomRight: Radius.circular(40),
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
               ),
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(10, 10, 20, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // Tombol Back
                     IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                       style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withOpacity(0.2),
+                        backgroundColor: Colors.white.withOpacity(0.15),
+                        shape: const CircleBorder(),
                       ),
                     ),
-                    const SizedBox(width: 8),
+
+                    // Judul di Tengah
                     Expanded(
-                      child: Text(
-                        widget.categoryName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 15),
+                        child: Text(
+                          widget.categoryName,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                     ),
+
+                    // Spacer dummy agar judul presisi di tengah
+                    const SizedBox(width: 48),
                   ],
                 ),
               ),
@@ -137,7 +150,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
 
           // Konten
           Padding(
-            padding: const EdgeInsets.only(top: 100),
+            padding: const EdgeInsets.only(top: 110),
             child: Column(
               children: [
                 // Search Bar
@@ -156,14 +169,13 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       ],
                     ),
                     child: TextField(
-                      onChanged: (val) =>
-                          setState(() => _searchQuery = val),
+                      onChanged: (val) => setState(() => _searchQuery = val),
                       decoration: const InputDecoration(
                         hintText: "Cari layanan atau nama talent...",
+                        hintStyle: TextStyle(color: Color.fromARGB(255, 187, 187, 187)),
                         prefixIcon: Icon(Icons.search, color: Colors.grey),
                         border: InputBorder.none,
-                        contentPadding:
-                            EdgeInsets.symmetric(vertical: 14),
+                        contentPadding: EdgeInsets.symmetric(vertical: 14),
                       ),
                     ),
                   ),
@@ -175,26 +187,20 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       ? const Center(child: CircularProgressIndicator())
                       : _filteredServices.isEmpty
                           ? const Center(
-                              child: Text(
-                                  'Belum ada layanan di kategori ini'))
+                              child: Text('Belum ada layanan di kategori ini'))
                           : RefreshIndicator(
                               onRefresh: _fetchServices,
                               child: ListView.builder(
-                                padding: const EdgeInsets.fromLTRB(
-                                    20, 5, 20, 20),
+                                padding:
+                                    const EdgeInsets.fromLTRB(20, 5, 20, 20),
                                 itemCount: _filteredServices.length,
                                 itemBuilder: (context, index) {
-                                  final service =
-                                      _filteredServices[index];
-                                  final packages = service[
-                                          'service_packages']
-                                      as List<dynamic>? ??
-                                      [];
+                                  final service = _filteredServices[index];
+                                  final packages =
+                                      service['service_packages'] as List<dynamic>? ?? [];
                                   final talentName =
-                                      service['users']?['name'] ??
-                                          'Talent';
-                                  final minPrice =
-                                      _getMinPrice(packages);
+                                      service['users']?['name'] ?? 'Talent';
+                                  final minPrice = _getMinPrice(packages);
                                   final isFeatured =
                                       service['is_featured'] == true;
 
@@ -249,7 +255,7 @@ class _ServiceListPageState extends State<ServiceListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Gambar + badge featured
+            // Gambar
             Stack(
               children: [
                 ClipRRect(
@@ -293,18 +299,23 @@ class _ServiceListPageState extends State<ServiceListPage> {
                             : null,
                       ),
                       const SizedBox(width: 8),
-                      Text(talentName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: Color(0xFF213E60))),
+                      Text(
+                        talentName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: Color(0xFF213E60),
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   // Judul layanan
-                  Text(service['title'] ?? '',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(
+                    service['title'] ?? '',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 15),
+                  ),
                   const SizedBox(height: 8),
                   // Harga + tombol
                   Row(
@@ -313,17 +324,23 @@ class _ServiceListPageState extends State<ServiceListPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('MULAI DARI',
-                              style: TextStyle(
-                                  fontSize: 10,
-                                  color: Colors.grey,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5)),
-                          Text(minPrice,
-                              style: const TextStyle(
-                                  color: Color(0xFFE68C3A),
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15)),
+                          const Text(
+                            'MULAI DARI',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey,
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            minPrice,
+                            style: const TextStyle(
+                              color: Color(0xFFE68C3A),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
                         ],
                       ),
                       ElevatedButton(
@@ -343,9 +360,11 @@ class _ServiceListPageState extends State<ServiceListPage> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 10),
                         ),
-                        child: const Text('Lihat Detail',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: 12)),
+                        child: const Text(
+                          'Lihat Detail',
+                          style:
+                              TextStyle(color: Colors.white, fontSize: 12),
+                        ),
                       ),
                     ],
                   ),

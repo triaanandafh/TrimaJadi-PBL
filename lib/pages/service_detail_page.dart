@@ -74,7 +74,7 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
         children: [
           // ── UBAHAN UTAMA 1: CONTAINER GRADASI LENGKUNG SEPERTI HOMEPAGE & LIST PAGE ──
           Container(
-            height: 90, // Tinggi proposional untuk area detail tanpa search bar melayang
+            height: 110, // Tinggi proposional untuk area detail tanpa search bar melayang
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(

@@ -368,7 +368,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
           _buildCategoryCard(
             context,
             categoryId: '6b09ddff-ae2e-437c-850b-b552a8ea3a0b',
-            title: "Visual dan Audio",
+            title: "Visual & Audio",
             subtitle: "Voice Over, edit video, podcast.",
             icon: Icons.music_note,
             iconBgColor: const Color(0xFFE0F2F1),
