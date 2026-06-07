@@ -6,11 +6,13 @@ import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'chat_list_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
   final String name;
+  final String receiverId;
 
-  const ChatPage({super.key, required this.name});
+  const ChatPage({super.key, required this.name, required this.receiverId});
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -57,6 +59,29 @@ class _ChatPageState extends State<ChatPage> {
   }
 }
 
+String _formatRupiah(dynamic value) {
+    if (value == null) return 'Rp 0';
+    final num amount = value is num ? value : num.tryParse(value.toString()) ?? 0;
+    final str    = amount.toInt().toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+    }
+    return 'Rp $buffer';
+  }
+
+Future<void> openFile(String url) async {
+  final uri = Uri.parse(url);
+
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+  }
+}
+
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
 
@@ -74,7 +99,7 @@ class _ChatPageState extends State<ChatPage> {
       // 1. Insert ke tabel chat_messages (Menggunakan nama kolom 'message_conten')
       final result = await supabase.from('chat_messages').insert({
         'sender_id': myId,
-        'chat_partner_name': widget.name,
+        'receiver_id': widget.receiverId,
         'message_type': 'text',
         'message_content': text, // Menyesuaikan nama kolom database kamu
       })
@@ -83,11 +108,12 @@ class _ChatPageState extends State<ChatPage> {
       // 2. Update status ke tabel chats utama agar Chat List terperbarui
       await supabase.from('chats').upsert({
         'user_id': myId,
+        'partner_id': widget.receiverId,
         'name': widget.name,
         'last_message': text,
         'time': DateTime.now().toIso8601String(),
         'unread': 0,
-      }, onConflict: 'user_id, name');
+      }, onConflict: 'user_id, partner_id');
       print("INSERT BERHASIL");  //DEBUG
     } catch (e) {
       debugPrint('Gagal mengirim pesan: $e');
@@ -95,37 +121,56 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> pickDocument() async {
-  FilePickerResult? result = await FilePicker.pickFiles();
-  if (result != null) {
-      PlatformFile file = result.files.first;
+  FilePickerResult? result = await FilePicker.pickFiles(withData: true,);
+  if (result == null) return;
+
+  final PlatformFile file = result.files.first;
+  if (file.bytes == null) return;
       try {
         final myId = supabase.auth.currentUser?.id;
         if (myId == null) return;
 
+        // 1. Upload ke Supabase Storage
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${file.name}';
+
+        await supabase.storage
+        .from('chat-files')
+        .uploadBinary(
+          'documents/$fileName',
+          file.bytes!,
+        );
+
+    // 2. Ambil public URL
+        final publicUrl = supabase.storage
+        .from('chat-files')
+        .getPublicUrl('documents/$fileName');
+
         // Simpan info dokumen ke tabel chat_messages
         await supabase.from('chat_messages').insert({
           'sender_id': myId,
-          'chat_partner_name': widget.name,
+          'receiver_id': widget.receiverId,
           'message_type': 'file',
-          'message_content': file.name, // Nama file disimpan di sini
-          'file_path': file.path,      // Path lokal file
+          'message_content': jsonEncode({   // ← gabungkan nama + url
+          'name': file.name,
+          'url' : publicUrl,
+        }), // Nama file disimpan di sini
+          // 'file_path': publicUrl,      // Path lokal file
         });
 
         // Perbarui pratinjau di list chat utama
         await supabase.from('chats').upsert({
           'user_id': myId,
+          'partner_id': widget.receiverId,
           'name': widget.name,
           'last_message': '📁 ${file.name}',
           'time': DateTime.now().toIso8601String(),
           'unread': 0,
-        }, onConflict: 'user_id, name');
+        }, onConflict: 'user_id, partner_id');
 
       } catch (e) {
         debugPrint("Gagal mengunggah dokumen: $e");
       }
-    } else {
-      print("User cancel pilih file");
-    }
+    
   }
 
   final ImagePicker _picker = ImagePicker();
@@ -137,23 +182,57 @@ Future<void> pickImage() async {
       final myId = supabase.auth.currentUser?.id;
       if (myId == null) return;
 
-      // Simpan info gambar ke tabel chat_messages
-      await supabase.from('chat_messages').insert({
-        'sender_id': myId,
-        'chat_partner_name': widget.name,
-        'message_type': 'image',
-        'message_content': image.name, // Nama file disimpan di sini
-        'file_path': image.path,      // Path lokal file
-      });
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${image.name}';
+      final fileBytes = await image.readAsBytes();
 
+      await supabase.storage
+        .from('chat-files')
+        .uploadBinary(
+          'images/$fileName',
+          fileBytes,
+          fileOptions: const FileOptions(contentType: 'image/jpeg'),
+        );
+
+    // 2. Ambil public URL
+    final publicUrl = supabase.storage
+        .from('chat-files')
+        .getPublicUrl('images/$fileName');
+        
+      // Simpan info gambar ke tabel chat_messages
+      // await supabase.from('chat_messages').insert({
+      //   'sender_id': myId,
+      //   'partner_id': widget.receiverId,
+      //   // 'chat_partner_name': widget.name,
+      //   'message_type': 'image',
+      //   'message_content': image.name, // Nama file disimpan di sini
+      //   'file_path': image.path,      // Path lokal file
+      // });
+
+      await supabase.from('chat_messages').insert({
+      'sender_id'      : myId,
+      'receiver_id'    : widget.receiverId,  // ✅ fix
+      'message_type'   : 'image',
+      'message_content': publicUrl,          // ✅ simpan URL bukan path lokal
+    });
       // Perbarui pratinjau di list chat utama
-      await supabase.from('chats').upsert({
-        'user_id': myId,
-        'name': widget.name,
-        'last_message': '🖼️ ${image.name}',
-        'time': DateTime.now().toIso8601String(),
-        'unread': 0,
-      }, onConflict: 'user_id, name');
+      // await supabase.from('chats').upsert({
+      //   'user_id': myId,
+      //   'receiver_id': widget.receiverId,
+      //   'name': widget.name,
+      //   'last_message': '🖼️ ${image.name}',
+      //   'time': DateTime.now().toIso8601String(),
+      //   'unread': 0,
+      // }, onConflict: 'user_id, partner_id');
+
+       await supabase.from('chats').upsert({
+      'user_id'     : myId,
+      'partner_id'  : widget.receiverId,
+      'name'        : widget.name,
+      'last_message': '🖼️ Gambar',
+      'time'        : DateTime.now().toIso8601String(),
+      'unread'      : 0,
+    }, onConflict: 'user_id, partner_id');
+
 
     } catch (e) {
       debugPrint("Gagal mengunggah gambar: $e");
@@ -175,18 +254,20 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
 
       await supabase.from('chat_messages').insert({
         'sender_id': myId,
-        'chat_partner_name': widget.name,
+        'receiver_id': widget.receiverId,
+        // 'chat_partner_name': widget.name,
         'message_type': 'offer',
         'message_content': offerJson,
       });
 
       await supabase.from('chats').upsert({
         'user_id': myId,
+        'partner_id': widget.receiverId,
         'name': widget.name,
         'last_message': '💼 Menawarkan Penawaran Khusus',
         'time': DateTime.now().toIso8601String(),
         'unread': 0,
-      }, onConflict: 'user_id, name');
+      }, onConflict: 'user_id, partner_id');
 
     } catch (e) {
       debugPrint('Gagal mengirim kartu penawaran: $e');
@@ -290,14 +371,14 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
           Expanded(
             child: StreamBuilder<List<Map<String, dynamic>>>(
               // Ganti StreamBuilder stream-nya dengan ini
-              stream: Stream.periodic(const Duration(seconds: 2))
-                  .asyncMap((_) => supabase
-                      .from('chat_messages')
-                      .select()
-                      .eq('sender_id', myId)
-                      .eq('chat_partner_name', widget.name)
-                      .order('created_at', ascending: true)
-                  ).map((data) => List<Map<String, dynamic>>.from(data)),
+              stream: supabase
+              .from('chat_messages')
+              .stream(primaryKey: ['id'])
+              .order('created_at', ascending: true)
+              .map((data) => data.where((msg) =>
+                  (msg['sender_id'] == myId && msg['receiver_id'] == widget.receiverId) ||
+                  (msg['sender_id'] == widget.receiverId && msg['receiver_id'] == myId)
+              ).toList()),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -351,15 +432,36 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
                       decoration: BoxDecoration(
                         color: isMe ? const Color(0xFFE68C3A) : Colors.grey[200],
                         borderRadius: BorderRadius.circular(12),
-                        image: msg['file_path'] != null
-                                ? DecorationImage(image: FileImage(File(msg['file_path'])), fit: BoxFit.cover)
-                                : null,
-                        
                       ),
+                      child: Image.network(
+                      msg['message_content'],
+                      fit: BoxFit.cover,
+                    ),
                     ),
                   );
                 } else if (msg['message_type'] == "file") {
-                  bubbleWidget = chatBubble("📄 ${msg['message_content']}", isMe, timeStr: chatTime);
+                  String fileName = 'File';
+                  String fileUrl  = '';
+
+                  try {
+                    // Data baru: format JSON {"name": "...", "url": "..."}
+                    final fileData = jsonDecode(msg['message_content'] ?? '{}');
+                    fileName = fileData['name'] ?? 'File';
+                    fileUrl  = fileData['url']  ?? '';
+                  } catch (_) {
+                    // Data lama: plain text berisi nama file saja
+                    fileName = msg['message_content'] ?? 'File';
+                    fileUrl  = msg['file_path']       ?? ''; // fallback ke file_path jika ada
+                  }
+
+                  bubbleWidget = GestureDetector(
+                  onTap: () => openFile(fileUrl),
+                  child: chatBubble(
+                    "📄 $fileName",
+                    isMe,
+                    timeStr: chatTime,
+                  ),
+                );
                 } else if (msg['message_type'] == "offer") {
                   final offerData = jsonDecode(msg['message_content'] ?? '{}');
                   bubbleWidget = _buildOfferCard(offerData, isMe, isTalent);
@@ -392,6 +494,9 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
   }
 
 Widget _buildOfferCard(Map<String, dynamic> offer, bool isMe, bool isTalent) {
+    // ✅ Handle int, double, dan string sekaligus
+final int priceVal = (num.tryParse(offer['price'].toString()) ?? 0).toInt();
+    
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -411,7 +516,7 @@ Widget _buildOfferCard(Map<String, dynamic> offer, bool isMe, bool isTalent) {
             const SizedBox(height: 6),
             Text(offer['title'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
             const SizedBox(height: 4),
-            Text("Rp ${offer['price']}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A237E))),
+            Text(_formatRupiah(priceVal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A237E))),
             const SizedBox(height: 6),
             Text(offer['description'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             const Divider(height: 16),
@@ -582,7 +687,8 @@ Widget _buildOfferCard(Map<String, dynamic> offer, bool isMe, bool isTalent) {
                                               ),
                                               onPressed: () {
                                                 Navigator.pop(context);
-                                                _sendCustomOffer(titleCtrl.text, int.tryParse(priceCtrl.text) ?? 0, descCtrl.text);
+                                                final inputPrice = int.tryParse(priceCtrl.text.trim()) ?? 0;
+                                                _sendCustomOffer(titleCtrl.text.trim(),inputPrice, descCtrl.text.trim());
                                               },
                                               child: const Text("Kirim Penawaran", style: TextStyle(color: Colors.white)),
                                             ),
@@ -652,8 +758,8 @@ Widget _buildOfferCard(Map<String, dynamic> offer, bool isMe, bool isTalent) {
   }
 }
 
-class KartuPenawaran extends StatelessWidget {
-  const KartuPenawaran({super.key});
+// class KartuPenawaran extends StatelessWidget {
+  // const KartuPenawaran({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -739,7 +845,7 @@ class KartuPenawaran extends StatelessWidget {
       ),
     );
   }
-}
+
 
 Widget dateLabel(String text) {
   return Center(

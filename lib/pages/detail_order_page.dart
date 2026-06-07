@@ -702,11 +702,14 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       backgroundColor: const Color(0xFFF7F7F7),
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 1,
         centerTitle: true,
+        scrolledUnderElevation:1,
+        shadowColor: Colors.black.withOpacity(0.2),
         leading: const BackButton(color: Colors.black),
         title: const Text('Detail Order',
-            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
@@ -773,11 +776,12 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                             if (currentUserId != null) {
                                               await supabase.from('chats').upsert({
                                                 'user_id'   : currentUserId,
+                                                'partner_id' : targetId,
                                                 'name' : targetName,
                                                 'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
                                                 'time': DateTime.now().toIso8601String(),
                                                 'unread': 0,
-                                              }, onConflict: 'user_id, name');
+                                              }, onConflict: 'user_id, partner_id');
                                             }
                                           } catch (e) {
                                             debugPrint('Error inserting chat message: $e');
@@ -786,7 +790,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                           if (mounted) {
                                             Navigator.push(
                                               context, MaterialPageRoute(
-                                                builder: (context) => ChatPage(name: targetName))
+                                                builder: (context) => ChatPage(name: targetName,  receiverId: targetId,))
                                             
                                           );
                                           }
@@ -1455,27 +1459,32 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                   content: const Text(
                     'Pesanan yang dibatalkan tidak dapat dipulihkan. Yakin ingin membatalkan?',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                    style: TextStyle(color: Color(0xFF718096), fontSize: 13),
                   ),
                   actionsAlignment: MainAxisAlignment.spaceEvenly,
                   actions: [
                     ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey.shade400,
-              foregroundColor: Colors.white,
+              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+              // foregroundColor: Colors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(20)),
             ),
             onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Kembali',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+                style: TextStyle(
+                      color: Colors.black87, // Teks batal warna hitam netral soft
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor:  const Color(0xFFF34949),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(20)),
+            // minimumSize: const Size(double.infinity, 48),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Ya, Batalkan',

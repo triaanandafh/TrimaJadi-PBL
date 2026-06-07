@@ -335,19 +335,17 @@ class _ServiceDetailPageState extends State<ServiceDetailPage> {
                     height: 52,
                     child: OutlinedButton.icon(
                       onPressed: () {
+                        final talentId = widget.service['user_id'] ?? '';
                         final talentName = widget.service['users']?['name'] ?? 'Talent';
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ChatPage(name: talentName),
+                            builder: (_) => ChatPage(name: talentName, receiverId: talentId),
                           ),
                         );
                       },
-                      icon: const Icon(
-                        Icons.chat_bubble_outline,
-                        size: 18,
-                        color: Color(0xFF1A237E),
-                      ),
+                      
                       label: const Text(
                         'Chat Talent',
                         style: TextStyle(

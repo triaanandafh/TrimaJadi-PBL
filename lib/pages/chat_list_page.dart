@@ -223,6 +223,7 @@ class _ChatListPageState extends State<ChatListPage> {
                               debugPrint(chat.toString());
                               return ChatItem(
                                 name: chat['name'] as String,
+                                receiverId: chat['partner_id'] ?? '',
                                 lastMessage: chat['last_message'] as String,
                                 time: formatChatTime(chat['time'] as String?),
                                 unread: chat['unread'] as int,
@@ -252,13 +253,15 @@ class ChatItem extends StatelessWidget {
   final String lastMessage;
   final String time;
   final int unread;
+  final String receiverId;
 
   const ChatItem({
     super.key,
     required this.name,
     required this.lastMessage,
     required this.time,
-    this.unread = 0,
+    this.unread = 0, 
+    required this.receiverId,
   });
 
   // Fungsi pembantu untuk mengambil inisial (Contoh: Budi Designer -> BD)
@@ -280,7 +283,7 @@ class ChatItem extends StatelessWidget {
         // Pastikan file chat_page.dart kamu sudah menerima parameter 'name'
         Navigator.push(
           context, 
-          MaterialPageRoute(builder: (_) => ChatPage(name: name))
+          MaterialPageRoute(builder: (_) => ChatPage(name: name, receiverId: receiverId,))
         );
       },
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
