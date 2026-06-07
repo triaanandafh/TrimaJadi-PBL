@@ -156,13 +156,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
                             ),
                           ],
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none_outlined, size: 28, color: Colors.white),
-                          onPressed: () {},
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.15),
-                          ),
-                        ),
                       ],
                     ),
                   ],
