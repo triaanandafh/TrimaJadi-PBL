@@ -9,14 +9,24 @@ import 'search_service_page.dart';
 import 'order_page.dart';
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final int initialIndex; // Tambahan variabel untuk menerima index tab
+
+  // Nilai default 0 agar tidak error saat dipanggil dari Login
+  const MainScreen({super.key, this.initialIndex = 0}); 
 
   @override
   State<MainScreen> createState() => MainScreenState();
 }
 
 class MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+  late int _currentIndex; // Ubah menjadi 'late' agar bisa diatur di initState
+
+  @override
+  void initState() {
+    super.initState();
+    // Atur tab awal berdasarkan data yang dikirim, jika tidak ada, otomatis ke 0 (Beranda)
+    _currentIndex = widget.initialIndex; 
+  }
 
   void goToIndex(int index) {
     if (mounted) setState(() => _currentIndex = index);
@@ -79,7 +89,7 @@ class MainScreenState extends State<MainScreen> {
     final bool isGuest   = isTalent && !UserData.isVerified;
 
     final List<Widget> pages = [
-      // HOME
+      // 0: HOME
       isTalent
           ? HomepageTalent(onViewAll: () => goToIndex(1))
           : HomepageClient(
@@ -87,16 +97,16 @@ class MainScreenState extends State<MainScreen> {
               onViewAll  : () => goToIndex(2),
             ),
 
-      // AKTIVITAS
+      // 1: AKTIVITAS
       const OrderPage(),
 
-      // CENTER PAGE
+      // 2: CENTER PAGE
       isTalent ? const LayananPage() : const CariLayananPage(),
 
-      // CHAT
+      // 3: CHAT
       const ChatListPage(),
 
-      // PROFIL
+      // 4: PROFIL
       ProfilePage(onNavigate: goToIndex),
     ];
 

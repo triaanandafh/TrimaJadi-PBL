@@ -5,7 +5,6 @@ class OrderCard extends StatelessWidget {
   final String subTitle; // Bisa tanggal atau nama user
   final String status;
   final Color statusColor;
-  final IconData icon;
   final VoidCallback? onTap;
 
   const OrderCard({
@@ -14,9 +13,54 @@ class OrderCard extends StatelessWidget {
     required this.subTitle,
     required this.status,
     this.statusColor = Colors.red,
-    this.icon = Icons.palette,
     this.onTap,
   });
+
+  // WIDGET ICON DINAMIS UNTUK LIST AKTIVITAS
+  Widget _buildCategoryIcon(String? categoryOrTitle) {
+    final cat = (categoryOrTitle ?? '').toLowerCase();
+    
+    IconData iconData;
+    Color iconColor;
+    Color bgColor;
+
+    // Pengecekan kata kunci sesuai dengan database-mu
+    if (cat.contains('desain') || cat.contains('design') || cat.contains('foto')) {
+      iconData = Icons.palette;
+      iconColor = Colors.blue;
+      bgColor = Colors.blue.shade50;
+    } else if (cat.contains('web') || cat.contains('pemrograman') || cat.contains('coding')) {
+      iconData = Icons.code;
+      iconColor = Colors.orange;
+      bgColor = Colors.orange.shade50;
+    } else if (cat.contains('edukasi') || cat.contains('tutor') || cat.contains('belajar')) {
+      iconData = Icons.school;
+      iconColor = Colors.purple;
+      bgColor = Colors.purple.shade50;
+    } else if (cat.contains('visual') || cat.contains('audio') || cat.contains('video') || cat.contains('voice over')) {
+      iconData = Icons.music_note;
+      iconColor = Colors.teal;
+      bgColor = Colors.teal.shade50;
+    } else if (cat.contains('penulisan') || cat.contains('penerjemahan') || cat.contains('translating') || cat.contains('translate')) {
+      iconData = Icons.translate;
+      iconColor = Colors.green;
+      bgColor = Colors.green.shade50;
+    } else {
+      iconData = Icons.business_center;
+      iconColor = Colors.grey;
+      bgColor = Colors.grey.shade100;
+    }
+
+    // Desain ikon bulat (Circle) khusus untuk list aktivitas
+    return Container(
+      padding: const EdgeInsets.all(12), 
+      decoration: BoxDecoration(
+        color: bgColor,
+        shape: BoxShape.circle, 
+      ),
+      child: Icon(iconData, color: iconColor, size: 24),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,10 +85,8 @@ class OrderCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: const Color(0xFFE8F0FF),
-                child: Icon(icon, color: const Color(0xFF1A43BF)),
-              ),
+              _buildCategoryIcon(title),
+              
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
