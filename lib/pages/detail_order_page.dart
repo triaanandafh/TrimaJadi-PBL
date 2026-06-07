@@ -1455,18 +1455,14 @@ class _DetailOrderPageState
       ),
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 1,
         centerTitle: true,
-        leading: const BackButton(
-          color: Colors.black,
-        ),
-        title: const Text(
-          'Detail Order',
-          style: TextStyle(
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        scrolledUnderElevation:1,
+        shadowColor: Colors.black.withOpacity(0.2),
+        leading: const BackButton(color: Colors.black),
+        title: const Text('Detail Order',
+            style: TextStyle(fontSize: 18, color: Colors.black, fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: const Icon(
@@ -1746,45 +1742,50 @@ class _DetailOrderPageState
                                       style: _titleStyle(),
                                     ),
                                   ],
-                                ),
-                                const SizedBox(
-                                  height: 12,
-                                ),
+                                  const SizedBox(height: 15),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    height: 48,
+                                    child: ElevatedButton(
+                                      style: _orangeButton(),
+                                      onPressed: () async {
+                                        final targetName = otherUserData?['name']?.toString() ?? 'User';
+                                        final targetId = widget.isTalent
+                                            ? orderData!['client_id']?.toString()
+                                            : orderData!['talent_id']?.toString();
 
-                                InkWell(
-                                  onTap: () async {
-                                    final url = Uri.tryParse(
-                                      orderData!['result_link'].toString(),
-                                    );
-                                    if (url !=
-                                            null &&
-                                        await canLaunchUrl(
-                                          url,
-                                        )) {
-                                      await launchUrl(
-                                        url,
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(
-                                      12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(
-                                        0xFFE8F0FF,
-                                      ),
-                                      borderRadius: BorderRadius.circular(
-                                        10,
-                                      ),
-                                      border: Border.all(
-                                        color:
-                                            const Color(
-                                              0xFF1A43BF,
-                                            ).withOpacity(
-                                              0.3,
-                                            ),
+                                          if (targetId == null) return;
+
+                                          try {
+                                            final currentUserId = supabase.auth.currentUser?.id;
+                                            if (currentUserId != null) {
+                                              await supabase.from('chats').upsert({
+                                                'user_id'   : currentUserId,
+                                                'partner_id' : targetId,
+                                                'name' : targetName,
+                                                'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
+                                                'time': DateTime.now().toIso8601String(),
+                                                'unread': 0,
+                                              }, onConflict: 'user_id, partner_id');
+                                            }
+                                          } catch (e) {
+                                            debugPrint('Error inserting chat message: $e');
+                                          }
+
+                                          if (mounted) {
+                                            Navigator.push(
+                                              context, MaterialPageRoute(
+                                                builder: (context) => ChatPage(name: targetName,  receiverId: targetId,))
+                                            
+                                          );
+                                          }
+                                      },
+                                      child: Text(
+                                        widget.isTalent
+                                            ? 'Hubungi Client'
+                                            : 'Hubungi Talent',
+                                        style: const TextStyle(
+                                            color: Colors.white),
                                       ),
                                     ),
                                     child: Row(
@@ -2559,12 +2560,54 @@ class _DetailOrderPageState
   );
 
   ButtonStyle _blueButton() => ElevatedButton.styleFrom(
-    backgroundColor: const Color(
-      0xFF2C4A6E,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(
-        25,
+        backgroundColor: const Color(0xFF2C4A6E),
+        shape:
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+      );
+  
+            Future<void> _handleCancelOrder() async {
+              final confirm = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  title: const Text('Batalkan Pesanan?',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  content: const Text(
+                    'Pesanan yang dibatalkan tidak dapat dipulihkan. Yakin ingin membatalkan?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Color(0xFF718096), fontSize: 13),
+                  ),
+                  actionsAlignment: MainAxisAlignment.spaceEvenly,
+                  actions: [
+                    ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+              // foregroundColor: Colors.white,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+            ),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Kembali',
+                style: TextStyle(
+                      color: Colors.black87, // Teks batal warna hitam netral soft
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor:  const Color(0xFFF34949),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+            // minimumSize: const Size(double.infinity, 48),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Ya, Batalkan',
+                style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     ),
   );

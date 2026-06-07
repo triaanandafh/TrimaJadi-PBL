@@ -198,14 +198,17 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
         backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
         elevation: 1,
+        scrolledUnderElevation:1,
+        shadowColor: Colors.black.withOpacity(0.2),
         leading: const BackButton(color: Colors.black),
         title: const Text(
           'Pesan Layanan',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 18, color: Colors.black87, fontWeight: FontWeight.bold),
         ),
       ),
       body: _isLoading
