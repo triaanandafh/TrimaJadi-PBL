@@ -1297,13 +1297,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
             ),
           ),
           onPressed: _isProcessingPayment ? null : _handlePayment,
-          child: const Text(
-            'Coba Bayar Lagi',
-            style: TextStyle(
-              color: Colors.white,
-            ),
-          ),
-          onPressed: _isProcessingPayment ? null : _handlePayment,
           child: const Text('Coba Bayar Lagi', style: TextStyle(color: Colors.white)),
         ),
       );
