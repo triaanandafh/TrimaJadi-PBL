@@ -27,7 +27,7 @@ class CustomBottomNavbar extends StatelessWidget {
             child: Icon(Icons.search),
           ),
 
-          Icon(Icons.chat),
+          Icon(Icons.speaker_notes),
           Icon(Icons.person),
         ],
       ),
