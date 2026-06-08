@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:file_picker/file_picker.dart';
 import '../services/auth_service.dart';
 
 class RegisterTalentPage extends StatefulWidget {
@@ -27,11 +26,6 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   Uint8List? ktmImageBytes;
   String? ktmImageExt;
   final ImagePicker _picker = ImagePicker();
-
-  // CV
-  File? cvPdfFile;
-  Uint8List? cvPdfBytes;
-  String? cvFileName;
 
   @override
   void dispose() {
@@ -60,46 +54,17 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
     }
   }
 
-  Future<void> _pickCVPdf() async {
-    if (kIsWeb) {
-      FilePickerResult? result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-        withData: true, // penting untuk web
-      );
-      if (result != null && result.files.single.bytes != null) {
-        setState(() {
-          cvPdfBytes = result.files.single.bytes;
-          cvFileName = result.files.single.name;
-        });
-      }
-    } else {
-      FilePickerResult? result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf'],
-      );
-      if (result != null && result.files.single.path != null) {
-        setState(() {
-          cvPdfFile = File(result.files.single.path!);
-          cvFileName = result.files.single.name;
-        });
-      }
-    }
-  }
-
   Future<void> _register() async {
     final hasKtm = kIsWeb ? ktmImageBytes != null : ktmImage != null;
-    final hasCv = kIsWeb ? cvPdfBytes != null : cvPdfFile != null;
 
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         passwordController.text.trim().isEmpty ||
         phoneController.text.trim().isEmpty ||
-        !hasKtm ||
-        !hasCv) {
+        !hasKtm) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Mohon isi semua data, upload KTM, dan upload CV'),
+          content: Text('Mohon isi semua data dan upload KTM'),
           backgroundColor: Colors.red,
         ),
       );
@@ -114,8 +79,6 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
         phone: phoneController.text.trim(),
-        cvPdf: kIsWeb ? null : cvPdfFile,
-        cvPdfBytes: kIsWeb ? cvPdfBytes : null,
         ktmImage: kIsWeb ? null : ktmImage,
         ktmImageBytes: kIsWeb ? ktmImageBytes : null,
         ktmImageExt: ktmImageExt,
@@ -204,7 +167,6 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
   @override
   Widget build(BuildContext context) {
     final hasKtm = kIsWeb ? ktmImageBytes != null : ktmImage != null;
-    final hasCv = kIsWeb ? cvPdfBytes != null : cvPdfFile != null;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -336,58 +298,6 @@ class _RegisterTalentPageState extends State<RegisterTalentPage> {
                                           color: Colors.grey.shade600)),
                                 ],
                               ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "Upload CV / Portfolio (PDF) *",
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: _pickCVPdf,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: hasCv ? Colors.blue : Colors.grey.shade400,
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              hasCv ? Icons.picture_as_pdf : Icons.upload_file,
-                              size: 40,
-                              color: hasCv ? Colors.red : Colors.grey.shade500,
-                            ),
-                            const SizedBox(height: 10),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              child: Text(
-                                hasCv
-                                    ? cvFileName!
-                                    : "Ketuk untuk memilih file PDF",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: hasCv
-                                      ? Colors.black87
-                                      : Colors.grey.shade600,
-                                  fontWeight: hasCv
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
