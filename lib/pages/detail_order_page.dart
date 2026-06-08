@@ -865,34 +865,41 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
 
                                     try {
                                       final currentUserId = supabase.auth.currentUser?.id;
-                                      if (currentUserId != null) {
-                                        await supabase.from('chats').upsert(
-                                          {
-                                            'user_id': currentUserId,
-                                            'name': targetName,
-                                            'last_message':
-                                                'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
-                                            'time': DateTime.now().toIso8601String(),
-                                            'unread': 0,
-                                          },
-                                          onConflict: 'user_id, name',
-                                        );
+                                      if (currentUserId !=
+                                          null) {
+                                        await supabase
+                                            .from(
+                                              'chats',
+                                            )
+                                            .upsert(
+                                              {
+                                                'user_id': currentUserId,
+                                                'partner_id'  : targetId, 
+
+                                                // 'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
+                                                'time': DateTime.now().toIso8601String(),
+                                                'unread': 0,
+                                              },
+                                              onConflict: 'user_id, partner_id',
+                                            );
                                       }
                                     } catch (e) {
                                       debugPrint('Error inserting chat message: $e');
                                     }
 
-                                    if (!mounted) return;
-                                    // ignore: use_build_context_synchronously
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => ChatPage(
-                                          name: targetName,
-                                          receiverId: targetId,
+                                    if (mounted) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder:
+                                              (
+                                                context,
+                                              ) => ChatPage(
+                                                name: targetName, receiverId: targetId,
+                                              ),
                                         ),
-                                      ),
-                                    );
+                                );
+                                    }
                                   },
                                   child: Text(
                                     widget.isTalent ? 'Hubungi Client' : 'Hubungi Talent',
@@ -991,35 +998,51 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                     Text('Hasil Pekerjaan', style: _titleStyle()),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
+                                const SizedBox(height: 15),
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton(
+                                    style: _orangeButton(),
+                                    onPressed: () async {
+                                      final targetName = otherUserData?['name']?.toString() ?? 'User';
+                                      final targetId = widget.isTalent
+                                          ? orderData!['client_id']?.toString()
+                                          : orderData!['talent_id']?.toString();
 
-                                InkWell(
-                                  onTap: () async {
-                                    final url = Uri.tryParse(
-                                      orderData!['result_link'].toString(),
-                                    );
-                                    if (url != null && await canLaunchUrl(url)) {
-                                      await launchUrl(
-                                        url,
-                                        mode: LaunchMode.externalApplication,
-                                      );
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE8F0FF),
-                                      borderRadius: BorderRadius.circular(10),
-                                      border: Border.all(
-                                        // FIX: withOpacity → withValues
-                                        color: const Color(0xFF1A43BF).withValues(alpha: 0.3),
-                                      ),
-                                    ),
+                                      if (targetId == null) return;
+
+                                      try {
+                                        final currentUserId = supabase.auth.currentUser?.id;
+                                        if (currentUserId != null) {
+                                          await supabase.from('chats').upsert({
+                                            'user_id'   : currentUserId,
+                                            'partner_id' : targetId,
+                                            'name' : targetName,
+                                            'last_message': 'Halo $targetName, saya ingin berdiskusi mengenai order kita.',
+                                            'time': DateTime.now().toIso8601String(),
+                                            'unread': 0,
+                                          }, onConflict: 'user_id, partner_id');
+                                        }
+                                      } catch (e) {
+                                        debugPrint('Error inserting chat message: $e');
+                                      }
+
+                                      if (mounted) {
+                                        Navigator.push(
+                                          context, 
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatPage(name: targetName, receiverId: targetId,),
+                                          ),
+                                        );
+                                      }
+                                    },
                                     child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
                                       children: [
                                         const Icon(
                                           Icons.link,
-                                          color: Color(0xFF1A43BF),
+                                          color: Colors.white,
                                           size: 18,
                                         ),
                                         const SizedBox(width: 8),
@@ -1027,7 +1050,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                           child: Text(
                                             orderData!['result_link'].toString(),
                                             style: const TextStyle(
-                                              color: Color(0xFF1A43BF),
+                                              color: Colors.white,
                                               decoration: TextDecoration.underline,
                                               fontSize: 13,
                                             ),
@@ -1037,7 +1060,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                                         ),
                                         const Icon(
                                           Icons.open_in_new,
-                                          color: Color(0xFF1A43BF),
+                                          color: Colors.white,
                                           size: 16,
                                         ),
                                       ],
@@ -1120,7 +1143,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                             ],
                           ),
                         ),
-
                         // ===== BATALKAN PESANAN (hanya client, belum bayar) =====
                         if (!widget.isTalent &&
                             (orderData!['payment_status']?.toString() == 'unpaid' ||
@@ -1193,7 +1215,6 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
                     ),
                   ),
                 ),
-
                 // BOTTOM BUTTON
                 Container(
                   padding: const EdgeInsets.all(16),
@@ -1269,7 +1290,18 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
         child: ElevatedButton(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(
+                25,
+              ),
+            ),
+          ),
+          onPressed: _isProcessingPayment ? null : _handlePayment,
+          child: const Text(
+            'Coba Bayar Lagi',
+            style: TextStyle(
+              color: Colors.white,
+            ),
           ),
           onPressed: _isProcessingPayment ? null : _handlePayment,
           child: const Text('Coba Bayar Lagi', style: TextStyle(color: Colors.white)),
@@ -1372,7 +1404,7 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
       );
     }
 
-    // TALENT: sedang mengerjakan → tombol Submit Hasil
+    // TALENT: sedang mengerjakan → tombol Submit Hasil + TOMBOL BATAL
     if (widget.isTalent && workStatus == 'progress') {
       return SizedBox(
         width: double.infinity,
@@ -1544,9 +1576,9 @@ class _DetailOrderPageState extends State<DetailOrderPage> {
   }
 
   TextStyle _titleStyle() => const TextStyle(
-    fontWeight: FontWeight.bold,
-    fontSize: 14,
-  );
+        fontWeight: FontWeight.bold,
+        fontSize: 14,
+      );
 
   ButtonStyle _orangeButton() => ElevatedButton.styleFrom(
     backgroundColor: const Color(0xFFE68C3A),
