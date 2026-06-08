@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../widgets/notification_bell.dart'; // ← import widget baru
 import '../widgets/rating_widgets.dart';
 import 'change_password_page.dart';
 import 'edit_profile_page.dart';
@@ -24,13 +24,32 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final _supabase = Supabase.instance.client;
 
-  int  _balance    = 0;
-  bool _isVerified = false;
+  int  _balance      = 0;
+  bool _isVerified   = false;
+  int  _unreadNotif  = 0; // ← jumlah notif belum dibaca
 
   @override
   void initState() {
     super.initState();
     _fetchProfileData();
+    _subscribeNotifCount(); // ← realtime listener
+  }
+
+  /// Realtime stream untuk badge angka di menu Notifikasi
+  void _subscribeNotifCount() {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    _supabase
+        .from('notifications')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .listen((data) {
+          if (mounted) {
+            final unread = data.where((n) => n['is_read'] == false).length;
+            setState(() => _unreadNotif = unread);
+          }
+        });
   }
 
   Future<void> _fetchProfileData() async {
@@ -86,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
             automaticallyImplyLeading: false,
             toolbarHeight: 70,
             title: const Padding(
-              padding: EdgeInsets.only(left: 10), // geser ke kanan
+              padding: EdgeInsets.only(left: 10),
               child: Text('Profil',
                   style: TextStyle(
                       color: Colors.white, fontWeight: FontWeight.bold, fontSize: 24)),
@@ -94,26 +113,15 @@ class _ProfilePageState extends State<ProfilePage> {
             actions: [
               Padding(
                 padding: const EdgeInsets.only(right: 25),
-                child: InkWell(
-                  onTap: () => Navigator.push(context,
-                      MaterialPageRoute(builder: (_) => const NotificationPage())),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.notifications_none,
-                        color: Color(0xFFE68C3A), size: 22),
-                  ),
-                ),
+                // ── GANTI: pakai NotificationBell widget ──
+                child: const NotificationBell(),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 110), // naikkan angka ini untuk geser ke bawah
+                  const SizedBox(height: 110),
                   Container(
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
@@ -203,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _menuItem(context, Icons.lock_outline, 'Ubah Password'),
                   _divider(),
                   _menuItem(context, Icons.notifications_none,
-                      'Notifikasi', isLast: true),
+                      'Notifikasi', isLast: true, badgeCount: _unreadNotif),
                 ]),
 
                 const SizedBox(height: 20),
@@ -287,10 +295,9 @@ class _ProfilePageState extends State<ProfilePage> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white, // Menjaga dialog tetap berwarna putih bersih di Material 3
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), // Sudut lengkungan lebih melingkar sesuai mockup
+        surfaceTintColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-        
         title: const Text(
           'Keluar Akun',
           textAlign: TextAlign.center,
@@ -300,7 +307,6 @@ class _ProfilePageState extends State<ProfilePage> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        // ── REVISI KONTEN: MENGHAPUS TITLE & MERENDEER TEXT BERTUMPUK ──
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -308,7 +314,7 @@ class _ProfilePageState extends State<ProfilePage> {
               'Apakah kamu yakin ingin keluar dari akun ini?',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF4A5568), // Warna teks utama abu-abu gelap elegan
+                color: Color(0xFF4A5568),
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
                 height: 1.3,
@@ -319,28 +325,24 @@ class _ProfilePageState extends State<ProfilePage> {
               'Kamu perlu login kembali untuk mengakses aplikasi.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF718096), // Warna sub-keterangan sesuai target mockup kamu
+                color: Color(0xFF718096),
                 fontSize: 13,
                 height: 1.3,
               ),
             ),
           ],
         ),
-        
-        // ── REVISI ACTIONS: MERUBAH SUSUNAN MENJADI HORIZONTAL (KIRI-KANAN) ──
         actionsPadding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
         actions: [
           Row(
             children: [
-              // --- TOMBOL BATAL (SISI KIRI) ---
               Expanded(
                 child: OutlinedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: OutlinedButton.styleFrom(
-                    // Menggunakan warna border abu-abu soft pudar penyeimbang desain target
                     side: BorderSide(color: Colors.grey.shade200, width: 1.2),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20), // Bentuk elips rounded penuh
+                      borderRadius: BorderRadius.circular(20),
                     ),
                     minimumSize: const Size(double.infinity, 48),
                     elevation: 0,
@@ -348,22 +350,19 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: const Text(
                     'Batal',
                     style: TextStyle(
-                      color: Colors.black87, // Teks batal warna hitam netral soft
+                      color: Colors.black87,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12), // Jarak horizontal antar tombol
-              
-              // --- TOMBOL KELUAR (SISI KANAN) ---
+              const SizedBox(width: 12),
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
-                      // Efek bayangan merah lembut tipis di bawah tombol Keluar
                       BoxShadow(
                         color: Colors.red.withOpacity(0.2),
                         blurRadius: 8,
@@ -385,8 +384,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFF34949), // Warna merah coral soft khas mockup kamu
-                      shadowColor: Colors.transparent, // Matikan shadow default agar digantikan BoxShadow kustom kita
+                      backgroundColor: const Color(0xFFF34949),
+                      shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
@@ -447,9 +446,39 @@ class _ProfilePageState extends State<ProfilePage> {
     String title, {
     Color?  textColor,
     Color?  iconBgColor,
-    bool    isFirst = false,
-    bool    isLast  = false,
+    bool    isFirst    = false,
+    bool    isLast     = false,
+    int     badgeCount = 0, // ← badge angka notif belum dibaca
   }) {
+    // Trailing: badge merah + chevron jika ada, chevron saja jika tidak
+    Widget trailing;
+    if (badgeCount > 0) {
+      trailing = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              badgeCount > 99 ? '99+' : '$badgeCount',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+        ],
+      );
+    } else {
+      trailing = const Icon(Icons.chevron_right, color: Colors.grey, size: 20);
+    }
+
     return ListTile(
       contentPadding:
           const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
@@ -476,8 +505,7 @@ class _ProfilePageState extends State<ProfilePage> {
           fontSize: 15,
         ),
       ),
-      trailing:
-          const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+      trailing: trailing,
       onTap: () {
         switch (title) {
           case 'Kelola Layanan Saya':

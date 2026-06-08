@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:trimajadi/pages/notification_page.dart';
+import '../widgets/notification_bell.dart'; // ← import widget baru
 import '../widgets/order_card.dart';
 import 'add_service_page.dart';
 import 'detail_order_page.dart';
@@ -256,22 +256,8 @@ class _HomepageTalentState extends State<HomepageTalent> {
                           ),
                         ],
                       ),
-                      InkWell(
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (_) => const NotificationPage()),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.notifications_none,
-                              color: Color(0xFFE68C3A)),
-                        ),
-                      ),
+                      // ── GANTI: pakai NotificationBell widget ──
+                      const NotificationBell(),
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -412,7 +398,6 @@ class _HomepageTalentState extends State<HomepageTalent> {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                // Blokir jika guest
                 if (_isGuest) {
                   _showGuestDialog();
                   return;
