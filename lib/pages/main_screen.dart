@@ -142,8 +142,8 @@ class MainScreenState extends State<MainScreen> {
             _buildCenterItem(isTalent, isGuest: isGuest),
             // Chat — dikunci untuk guest talent
             _buildNavItem(
-              Icons.chat_bubble_outline,
-              Icons.chat_bubble,
+              Icons.comment_outlined,
+              Icons.comment,
               'Obrolan',
               3,
               isLocked: isGuest,

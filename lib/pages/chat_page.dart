@@ -85,11 +85,15 @@ Future<void> openFile(String url) async {
     final text = _controller.text.trim();
 
     if (text.isEmpty) return;
-
     _controller.clear(); // Bersihkan field text input secara instan
 
     try {
       final myId = supabase.auth.currentUser?.id;
+      debugPrint("===== SEND MESSAGE =====");
+debugPrint("myId         : $myId");
+debugPrint("receiverId   : ${widget.receiverId}");
+debugPrint("receiverName : ${widget.name}");
+debugPrint("message      : $text");
       if (myId == null) return;
 
       // 1. Insert ke tabel chat_messages (Menggunakan nama kolom 'message_conten')
@@ -100,7 +104,8 @@ Future<void> openFile(String url) async {
         'message_content': text, // Menyesuaikan nama kolom database kamu
       })
       .select();
-
+      
+      
       // 2. Update status ke tabel chats utama agar Chat List terperbarui
       await supabase.from('chats').upsert({
         'user_id': myId,
