@@ -197,7 +197,7 @@ class _NotificationPageState extends State<NotificationPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ChatPage(name: partnerName),
+                builder: (_) => ChatPage(name: partnerName, receiverId: partnerId.toString(),),
               ),
             );
           } else {

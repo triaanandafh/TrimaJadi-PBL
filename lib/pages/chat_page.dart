@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:io';
 import 'chat_list_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'detail_order_page.dart';
 
 class ChatPage extends StatefulWidget {
   final String name;
@@ -39,7 +40,6 @@ class _ChatPageState extends State<ChatPage> {
 
   String _getDateLabel(String? dateStr) {
   if (dateStr == null || dateStr.isEmpty) return "Hari ini";
-  
   try {
     DateTime chatDate = DateTime.parse(dateStr).toLocal();
     DateTime now = DateTime.now();
@@ -77,15 +77,12 @@ Future<void> openFile(String url) async {
   if (await canLaunchUrl(uri)) {
     await launchUrl(
       uri,
-      mode: LaunchMode.externalApplication,
-    );
+      mode: LaunchMode.externalApplication,);
   }
 }
 
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
-
-    print("TEXT = $text");   //DEBUG
 
     if (text.isEmpty) return;
 
@@ -93,7 +90,6 @@ Future<void> openFile(String url) async {
 
     try {
       final myId = supabase.auth.currentUser?.id;
-      print("USER ID = $myId"); //DEBUG
       if (myId == null) return;
 
       // 1. Insert ke tabel chat_messages (Menggunakan nama kolom 'message_conten')
@@ -249,7 +245,9 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
         'title': title,
         'price': price,
         'description': description,
-        'status': 'pending'
+        'status': 'pending',
+        'sender_id'  : myId,          
+        'receiver_id': widget.receiverId
       });
 
       await supabase.from('chat_messages').insert({
@@ -331,8 +329,6 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
             )
               ],
             )
-            
-            
           ],
         ),
         actions: [
@@ -340,12 +336,6 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
             icon: Icon(Icons.more_vert, color: Colors.grey[700]),
             color: Colors.white,
             onSelected: (value) {
-              // Logika eksekusi aksi berdasarkan opsi yang dipilih
-              if (value == 'profile') {
-                print("Navigasi ke halaman profil");
-              } else if (value == 'report') {
-                print("Aksi laporkan user");
-              }
             },
             itemBuilder: (BuildContext context) {
               return [
@@ -439,7 +429,7 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
                     ),
                     ),
                   );
-                } else if (msg['message_type'] == "file") {
+                }else if (msg['message_type'] == "file") {
                   String fileName = 'File';
                   String fileUrl  = '';
 
@@ -464,7 +454,7 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
                 );
                 } else if (msg['message_type'] == "offer") {
                   final offerData = jsonDecode(msg['message_content'] ?? '{}');
-                  bubbleWidget = _buildOfferCard(offerData, isMe, isTalent);
+                  bubbleWidget = _buildOfferCard(offerData,msg, isMe, isTalent);
                 }
                 else {
                   bubbleWidget = chatBubble(msg['message_content'], isMe, timeStr: chatTime);
@@ -481,10 +471,10 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
                       } else {
                         return bubbleWidget;
                       }
-              }
-            );
-              },
-          ),
+                    },
+                  );
+                },
+              ),
           ),
           // INPUT CHAT
           chatInput(context),
@@ -493,48 +483,98 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
     );
   }
 
-Widget _buildOfferCard(Map<String, dynamic> offer, bool isMe, bool isTalent) {
-    // ✅ Handle int, double, dan string sekaligus
-final int priceVal = (num.tryParse(offer['price'].toString()) ?? 0).toInt();
-    
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        padding: const EdgeInsets.all(16),
-        constraints: const BoxConstraints(maxWidth: 270),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE68C3A), width: 1.5),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text("KARTU PENAWARAN JASA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFE68C3A))),
-            const SizedBox(height: 6),
-            Text(offer['title'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-            const SizedBox(height: 4),
-            Text(_formatRupiah(priceVal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A237E))),
-            const SizedBox(height: 6),
-            Text(offer['description'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            const Divider(height: 16),
-            if (!isMe && !isTalent) // Muncul hanya di sisi Client penerima
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE68C3A)),
-                  onPressed: () {},
-                  child: const Text("Terima & Bayar", style: TextStyle(color: Colors.white)),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
 
+Widget _buildOfferCard(Map<String, dynamic> offer, Map<String, dynamic> msg, bool isMe, bool isTalent) {
+  // ✅ Handle int, double, dan string sekaligus
+  final int priceVal = (num.tryParse(offer['price'].toString()) ?? 0).toInt();
+  
+  return Align(
+    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.all(16),
+      constraints: const BoxConstraints(maxWidth: 270),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE68C3A), width: 1.5),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text("KARTU PENAWARAN JASA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFE68C3A))),
+          const SizedBox(height: 6),
+          Text(offer['title'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+          const SizedBox(height: 4),
+          Text(_formatRupiah(priceVal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A237E))),
+          const SizedBox(height: 6),
+          Text(offer['description'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+          const Divider(height: 16),
+          if (!isMe && !isTalent) // Muncul hanya di sisi Client penerima
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE68C3A)),
+                onPressed: () async {
+                  try {
+                    final String title = offer['title'] ?? 'Layanan Kustom';
+                    final myId = Supabase.instance.client.auth.currentUser?.id;
+
+                    if (myId == null) return;
+
+                    final talentId = offer['sender_id']?.toString();
+               
+                    if (talentId == null) return;
+
+                    final orderResult = await Supabase.instance.client.from('orders').insert({
+                      'client_id'     : myId,
+                      'talent_id'     : talentId,
+                      'service_name'  : '$title - Paket Kustom',
+                      'package_type'  : 'custom',
+                      'total_price'   : priceVal,
+                      'payment_status': 'unpaid',
+                      'work_status'   : 'pending',
+                      'order_date'    : DateTime.now().toIso8601String().split('T')[0],
+                      'description'   : offer['description'] ?? '',
+                      'duration'      : 7, 
+                    }).select().single();
+                    debugPrint('Order berhasil: $orderResult');
+
+                    final newOrderId = orderResult['id'].toString();
+
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DetailOrderPage(
+                            orderId : newOrderId,
+                            isTalent: false,
+                            status  : 'pending',
+                          ),
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    debugPrint('Gagal membuat order dari offer: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Gagal membuat order: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
+                child: const Text("Terima & Bayar", style: TextStyle(color: Colors.white)),
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
+}
   // --- CHAT BUBBLE ---
   Widget chatBubble(String text, bool isMe, {String? timeStr}) {
     final displayTime = timeStr ?? "08:26";
@@ -582,269 +622,231 @@ final int priceVal = (num.tryParse(offer['price'].toString()) ?? 0).toInt();
   }
 
   // --- INPUT FIELD ---
-  Widget chatInput(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-        ),
+Widget chatInput(BuildContext context) {
+  debugPrint('UserData.role = ${UserData.role}');
+  final isTalent = UserData.role?.toLowerCase() == "talent";
+  debugPrint('isTalent = $isTalent');
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      border: Border(
+        top: BorderSide(color: Colors.grey[200]!),
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              showModalBottomSheet(
-                context: context,
-                backgroundColor: Colors.white, // Memaksa background tetap bersih putih
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(24), // Sudut lengkungan atas kustom rapi
-                  ),
+    ),
+    child: Row(
+      children: [
+        GestureDetector(
+          onTap: () {
+            showModalBottomSheet(
+              context: context,
+              backgroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(24),
                 ),
-                builder: (context) {
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 12, bottom: 30, left: 16, right: 16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Garis penanda handle pill kecil di bagian atas sheet
-                        Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+              ),
+              builder: (ctx) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 30, left: 16, right: 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        const SizedBox(height: 25),
-                        
-                        // ── PERBAIKAN UTAMA: SUSUNAN HORIZONTAL SESUAI CONTOH KIRI ──
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // --- OPSI DOKUMEN ---
-                            _buildSheetItem(
-                              context: context,
-                              icon: Icons.insert_drive_file_outlined,
-                              label: "Dokumen",
-                              onTap: () => pickDocument(),
-                            ),
-                            
-                            // --- OPSI GAMBAR ---
-                            _buildSheetItem(
-                              context: context,
-                              icon: Icons.image_outlined,
-                              label: "Gambar",
-                              onTap: () => pickImage(),
-                            ),
-                            
-                            // --- OPSI KARTU PENAWARAN ---
-                            _buildSheetItem(
-                              context: context,
-                              icon: Icons.local_offer_outlined,
-                              label: "Kartu\nPenawaran", // Gunakan \n agar teks panjang turun ke bawah dengan seimbang
-                              onTap: () {
-                                // Tampilkan form input penawaran khusus
-                                showModalBottomSheet(
-                                  context: context,
-                                  isScrollControlled: true,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                                  ),
-                                  builder: (context) {
-                                    final titleCtrl = TextEditingController();
-                                    final priceCtrl = TextEditingController();
-                                    final descCtrl = TextEditingController();
+                      ),
+                      const SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // --- DOKUMEN ---
+                          _buildSheetItem(
+                            context: ctx,
+                            icon: Icons.insert_drive_file_outlined,
+                            label: "Dokumen",
+                            onTap: () => pickDocument(),
+                          ),
 
-                                    return Padding(
-                                      padding: EdgeInsets.only(
-                                        left: 20, 
-                                        right: 20, 
-                                        top: 20, 
-                                        bottom: MediaQuery.of(context).viewInsets.bottom + 20
+                          // --- GAMBAR ---
+                          _buildSheetItem(
+                            context: ctx,
+                            icon: Icons.image_outlined,
+                            label: "Gambar",
+                            onTap: () => pickImage(),
+                          ),
+
+                          // --- KARTU PENAWARAN (hanya Talent) ---
+                          if (isTalent)
+                            _buildSheetItem(
+                              context: ctx,
+                              icon: Icons.local_offer_outlined,
+                              label: "Kartu\nPenawaran",
+                              autoClose: false, 
+                              onTap: () {
+                                debugPrint('=== KARTU PENAWARAN TAPPED ===');
+                                debugPrint('isTalent: $isTalent');
+                                Navigator.pop(ctx);
+                                Future.delayed(const Duration(milliseconds: 300), () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    isScrollControlled: true,
+                                    backgroundColor: Colors.white,
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(20),
                                       ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Text("Buat Penawaran", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                                          const SizedBox(height: 20),
-                                          TextField(controller: titleCtrl, decoration: const InputDecoration(labelText: "Judul Layanan", border: OutlineInputBorder())),
-                                          const SizedBox(height: 15),
-                                          TextField(controller: priceCtrl, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: "Harga", border: OutlineInputBorder())),
-                                          const SizedBox(height: 15),
-                                          TextField(controller: descCtrl, maxLines: 3, decoration: const InputDecoration(labelText: "Deskripsi", border: OutlineInputBorder())),
-                                          const SizedBox(height: 20),
-                                          SizedBox(
-                                            width: double.infinity,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFFE68C3A), 
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              
+                                    ),
+                                    builder: (modalCtx) {
+                                      final titleCtrl = TextEditingController();
+                                      final priceCtrl = TextEditingController();
+                                      final descCtrl  = TextEditingController();
+
+                                      return Padding(
+                                        padding: EdgeInsets.only(
+                                          left: 20,
+                                          right: 20,
+                                          top: 20,
+                                          bottom: MediaQuery.of(modalCtx).viewInsets.bottom + 20,
+                                        ),
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Container(
+                                              width: 40,
+                                              height: 4,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey.shade300,
+                                                borderRadius: BorderRadius.circular(10),
                                               ),
-                                              onPressed: () {
-                                                Navigator.pop(context);
-                                                final inputPrice = int.tryParse(priceCtrl.text.trim()) ?? 0;
-                                                _sendCustomOffer(titleCtrl.text.trim(),inputPrice, descCtrl.text.trim());
-                                              },
-                                              child: const Text("Kirim Penawaran", style: TextStyle(color: Colors.white)),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
+                                            const SizedBox(height: 20),
+                                            const Text(
+                                              "Buat Penawaran",
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            TextField(
+                                              controller: titleCtrl,
+                                              decoration: const InputDecoration(
+                                                labelText: "Judul Layanan",
+                                                border: OutlineInputBorder(),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 15),
+                                            TextField(
+                                              controller: priceCtrl,
+                                              keyboardType: TextInputType.number,
+                                              decoration: const InputDecoration(
+                                                labelText: "Harga",
+                                                border: OutlineInputBorder(),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 15),
+                                            TextField(
+                                              controller: descCtrl,
+                                              maxLines: 3,
+                                              decoration: const InputDecoration(
+                                                labelText: "Deskripsi",
+                                                border: OutlineInputBorder(),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 20),
+                                            SizedBox(
+                                              width: double.infinity,
+                                              child: ElevatedButton(
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor: const Color(0xFFE68C3A),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                ),
+                                                onPressed: () {
+                                                  Navigator.pop(modalCtx);
+                                                  final inputPrice = int.tryParse(priceCtrl.text.trim()) ?? 0;
+                                                  _sendCustomOffer(
+                                                    titleCtrl.text.trim(),
+                                                    inputPrice,
+                                                    descCtrl.text.trim(),
+                                                  );
+                                                },
+                                                child: const Text(
+                                                  "Kirim Penawaran",
+                                                  style: TextStyle(color: Colors.white),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                });
                               },
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100, 
-                shape: BoxShape.circle,
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.add, size: 22, color: Colors.grey.shade600),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: TextField(
+            controller: _controller,
+            onSubmitted: (_) => _sendMessage(),
+            style: const TextStyle(fontSize: 14),
+            decoration: InputDecoration(
+              hintText: "Ketik pesan...",
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 15,
+                vertical: 10,
               ),
-              child: Icon(Icons.add, size: 22, color: Colors.grey.shade600),
+              filled: true,
+              fillColor: const Color(0xFFF4F6FA),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(25),
+                borderSide: BorderSide.none,
+              ),
             ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              onSubmitted: (_) => _sendMessage(),
-              style: const TextStyle(fontSize: 14),
-              decoration: InputDecoration(
-                hintText: "Ketik pesan...",
-                hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 15,
-                  vertical: 10,
-                ),
-                filled: true,
-                fillColor: const Color(0xFFF4F6FA),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(25),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          GestureDetector(
-            onTap: () => _sendMessage(),
-            child: Container(
+        ),
+        const SizedBox(width: 10),
+        GestureDetector(
+          onTap: () => _sendMessage(),
+          child: Container(
             padding: const EdgeInsets.all(10),
             decoration: const BoxDecoration(
               color: Color(0xFFE68C3A),
               shape: BoxShape.circle,
             ),
-            // padding: const EdgeInsets.all(10),
-            child: const Icon(Icons.send_rounded, color: Colors.white, size: 20,),
-            ),
+            child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
 }
-
-// class KartuPenawaran extends StatelessWidget {
-  // const KartuPenawaran({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-
-          // TITLE
-          const Text(
-            "Buat Penawaran",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // JUDUL
-          TextField(
-            decoration: InputDecoration(
-              labelText: "Judul Layanan",
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          // HARGA
-          TextField(
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: "Harga",
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 15),
-
-          // DESKRIPSI
-          TextField(
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: "Deskripsi",
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // BUTTON
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFE68C3A),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              onPressed: () {
-                Navigator.pop(context);
-                print("Penawaran dikirim");
-              },
-              child: const Text("Kirim Penawaran", style: TextStyle(color: Colors.white)),
-            ),
-          ),
-
-        ],
-      ),
-    );
-  }
 
 
 Widget dateLabel(String text) {
@@ -884,10 +886,12 @@ String getInitials(String name) {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    bool autoClose = true,
+
   }) {
     return GestureDetector(
       onTap: () {
-        Navigator.pop(context); // Otomatis menutup sheet utama saat item diklik
+        if (autoClose) Navigator.pop(context);  // ← hanya pop jika autoClose true
         onTap();
       },
       child: Column(
@@ -920,3 +924,4 @@ String getInitials(String name) {
       ),
     );
   }
+}
