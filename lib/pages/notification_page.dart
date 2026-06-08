@@ -326,7 +326,7 @@ class _NotificationPageState extends State<NotificationPage> {
             TextButton(
               onPressed: _markAllAsRead,
               child: const Text(
-                'Tandai semua',
+                'Tandai sudah dibaca',
                 style: TextStyle(fontSize: 12),
               ),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
+import '../widgets/notification_bell.dart'; // ← import widget baru
 import 'service_list_page.dart';
 import 'service_detail_page.dart';
 import 'search_service_page.dart';
@@ -8,9 +9,9 @@ import 'notification_page.dart';
 
 class HomepageClient extends StatefulWidget {
   final VoidCallback onTapSearch;
-  final VoidCallback onViewAll; 
+  final VoidCallback onViewAll;
 
-  const HomepageClient({super.key, required this.onTapSearch, required this.onViewAll,});
+  const HomepageClient({super.key, required this.onTapSearch, required this.onViewAll});
 
   @override
   State<HomepageClient> createState() => _HomepageClientState();
@@ -20,10 +21,9 @@ class _HomepageClientState extends State<HomepageClient> {
   final _supabase = Supabase.instance.client;
 
   List<Map<String, dynamic>> _popularCategories = [];
-  List<Map<String, dynamic>> _popularServices = [];
+  List<Map<String, dynamic>> _popularServices   = [];
   bool _isLoading = true;
 
-  // Mapping kategori name → icon & warna
   final Map<String, Map<String, dynamic>> _categoryStyle = {
     'Desain': {
       'icon': Icons.palette,
@@ -72,7 +72,6 @@ class _HomepageClientState extends State<HomepageClient> {
 
   Future<void> _fetchPopularCategories() async {
     try {
-      // Hitung order per kategori lewat services
       final response = await _supabase
           .from('categories')
           .select('''
@@ -84,7 +83,6 @@ class _HomepageClientState extends State<HomepageClient> {
 
       final categories = List<Map<String, dynamic>>.from(response);
 
-      // Hitung total order per kategori
       final withCount = categories.map((cat) {
         final services = cat['services'] as List<dynamic>? ?? [];
         int totalOrders = 0;
@@ -95,7 +93,6 @@ class _HomepageClientState extends State<HomepageClient> {
         return {...cat, 'order_count': totalOrders};
       }).toList();
 
-      // Urutkan dari terbanyak
       withCount.sort((a, b) =>
           (b['order_count'] as int).compareTo(a['order_count'] as int));
 
@@ -113,7 +110,7 @@ class _HomepageClientState extends State<HomepageClient> {
             users(id, name, avatar_url, is_verified),
             categories(name),
             service_packages(package_type, price, package_description)
-          '''); // ← tambah relasi yang dibutuhkan ServiceDetailPage
+          ''');
 
       final services = List<Map<String, dynamic>>.from(response);
 
@@ -202,25 +199,8 @@ class _HomepageClientState extends State<HomepageClient> {
                                 ),
                               ],
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const NotificationPage(),
-                                  ),
-                                );
-                              },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: const BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(Icons.notifications_none,
-                                  color: Color(0xFFE68C3A), size: 26),
-                              ),
-                            ),
+                            // ── GANTI: pakai NotificationBell widget ──
+                            const NotificationBell(),
                           ],
                         ),
                       ),
@@ -272,7 +252,6 @@ class _HomepageClientState extends State<HomepageClient> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Kategori Populer
                     _buildSectionTitle(
                       "Kategori Populer",
                       onTap: widget.onViewAll,
@@ -305,7 +284,6 @@ class _HomepageClientState extends State<HomepageClient> {
 
                     const SizedBox(height: 35),
 
-                    // Promo Card
                     ClipRRect(
                       borderRadius: BorderRadius.circular(15),
                       child: Container(
@@ -322,7 +300,6 @@ class _HomepageClientState extends State<HomepageClient> {
 
                     const SizedBox(height: 35),
 
-                    // Layanan Populer
                     _buildSectionTitle(
                       "Layanan Populer",
                       onTap: widget.onViewAll,
