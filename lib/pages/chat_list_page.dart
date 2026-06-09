@@ -12,6 +12,7 @@ class ChatListPage extends StatefulWidget {
 class _ChatListPageState extends State<ChatListPage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -19,15 +20,12 @@ class _ChatListPageState extends State<ChatListPage> {
   }
 
   String formatChatTime(String? timestampStr) {
-    // Logika sederhana untuk memformat waktu (bisa dikembangkan lebih lanjut)
-    if (timestampStr == null) return "";
-     
-    try{
-      DateTime date =DateTime.parse(timestampStr);
+    if (timestampStr == null || timestampStr.isEmpty) return "";
+    try {
+      DateTime date = DateTime.parse(timestampStr).toLocal();
       DateTime now = DateTime.now();
       DateTime today = DateTime(now.year, now.month, now.day);
       DateTime chatDay = DateTime(date.year, date.month, date.day);
-
       final difference = today.difference(chatDay).inDays;
       if (difference == 0) {
         return "${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}";
@@ -47,19 +45,19 @@ class _ChatListPageState extends State<ChatListPage> {
     final String myId = supabase.auth.currentUser?.id ?? '';
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB), // Warna background abu muda
+      backgroundColor: const Color(0xFFF5F7FB),
       body: Stack(
         children: [
-          // 1. HEADER BIRU (Background)
+          // HEADER BIRU
           Container(
             height: 220,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF1A237E), // Deep Blue (Profil kamu)
-                  Color(0xFF283593), // Indigo yang lebih terang
-                  Color(0xFF3949AB), // Light Indigo (Orderan kamu)
+                  Color(0xFF1A237E),
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
                 ],
                 stops: [0.0, 0.5, 1.0],
                 begin: Alignment.topLeft,
@@ -72,19 +70,17 @@ class _ChatListPageState extends State<ChatListPage> {
             ),
           ),
 
-          // 2. KONTEN UTAMA
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Navigasi Atas
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
-                        "Chat",
+                        "Obrolan",
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 24,
@@ -103,21 +99,35 @@ class _ChatListPageState extends State<ChatListPage> {
                 ),
 
                 StreamBuilder<List<Map<String, dynamic>>>(
-                  stream: supabase.from('chats').stream(primaryKey: ['id']).eq('user_id', myId),
+                  stream: supabase
+                      .from('chat_messages')
+                      .stream(primaryKey: ['id'])
+                      .map((data) => data
+                          .where((msg) =>
+                              msg['sender_id'] == myId ||
+                              msg['receiver_id'] == myId)
+                          .toList()),
                   builder: (context, snapshot) {
-                    final int chatCount = snapshot.data?.length ?? 0;
+                    // Hitung unique partner
+                    final Set<String> partners = {};
+                    for (final msg in snapshot.data ?? []) {
+                      final partner = msg['sender_id'] == myId
+                          ? msg['receiver_id']
+                          : msg['sender_id'];
+                      if (partner != null) partners.add(partner.toString());
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(left: 25, bottom: 20),
                       child: Text(
-                        "$chatCount percakapan aktif",
+                        "${partners.length} percakapan aktif",
                         style: const TextStyle(color: Colors.white70, fontSize: 16),
                       ),
                     );
                   },
                 ),
-                
+
                 const SizedBox(height: 10),
-                // 3. DAFTAR CHAT (Card Putih)
+
                 Expanded(
                   child: Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -137,8 +147,6 @@ class _ChatListPageState extends State<ChatListPage> {
                     ),
                     child: Column(
                       children: [
-                        
-                        // PERUBAHAN UTAMA: Kolom Searching ala WhatsApp
                         Padding(
                           padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                           child: TextField(
@@ -150,11 +158,14 @@ class _ChatListPageState extends State<ChatListPage> {
                             },
                             decoration: InputDecoration(
                               hintText: "Cari percakapan...",
-                              hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 14),
-                              prefixIcon: Icon(Icons.search, color: Colors.grey.shade500),
+                              hintStyle: TextStyle(
+                                  color: Colors.grey.shade500, fontSize: 14),
+                              prefixIcon: Icon(Icons.search,
+                                  color: Colors.grey.shade500),
                               suffixIcon: _searchQuery.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.close, color: Colors.grey),
+                                      icon: const Icon(Icons.close,
+                                          color: Colors.grey),
                                       onPressed: () {
                                         _searchController.clear();
                                         setState(() {
@@ -164,88 +175,220 @@ class _ChatListPageState extends State<ChatListPage> {
                                     )
                                   : null,
                               filled: true,
-                              fillColor: const Color(0xFFF2F5FA), // Warna abu-biru soft agar kontras dengan card putih
-                              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                              fillColor: const Color(0xFFF2F5FA),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 0),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(15),
-                                borderSide: BorderSide.none, // Menghilangkan garis border luar
+                                borderSide: BorderSide.none,
                               ),
                             ),
                           ),
                         ),
-                    Expanded(
-                    child: ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(30),
-                        topRight: Radius.circular(30),
-                      ),
-                      child: StreamBuilder<List<Map<String, dynamic>>>(
-                        stream: supabase.from('chats').stream(primaryKey: ['id']).eq('user_id', myId).order('time', ascending: false),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(
-                              child: Text('Belum ada obrolan aktif',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
+
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(30),
+                              topRight: Radius.circular(30),
                             ),
-                            );
-                          }
-                          final chatList = snapshot.data!;
+                            child: StreamBuilder<List<Map<String, dynamic>>>(
+                              stream: supabase
+                                  .from('chat_messages')
+                                  .stream(primaryKey: ['id'])
+                                  .order('created_at', ascending: false),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
 
-                          // lOGIKA fILTERING CHAT BERDASARKAN NAMA DAN PESAN TERAKHIR
-                          final filteredChatList = _searchQuery.isEmpty
-                              ? chatList
-                              : chatList.where((chat) {
-                                  final name = (chat['name'] as String).toLowerCase();
-                                  final lastMessage = (chat['last_message'] as String).toLowerCase();
-                                  final query = _searchQuery.toLowerCase();
-                                  return name.contains(query) || lastMessage.contains(query);
-                                }).toList();
+                                final allMessages = snapshot.data ?? [];
 
-                          if (filteredChatList.isEmpty) {
-                            return const Center(
-                              child: Text('Tidak ada percakapan yang cocok',
-                              style: TextStyle(color: Colors.grey, fontSize: 16),
+                                if (allMessages.isEmpty) {
+                                  return const Center(
+                                    child: Text(
+                                      'Belum ada obrolan aktif',
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 16),
+                                    ),
+                                  );
+                                }
+
+                                // Ambil pesan terbaru dari setiap unique conversation
+                                final Map<String, Map<String, dynamic>> conversationMap = {};
+
+                                for (final msg in allMessages) {
+                                  final senderId = msg['sender_id']?.toString() ?? '';
+                                  final receiverId = msg['receiver_id']?.toString() ?? '';
+
+                                  // Hanya tampilkan percakapan yang melibatkan user ini
+                                  if (senderId != myId && receiverId != myId) continue;
+
+                                  // Buat key unik untuk pasangan ini (urutan tidak penting)
+                                  final List<String> pair = [senderId, receiverId]..sort();
+                                  final String key = pair.join('_');
+
+                                  // Hanya simpan pesan terbaru (stream sudah descending)
+                                  if (!conversationMap.containsKey(key)) {
+                                    conversationMap[key] = msg;
+                                  }
+                                }
+
+                                if (conversationMap.isEmpty) {
+                                  return const Center(
+                                    child: Text(
+                                      'Belum ada obrolan aktif',
+                                      style: TextStyle(
+                                          color: Colors.grey, fontSize: 16),
+                                    ),
+                                  );
+                                }
+
+                                // Konversi ke list dan sort by waktu terbaru
+                                final conversations = conversationMap.values.toList();
+                                conversations.sort((a, b) {
+                                  final aTime = a['created_at']?.toString() ?? '';
+                                  final bTime = b['created_at']?.toString() ?? '';
+                                  return bTime.compareTo(aTime);
+                                });
+
+                                // Filter berdasarkan search query menggunakan partner_id
+                                // (nama akan di-fetch secara async di ChatItem)
+
+                                return FutureBuilder<List<_ConversationData>>(
+                                  future: _buildConversationList(conversations, myId, supabase),
+                                  builder: (context, futureSnapshot) {
+                                    if (!futureSnapshot.hasData) {
+                                      return const Center(
+                                          child: CircularProgressIndicator());
+                                    }
+
+                                    var convList = futureSnapshot.data!;
+
+                                    // Filter search
+                                    if (_searchQuery.isNotEmpty) {
+                                      convList = convList.where((c) {
+                                        return c.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+                                            c.lastMessage.toLowerCase().contains(_searchQuery.toLowerCase());
+                                      }).toList();
+                                    }
+
+                                    if (convList.isEmpty) {
+                                      return const Center(
+                                        child: Text(
+                                          'Tidak ada percakapan yang cocok',
+                                          style: TextStyle(
+                                              color: Colors.grey, fontSize: 16),
+                                        ),
+                                      );
+                                    }
+
+                                    return ListView.separated(
+                                      padding: EdgeInsets.zero,
+                                      itemCount: convList.length,
+                                      separatorBuilder: (context, index) =>
+                                          const Divider(height: 1, indent: 80),
+                                      itemBuilder: (context, index) {
+                                        final conv = convList[index];
+                                        return ChatItem(
+                                          name: conv.name,
+                                          receiverId: conv.partnerId,
+                                          lastMessage: conv.lastMessage,
+                                          time: formatChatTime(conv.time),
+                                          unread: 0,
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
                             ),
-                            );
-                          }
-
-                          return ListView.separated(
-                            padding: EdgeInsets.zero,
-                            itemCount: filteredChatList.length,
-                            separatorBuilder: (context, index) => const Divider(height: 1, indent: 80),
-                            itemBuilder: (context, index) {
-                              final chat = filteredChatList[index];
-                              debugPrint(chat.toString());
-                              return ChatItem(
-                                name: chat['name'] as String,
-                                receiverId: chat['partner_id'] ?? '',
-                                lastMessage: chat['last_message'] as String,
-                                time: formatChatTime(chat['time'] as String?),
-                                unread: chat['unread'] as int,
-                              );
-                            },
-                            
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                ),
               ],
-            ),
             ),
           ),
         ],
       ),
-    ),
-        ],
-      ),
-      );
+    );
   }
+
+  // Ambil nama partner dari tabel profiles/users
+  Future<List<_ConversationData>> _buildConversationList(
+    List<Map<String, dynamic>> conversations,
+    String myId,
+    SupabaseClient supabase,
+  ) async {
+    final List<_ConversationData> result = [];
+
+    for (final msg in conversations) {
+      final senderId = msg['sender_id']?.toString() ?? '';
+      final receiverId = msg['receiver_id']?.toString() ?? '';
+      final partnerId = senderId == myId ? receiverId : senderId;
+
+      if (partnerId.isEmpty) continue;
+
+      String partnerName = 'Unknown';
+      try {
+        final profileData = await supabase
+            .from('users') 
+            .select('name') 
+            .eq('id', partnerId)
+            .maybeSingle();
+
+        if (profileData != null) {
+          partnerName = profileData['full_name']?.toString() ??
+              profileData['name']?.toString() ??
+              'Unknown';
+        }
+      } catch (e) {
+        debugPrint('Gagal ambil profil partner: $e');
+      }
+
+      // Tentukan last message preview
+      String lastMessage = '';
+      final msgType = msg['message_type']?.toString() ?? 'text';
+      if (msgType == 'image') {
+        lastMessage = '🖼️ Gambar';
+      } else if (msgType == 'file') {
+        lastMessage = '📁 File';
+      } else if (msgType == 'offer') {
+        lastMessage = '💼 Penawaran Khusus';
+      } else {
+        lastMessage = msg['message_content']?.toString() ?? '';
+      }
+
+      result.add(_ConversationData(
+        partnerId: partnerId,
+        name: partnerName,
+        lastMessage: lastMessage,
+        time: msg['created_at']?.toString() ?? '',
+      ));
+    }
+
+    return result;
+  }
+}
+
+// Data class helper
+class _ConversationData {
+  final String partnerId;
+  final String name;
+  final String lastMessage;
+  final String time;
+
+  _ConversationData({
+    required this.partnerId,
+    required this.name,
+    required this.lastMessage,
+    required this.time,
+  });
 }
 
 class ChatItem extends StatelessWidget {
@@ -260,17 +403,16 @@ class ChatItem extends StatelessWidget {
     required this.name,
     required this.lastMessage,
     required this.time,
-    this.unread = 0, 
+    this.unread = 0,
     required this.receiverId,
   });
 
-  // Fungsi pembantu untuk mengambil inisial (Contoh: Budi Designer -> BD)
   String getInitials(String name) {
-    List<String> names = name.split(" ");
+    List<String> names = name.trim().split(" ");
     String initials = "";
     if (names.length >= 2) {
       initials = names[0][0] + names[1][0];
-    } else {
+    } else if (names.isNotEmpty && names[0].isNotEmpty) {
       initials = names[0][0];
     }
     return initials.toUpperCase();
@@ -280,13 +422,14 @@ class ChatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       onTap: () {
-        // Pastikan file chat_page.dart kamu sudah menerima parameter 'name'
         Navigator.push(
-          context, 
-          MaterialPageRoute(builder: (_) => ChatPage(name: name, receiverId: receiverId,))
+          context,
+          MaterialPageRoute(
+              builder: (_) => ChatPage(name: name, receiverId: receiverId)),
         );
       },
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Stack(
         children: [
           CircleAvatar(
@@ -295,12 +438,9 @@ class ChatItem extends StatelessWidget {
             child: Text(
               getInitials(name),
               style: const TextStyle(
-                color: Colors.white, 
-                fontWeight: FontWeight.bold
-              ),
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ),
-          // Dot Indikator Status (Oranye)
           Positioned(
             right: 0,
             bottom: 0,
@@ -308,7 +448,7 @@ class ChatItem extends StatelessWidget {
               height: 16,
               width: 16,
               decoration: BoxDecoration(
-                color: const Color(0xFFE68C3A), 
+                color: const Color(0xFFE68C3A),
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
@@ -319,19 +459,24 @@ class ChatItem extends StatelessWidget {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold, 
-              fontSize: 16
+          Expanded(
+            child: Text(
+              name,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                  fontWeight: FontWeight.bold, fontSize: 16),
             ),
           ),
+          const SizedBox(width: 8),
           Text(
             time,
             style: TextStyle(
               fontSize: 12,
-              color: unread > 0 ? const Color(0xFFE68C3A) : Colors.grey,
-              fontWeight: unread > 0 ? FontWeight.bold : FontWeight.normal,
+              color: unread > 0
+                  ? const Color(0xFFE68C3A)
+                  : Colors.grey,
+              fontWeight:
+                  unread > 0 ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ],
@@ -348,11 +493,11 @@ class ChatItem extends StatelessWidget {
                 style: const TextStyle(color: Colors.black54),
               ),
             ),
-            // Badge Notifikasi jika ada pesan yang belum dibaca
             if (unread > 0)
               Container(
                 margin: const EdgeInsets.only(left: 10),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE68C3A),
                   borderRadius: BorderRadius.circular(10),
@@ -360,10 +505,9 @@ class ChatItem extends StatelessWidget {
                 child: Text(
                   unread.toString(),
                   style: const TextStyle(
-                    color: Colors.white, 
-                    fontSize: 10, 
-                    fontWeight: FontWeight.bold
-                  ),
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
           ],
