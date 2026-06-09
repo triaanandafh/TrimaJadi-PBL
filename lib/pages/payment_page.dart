@@ -8,7 +8,7 @@ import 'package:trimajadi/pages/main_screen.dart';
 class PaymentMethodModel {
   final String id;
   final String name;
-  final String shortName; 
+  final String shortName;
   final bool isVirtualAccount;
   final Color color;
   final List<String> steps;
@@ -88,6 +88,7 @@ class ChoosePaymentPage extends StatelessWidget {
   final int totalPrice;
   final String serviceName;
   final String clientName;
+  final bool isPromotion; // TAMBAHAN
 
   const ChoosePaymentPage({
     super.key,
@@ -95,6 +96,7 @@ class ChoosePaymentPage extends StatelessWidget {
     required this.totalPrice,
     required this.serviceName,
     required this.clientName,
+    this.isPromotion = false, // TAMBAHAN
   });
 
   String _formatRupiah(int v) {
@@ -115,9 +117,10 @@ class ChoosePaymentPage extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 1,
         leading: const BackButton(color: Colors.black),
-        title: const Text(
-          'Pilih Pembayaran',
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        title: Text(
+          isPromotion ? 'Bayar Promosi' : 'Pilih Pembayaran',
+          style:
+              const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(
@@ -130,11 +133,16 @@ class ChoosePaymentPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF1A237E),
+                color: isPromotion
+                    ? const Color(0xFFE68C3A)
+                    : const Color(0xFF1A237E),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF1A237E).withOpacity(0.2),
+                    color: (isPromotion
+                            ? const Color(0xFFE68C3A)
+                            : const Color(0xFF1A237E))
+                        .withOpacity(0.2),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -143,10 +151,24 @@ class ChoosePaymentPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Total Tagihan',
-                    style: TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
+                  if (isPromotion)
+                    const Row(
+                      children: [
+                        Icon(Icons.rocket_launch,
+                            color: Colors.white70, size: 16),
+                        SizedBox(width: 6),
+                        Text(
+                          'Biaya Promosi',
+                          style:
+                              TextStyle(color: Colors.white70, fontSize: 14),
+                        ),
+                      ],
+                    )
+                  else
+                    const Text(
+                      'Total Tagihan',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
+                    ),
                   const SizedBox(height: 8),
                   Text(
                     _formatRupiah(totalPrice),
@@ -160,8 +182,10 @@ class ChoosePaymentPage extends StatelessWidget {
                   const Divider(color: Colors.white24),
                   const SizedBox(height: 8),
                   Text(
-                    'Layanan: $serviceName',
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    isPromotion
+                        ? 'Layanan: $serviceName\nDurasi: 28 hari (setelah disetujui admin)'
+                        : 'Layanan: $serviceName',
+                    style: const TextStyle(color: Colors.white, fontSize: 13, height: 1.5),
                   ),
                 ],
               ),
@@ -200,8 +224,8 @@ class ChoosePaymentPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final method = paymentOptions[index];
                   return ListTile(
-                    contentPadding:
-                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     leading: Container(
                       width: 48,
                       height: 32,
@@ -227,9 +251,9 @@ class ChoosePaymentPage extends StatelessWidget {
                         fontSize: 14,
                       ),
                     ),
-                    trailing: const Icon(Icons.chevron_right, color: Colors.grey),
+                    trailing:
+                        const Icon(Icons.chevron_right, color: Colors.grey),
                     onTap: () {
-                      // Pindah ke halaman pembayaran spesifik
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -238,7 +262,8 @@ class ChoosePaymentPage extends StatelessWidget {
                             totalPrice: totalPrice,
                             serviceName: serviceName,
                             clientName: clientName,
-                            selectedPayment: method, // Kirim metode yang dipilih
+                            selectedPayment: method,
+                            isPromotion: isPromotion, // TAMBAHAN
                           ),
                         ),
                       );
@@ -247,6 +272,36 @@ class ChoosePaymentPage extends StatelessWidget {
                 },
               ),
             ),
+
+            if (isPromotion) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8F0),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                      color: const Color(0xFFE68C3A).withOpacity(0.3)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.info_outline,
+                        color: Color(0xFFE68C3A), size: 18),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Dana akan ditahan hingga admin menyetujui promosi. Jika ditolak, dana dikembalikan ke wallet kamu.',
+                        style: TextStyle(
+                            color: Color(0xFFE68C3A),
+                            fontSize: 12,
+                            height: 1.5),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -260,7 +315,8 @@ class PaymentPage extends StatefulWidget {
   final int totalPrice;
   final String serviceName;
   final String clientName;
-  final PaymentMethodModel selectedPayment; 
+  final PaymentMethodModel selectedPayment;
+  final bool isPromotion; // TAMBAHAN
 
   const PaymentPage({
     super.key,
@@ -269,6 +325,7 @@ class PaymentPage extends StatefulWidget {
     required this.serviceName,
     required this.clientName,
     required this.selectedPayment,
+    this.isPromotion = false, // TAMBAHAN
   });
 
   @override
@@ -282,7 +339,7 @@ class _PaymentPageState extends State<PaymentPage>
   late final String _vaNumber;
   late final String _merchantOrderId;
 
-  static const int _expirySeconds = 24 * 60 * 60; // 24 Jam
+  static const int _expirySeconds = 24 * 60 * 60;
   int _secondsLeft = _expirySeconds;
   Timer? _countdownTimer;
 
@@ -376,11 +433,24 @@ class _PaymentPageState extends State<PaymentPage>
     await Future.delayed(const Duration(seconds: 2));
 
     try {
-      await supabase.from('orders').update({
-        'payment_status': 'paid',
-        'work_status': 'progress',
-        'merchant_order_id': _merchantOrderId,
-      }).eq('id', widget.orderId);
+      if (widget.isPromotion) {
+        // Insert ke promotion_requests dengan status pending
+        await supabase.from('promotion_requests').insert({
+          'service_id': widget.orderId,
+          'talent_id': supabase.auth.currentUser!.id,
+          'amount': widget.totalPrice,
+          'status': 'pending',
+          'payment_method': widget.selectedPayment.id,
+          'requested_at': DateTime.now().toIso8601String(),
+        });
+      } else {
+        // Flow order biasa
+        await supabase.from('orders').update({
+          'payment_status': 'paid',
+          'work_status': 'progress',
+          'merchant_order_id': _merchantOrderId,
+        }).eq('id', widget.orderId);
+      }
 
       _countdownTimer?.cancel();
       setState(() {
@@ -443,6 +513,8 @@ class _PaymentPageState extends State<PaymentPage>
                   const Divider(),
                   _infoRow('No. Order', _merchantOrderId),
                   _infoRow('Layanan', widget.serviceName),
+                  if (widget.isPromotion)
+                    _infoRow('Durasi Promosi', '28 hari'),
                   const Divider(),
                   _infoRow(
                     'Total',
@@ -489,8 +561,7 @@ class _PaymentPageState extends State<PaymentPage>
                     ],
                   ),
                   const SizedBox(height: 16),
-                  
-                  // Render Virtual Account UI atau E-Wallet UI
+
                   if (widget.selectedPayment.isVirtualAccount) ...[
                     const Text(
                       'Nomor Virtual Account',
@@ -508,7 +579,8 @@ class _PaymentPageState extends State<PaymentPage>
                             color: const Color(0xFFE8F0FF),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                                color: const Color(0xFF1A237E).withOpacity(0.3)),
+                                color: const Color(0xFF1A237E)
+                                    .withOpacity(0.3)),
                           ),
                           child: Row(
                             children: [
@@ -544,12 +616,14 @@ class _PaymentPageState extends State<PaymentPage>
                         color: widget.selectedPayment.color.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                            color: widget.selectedPayment.color.withOpacity(0.3)),
+                            color: widget.selectedPayment.color
+                                .withOpacity(0.3)),
                       ),
                       child: Column(
                         children: [
                           Icon(Icons.qr_code_scanner,
-                              size: 48, color: widget.selectedPayment.color),
+                              size: 48,
+                              color: widget.selectedPayment.color),
                           const SizedBox(height: 8),
                           Text(
                             'Pembayaran via Aplikasi',
@@ -568,11 +642,9 @@ class _PaymentPageState extends State<PaymentPage>
                   const SizedBox(height: 8),
                   _sectionTitle('Cara Pembayaran'),
                   const SizedBox(height: 10),
-                  ...widget.selectedPayment.steps.asMap().entries.map((entry) {
-                    int index = entry.key + 1;
-                    String text = entry.value;
-                    return _step(index.toString(), text);
-                  }),
+                  ...widget.selectedPayment.steps.asMap().entries.map(
+                      (entry) => _step(
+                          (entry.key + 1).toString(), entry.value)),
                 ],
               ),
             ),
@@ -582,7 +654,9 @@ class _PaymentPageState extends State<PaymentPage>
               height: 52,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1A237E),
+                  backgroundColor: widget.isPromotion
+                      ? const Color(0xFFE68C3A)
+                      : const Color(0xFF1A237E),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14)),
                   elevation: 0,
@@ -636,37 +710,50 @@ class _PaymentPageState extends State<PaymentPage>
                 width: 110,
                 height: 110,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A237E),
+                  color: widget.isPromotion
+                      ? const Color(0xFFE68C3A)
+                      : const Color(0xFF1A237E),
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF1A237E).withOpacity(0.3),
+                      color: (widget.isPromotion
+                              ? const Color(0xFFE68C3A)
+                              : const Color(0xFF1A237E))
+                          .withOpacity(0.3),
                       blurRadius: 24,
                       spreadRadius: 4,
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
+                child: Icon(
+                  widget.isPromotion
+                      ? Icons.rocket_launch
+                      : Icons.check_rounded,
                   color: Colors.white,
                   size: 60,
                 ),
               ),
             ),
             const SizedBox(height: 28),
-            const Text(
-              'Pembayaran Berhasil!',
+            Text(
+              widget.isPromotion
+                  ? 'Pembayaran Diterima!'
+                  : 'Pembayaran Berhasil!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1A237E),
+                color: widget.isPromotion
+                    ? const Color(0xFFE68C3A)
+                    : const Color(0xFF1A237E),
               ),
             ),
             const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Order kamu sekarang sedang diproses. Pantau perkembangannya di halaman detail pesanan.',
+                widget.isPromotion
+                    ? 'Pengajuan promosi kamu sedang ditinjau admin. Promosi aktif setelah disetujui. Dana dikembalikan jika ditolak.'
+                    : 'Order kamu sekarang sedang diproses. Pantau perkembangannya di halaman detail pesanan.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[600], height: 1.6),
               ),
@@ -690,10 +777,19 @@ class _PaymentPageState extends State<PaymentPage>
                     valueColor: const Color(0xFF1A237E),
                   ),
                   const SizedBox(height: 6),
-                  _infoRow('Status', 'Lunas',
-                      valueBold: true, valueColor: Colors.green),
+                  if (widget.isPromotion)
+                    _infoRow('Status', 'Menunggu Admin',
+                        valueBold: true,
+                        valueColor: Colors.orange)
+                  else
+                    _infoRow('Status', 'Lunas',
+                        valueBold: true, valueColor: Colors.green),
                   const SizedBox(height: 6),
                   _infoRow('Metode', widget.selectedPayment.name),
+                  if (widget.isPromotion) ...[
+                    const SizedBox(height: 6),
+                    _infoRow('Durasi', '28 hari'),
+                  ],
                 ],
               ),
             ),
@@ -705,7 +801,9 @@ class _PaymentPageState extends State<PaymentPage>
                 height: 52,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A237E),
+                    backgroundColor: widget.isPromotion
+                        ? const Color(0xFFE68C3A)
+                        : const Color(0xFF1A237E),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                     elevation: 0,
@@ -714,14 +812,18 @@ class _PaymentPageState extends State<PaymentPage>
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const MainScreen(initialIndex: 1),
+                        builder: (context) => MainScreen(
+                          initialIndex: widget.isPromotion ? 2 : 1,
+                        ),
                       ),
-                      (route) => false, // Ini akan menyisakan halaman paling awal (biasanya Home) di riwayat bawahnya
+                      (route) => false,
                     );
                   },
-                  child: const Text(
-                    'Lihat Detail Pesanan',
-                    style: TextStyle(
+                  child: Text(
+                    widget.isPromotion
+                        ? 'Kembali ke Layanan Saya'
+                        : 'Lihat Detail Pesanan',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -765,7 +867,7 @@ class _PaymentPageState extends State<PaymentPage>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Sesi pembayaran ini telah kadaluarsa. Silakan kembali dan buat order ulang.',
+                'Sesi pembayaran ini telah kadaluarsa. Silakan kembali dan coba lagi.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.grey[600], height: 1.6),
               ),
@@ -782,10 +884,7 @@ class _PaymentPageState extends State<PaymentPage>
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14)),
                   ),
-                  onPressed: () {
-                    // Kembali ke halaman Choose Payment, atau bisa disesuaikan ke Home
-                    Navigator.pop(context);
-                  },
+                  onPressed: () => Navigator.pop(context),
                   child: const Text(
                     'Kembali',
                     style: TextStyle(
@@ -828,7 +927,8 @@ class _PaymentPageState extends State<PaymentPage>
             child: Text(
               'Selesaikan pembayaran dalam',
               style: TextStyle(
-                color: isLow ? Colors.red.shade700 : const Color(0xFF1A237E),
+                color:
+                    isLow ? Colors.red.shade700 : const Color(0xFF1A237E),
                 fontSize: 13,
               ),
             ),
@@ -868,7 +968,8 @@ class _PaymentPageState extends State<PaymentPage>
 
   Widget _sectionTitle(String t) => Text(
         t,
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        style:
+            const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
       );
 
   Widget _infoRow(
@@ -892,7 +993,8 @@ class _PaymentPageState extends State<PaymentPage>
             child: Text(
               value,
               style: TextStyle(
-                fontWeight: valueBold ? FontWeight.bold : FontWeight.normal,
+                fontWeight:
+                    valueBold ? FontWeight.bold : FontWeight.normal,
                 color: valueColor ?? Colors.black,
                 fontSize: 13,
               ),
