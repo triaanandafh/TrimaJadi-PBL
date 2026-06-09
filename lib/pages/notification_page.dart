@@ -128,7 +128,7 @@ class _NotificationPageState extends State<NotificationPage> {
     if (!mounted) return;
 
     switch (notif.type) {
-      case 'pesanan':
+      case 'order':
       case 'completed':
       case 'review':
         if (notif.referenceId != null) {
@@ -157,7 +157,7 @@ class _NotificationPageState extends State<NotificationPage> {
               ),
             );
           } else {
-            _showSnackBar('Pesanan tidak ditemukan');
+            _showSnackBar('Order tidak ditemukan');
           }
         }
         break;
@@ -220,7 +220,7 @@ class _NotificationPageState extends State<NotificationPage> {
   // ── Helpers icon & warna ─────────────────────────────────────
   IconData _iconFromType(String type) {
     switch (type) {
-      case 'pesanan':
+      case 'order':
         return Icons.shopping_bag_rounded;
       case 'chat':
         return Icons.chat_bubble_rounded;
@@ -235,7 +235,7 @@ class _NotificationPageState extends State<NotificationPage> {
 
   Color _colorFromType(String type) {
     switch (type) {
-      case 'pesanan':
+      case 'order':
         return Colors.orange;
       case 'chat':
         return Colors.blue;
@@ -361,7 +361,7 @@ class _NotificationPageState extends State<NotificationPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Notifikasi pesanan dan pesan akan muncul di sini',
+            'Notifikasi order dan pesan akan muncul di sini',
             style: TextStyle(color: Colors.grey[400], fontSize: 13),
             textAlign: TextAlign.center,
           ),
@@ -397,12 +397,12 @@ class _NotificationPageState extends State<NotificationPage> {
     String? navLabel;
     if (notif.referenceId != null) {
       switch (notif.type) {
-        case 'pesanan':
+        case 'order':
         case 'completed':
         case 'review':
-          navLabel = 'Lihat Pesanan';
+          navLabel = 'Lihat Order';
           break;
-        case 'Chat':
+        case 'chat':
           navLabel = 'Buka Chat';
           break;
       }
