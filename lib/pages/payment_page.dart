@@ -82,6 +82,7 @@ final List<PaymentMethodModel> paymentOptions = [
   ),
 ];
 
+
 // 2. HALAMAN PILIH METODE PEMBAYARAN
 class ChoosePaymentPage extends StatelessWidget {
   final String orderId;
@@ -89,6 +90,7 @@ class ChoosePaymentPage extends StatelessWidget {
   final String serviceName;
   final String clientName;
   final bool isPromotion; // TAMBAHAN
+  final String? categoryId;
 
   const ChoosePaymentPage({
     super.key,
@@ -97,6 +99,7 @@ class ChoosePaymentPage extends StatelessWidget {
     required this.serviceName,
     required this.clientName,
     this.isPromotion = false, // TAMBAHAN
+    this.categoryId,
   });
 
   String _formatRupiah(int v) {
@@ -264,6 +267,7 @@ class ChoosePaymentPage extends StatelessWidget {
                             clientName: clientName,
                             selectedPayment: method,
                             isPromotion: isPromotion, // TAMBAHAN
+                            categoryId: categoryId,
                           ),
                         ),
                       );
@@ -317,6 +321,7 @@ class PaymentPage extends StatefulWidget {
   final String clientName;
   final PaymentMethodModel selectedPayment;
   final bool isPromotion; // TAMBAHAN
+  final String? categoryId;
 
   const PaymentPage({
     super.key,
@@ -326,6 +331,7 @@ class PaymentPage extends StatefulWidget {
     required this.clientName,
     required this.selectedPayment,
     this.isPromotion = false, // TAMBAHAN
+    this.categoryId,
   });
 
   @override
@@ -437,6 +443,7 @@ class _PaymentPageState extends State<PaymentPage>
         // Insert ke promotion_requests dengan status pending
         await supabase.from('promotion_requests').insert({
           'service_id': widget.orderId,
+          'category_id': widget.categoryId,
           'talent_id': supabase.auth.currentUser!.id,
           'amount': widget.totalPrice,
           'status': 'pending',

@@ -98,8 +98,8 @@ class _LayananPageState extends State<LayananPage> {
               ),
               child: const Text(
                 'Hapus',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                style: TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.w600),
               ),
             ),
           ),
@@ -132,6 +132,7 @@ class _LayananPageState extends State<LayananPage> {
   }
 
   Future<void> _showPromoDialog(Map<String, dynamic> service) async {
+    // Cek apakah layanan ini sudah ada promo pending/approved
     final existing = await _supabase
         .from('promotion_requests')
         .select()
@@ -153,10 +154,16 @@ class _LayananPageState extends State<LayananPage> {
       return;
     }
 
+    // Ambil category_id & nama kategori dari service
+    final categoryId = service['category_id'];
+    final categoryName = service['categories']?['name'] ?? 'kategori ini';
+
+    // Cek slot per kategori
     final approvedResult = await _supabase
         .from('promotion_requests')
         .select()
         .eq('status', 'approved')
+        .eq('category_id', categoryId)
         .count();
 
     final approvedCount = approvedResult.count;
@@ -199,7 +206,10 @@ class _LayananPageState extends State<LayananPage> {
                   const SizedBox(height: 4),
                   _promoInfoRow('Harga', 'Rp 50.000'),
                   const SizedBox(height: 4),
-                  _promoInfoRow('Slot tersisa', '${3 - approvedCount} / 3'),
+                  _promoInfoRow(
+                    'Slot "$categoryName"',
+                    '${3 - approvedCount} / 3',
+                  ),
                 ],
               ),
             ),
@@ -245,6 +255,7 @@ class _LayananPageState extends State<LayananPage> {
                             serviceName: service['title'] ?? '',
                             clientName: '',
                             isPromotion: true,
+                            categoryId: service['category_id'],
                           ),
                         ),
                       );
@@ -272,7 +283,8 @@ class _LayananPageState extends State<LayananPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(label,
+            style: const TextStyle(color: Colors.grey, fontSize: 13)),
         Text(value,
             style:
                 const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
@@ -373,7 +385,8 @@ class _LayananPageState extends State<LayananPage> {
                             final categoryName =
                                 service['categories']?['name'] ?? 'Kategori';
                             final packages =
-                                service['service_packages'] as List<dynamic>? ??
+                                service['service_packages']
+                                    as List<dynamic>? ??
                                     [];
                             final basic = _getPackage(packages, 'basic');
                             final standard =
@@ -433,7 +446,8 @@ class _LayananPageState extends State<LayananPage> {
           width: isFeatured ? 1.5 : 1,
         ),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.02), blurRadius: 10),
         ],
       ),
       child: Column(
@@ -443,7 +457,8 @@ class _LayananPageState extends State<LayananPage> {
           if (isFeatured)
             Container(
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: const Color(0xFFE68C3A).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(6),
@@ -465,7 +480,7 @@ class _LayananPageState extends State<LayananPage> {
               ),
             ),
 
-          // Konten utama
+          // Konten utama: kiri (info) | garis | kanan (tombol)
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -485,13 +500,15 @@ class _LayananPageState extends State<LayananPage> {
                             borderRadius: BorderRadius.circular(12),
                             image: service['image_url'] != null
                                 ? DecorationImage(
-                                    image: NetworkImage(service['image_url']),
+                                    image:
+                                        NetworkImage(service['image_url']),
                                     fit: BoxFit.cover,
                                   )
                                 : null,
                           ),
                           child: service['image_url'] == null
-                              ? const Icon(Icons.image, color: Color(0xFF1A43BF))
+                              ? const Icon(Icons.image,
+                                  color: Color(0xFF1A43BF))
                               : null,
                         ),
                         const SizedBox(width: 12),
@@ -508,7 +525,8 @@ class _LayananPageState extends State<LayananPage> {
                               Text(
                                 service['title'] ?? '',
                                 style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 15),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 15),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -523,9 +541,12 @@ class _LayananPageState extends State<LayananPage> {
                     // Harga paket
                     Row(
                       children: [
-                        _packagePrice('Basic', basic?['price'], Colors.blue),
-                        _packagePrice('Standard', standard?['price'], Colors.orange),
-                        _packagePrice('Premium', premium?['price'], Colors.purple),
+                        _packagePrice(
+                            'Basic', basic?['price'], Colors.blue),
+                        _packagePrice(
+                            'Standard', standard?['price'], Colors.orange),
+                        _packagePrice(
+                            'Premium', premium?['price'], Colors.purple),
                       ],
                     ),
                   ],
@@ -560,7 +581,9 @@ class _LayananPageState extends State<LayananPage> {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (_) => EditServicePage(service: service)),
+                          builder: (_) =>
+                              EditServicePage(service: service),
+                        ),
                       );
                       _fetchServices();
                     },
@@ -612,7 +635,8 @@ class _LayananPageState extends State<LayananPage> {
           const SizedBox(height: 3),
           Text(
             _formatPrice(price),
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            style:
+                const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
