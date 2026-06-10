@@ -4,10 +4,11 @@ import '../models/user_model.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:io';
-import 'chat_list_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'detail_order_page.dart';
+import 'talent_profile_preview_page.dart';
+import 'dart:io';
+import 'chat_list_page.dart';
 
 class ChatPage extends StatefulWidget {
   final String name;
@@ -39,27 +40,27 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   String _getDateLabel(String? dateStr) {
-  if (dateStr == null || dateStr.isEmpty) return "Hari ini";
-  try {
-    DateTime chatDate = DateTime.parse(dateStr).toLocal();
-    DateTime now = DateTime.now();
-    DateTime today = DateTime(now.year, now.month, now.day);
-    DateTime yesterday = today.subtract(const Duration(days: 1));
-    DateTime targetDay = DateTime(chatDate.year, chatDate.month, chatDate.day);
+    if (dateStr == null || dateStr.isEmpty) return "Hari ini";
+    try {
+      DateTime chatDate = DateTime.parse(dateStr).toLocal();
+      DateTime now = DateTime.now();
+      DateTime today = DateTime(now.year, now.month, now.day);
+      DateTime yesterday = today.subtract(const Duration(days: 1));
+      DateTime targetDay = DateTime(chatDate.year, chatDate.month, chatDate.day);
 
-    if (targetDay == today) {
+      if (targetDay == today) {
+        return "Hari ini";
+      } else if (targetDay == yesterday) {
+        return "Kemarin";
+      } else {
+        return "${chatDate.day}/${chatDate.month}/${chatDate.year}";
+      }
+    } catch (_) {
       return "Hari ini";
-    } else if (targetDay == yesterday) {
-      return "Kemarin";
-    } else {
-      return "${chatDate.day}/${chatDate.month}/${chatDate.year}";
     }
-  } catch (_) {
-    return "Hari ini";
   }
-}
 
-String _formatRupiah(dynamic value) {
+  String _formatRupiah(dynamic value) {
     if (value == null) return 'Rp 0';
     final num amount = value is num ? value : num.tryParse(value.toString()) ?? 0;
     final str    = amount.toInt().toString();
@@ -71,7 +72,7 @@ String _formatRupiah(dynamic value) {
     return 'Rp $buffer';
   }
 
-Future<void> openFile(String url) async {
+  Future<void> openFile(String url) async {
   final uri = Uri.parse(url);
 
   if (await canLaunchUrl(uri)) {
@@ -279,6 +280,136 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
   
   String get name => widget.name;
 
+  void _showReportDialog(BuildContext context) {
+    String? selectedReason;
+    final otherController = TextEditingController();
+    final reasons = [
+      'Penipuan / Scam',
+      'Konten tidak pantas',
+      'Spam',
+      'Pelecehan / Ancaman',
+      'Lainnya',
+    ];
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Laporkan Pengguna',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Pilih alasan laporan:',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 10),
+                ...reasons.map((reason) => RadioListTile<String>(
+                      value: reason,
+                      groupValue: selectedReason,
+                      title: Text(reason, style: const TextStyle(fontSize: 14)),
+                      activeColor: const Color(0xFFE68C3A),
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      onChanged: (val) => setDialogState(() => selectedReason = val),
+                    )),
+                // TextField muncul hanya saat pilih "Lainnya"
+                if (selectedReason == 'Lainnya') ...[
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: otherController,
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      hintText: 'Tuliskan alasan kamu...',
+                      hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade400),
+                      contentPadding: const EdgeInsets.all(12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: Colors.grey.shade300),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: Color(0xFFE68C3A)),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text('Batal', style: TextStyle(color: Colors.grey.shade600)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE68C3A),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: selectedReason == null
+                  ? null
+                  : () async {
+                      // Jika "Lainnya" tapi field kosong, tidak bisa kirim
+                      if (selectedReason == 'Lainnya' && otherController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(ctx).showSnackBar(
+                          const SnackBar(
+                            content: Text('Mohon tuliskan alasan kamu.'),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      final finalReason = selectedReason == 'Lainnya'
+                          ? 'Lainnya: ${otherController.text.trim()}'
+                          : selectedReason!;
+
+                      Navigator.pop(ctx);
+                      try {
+                        final myId = supabase.auth.currentUser?.id;
+                        if (myId == null) return;
+
+                        await supabase.from('reports').insert({
+                          'reporter_id': myId,
+                          'reported_id': widget.receiverId,
+                          'reason': finalReason,
+                        });
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Laporan berhasil dikirim. Terima kasih.'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Kamu sudah pernah melaporkan pengguna ini.'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              child: const Text('Kirim Laporan', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     bool isTalent = UserData.role == "Talent";
@@ -340,7 +471,20 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: Colors.grey[700]),
             color: Colors.white,
-            onSelected: (value) {
+            onSelected: (value) async {
+              if (value == 'profile') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TalentProfilePreviewPage(
+                      talentId: widget.receiverId,
+                      talentName: widget.name,
+                    ),
+                  ),
+                );
+              } else if (value == 'report') {
+                _showReportDialog(context);
+              }
             },
             itemBuilder: (BuildContext context) {
               return [
