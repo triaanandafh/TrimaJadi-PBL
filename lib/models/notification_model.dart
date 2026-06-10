@@ -28,4 +28,24 @@ class NotificationModel {
       referenceId: json['reference_id'],
     );
   }
+
+  NotificationModel copyWith({
+    String? id,
+    String? title,
+    String? subtitle,
+    String? type,
+    bool? isRead,
+    DateTime? createdAt,
+    String? referenceId,
+  }) {
+    return NotificationModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      type: type ?? this.type,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      referenceId: referenceId ?? this.referenceId,
+    );
+  }
 }

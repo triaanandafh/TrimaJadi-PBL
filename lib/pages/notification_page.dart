@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/notification_model.dart';
+import '../state/notification_state.dart';
 import 'detail_order_page.dart';
 import 'chat_page.dart';
 
@@ -23,7 +24,6 @@ class _NotificationPageState extends State<NotificationPage> {
     _subscribeRealtime();
   }
 
-  // ── Fetch dari Supabase ──────────────────────────────────────
   Future<void> _fetchNotifications() async {
     setState(() => _isLoading = true);
     try {
@@ -40,6 +40,10 @@ class _NotificationPageState extends State<NotificationPage> {
         _notifications =
             (data as List).map((e) => NotificationModel.fromJson(e)).toList();
       });
+
+      // Sync ValueNotifier setelah fetch
+      notificationUnreadCount.value =
+          _notifications.where((n) => !n.isRead).length;
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -51,7 +55,6 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  // ── Realtime listener ────────────────────────────────────────
   void _subscribeRealtime() {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -67,11 +70,12 @@ class _NotificationPageState extends State<NotificationPage> {
               _notifications =
                   data.map((e) => NotificationModel.fromJson(e)).toList();
             });
+            notificationUnreadCount.value =
+                _notifications.where((n) => !n.isRead).length;
           }
         });
   }
 
-  // ── Tandai sudah dibaca ──────────────────────────────────────
   Future<void> _markAsRead(String id) async {
     await _supabase
         .from('notifications')
@@ -80,21 +84,14 @@ class _NotificationPageState extends State<NotificationPage> {
     setState(() {
       final idx = _notifications.indexWhere((n) => n.id == id);
       if (idx != -1) {
-        final n = _notifications[idx];
-        _notifications[idx] = NotificationModel(
-          id: n.id,
-          title: n.title,
-          subtitle: n.subtitle,
-          type: n.type,
-          isRead: true,
-          createdAt: n.createdAt,
-          referenceId: n.referenceId,
-        );
+        _notifications[idx] = _notifications[idx].copyWith(isRead: true);
       }
     });
+
+    notificationUnreadCount.value =
+        _notifications.where((n) => !n.isRead).length;
   }
 
-  // ── Mark all as read ─────────────────────────────────────────
   Future<void> _markAllAsRead() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -107,22 +104,14 @@ class _NotificationPageState extends State<NotificationPage> {
 
     setState(() {
       _notifications = _notifications
-          .map((n) => NotificationModel(
-                id: n.id,
-                title: n.title,
-                subtitle: n.subtitle,
-                type: n.type,
-                isRead: true,
-                createdAt: n.createdAt,
-                referenceId: n.referenceId,
-              ))
+          .map((n) => n.copyWith(isRead: true))
           .toList();
     });
+
+    notificationUnreadCount.value = 0;
   }
 
-  // ── Tap notifikasi → navigate ────────────────────────────────
   Future<void> _onTapNotif(NotificationModel notif) async {
-    // Tandai sudah dibaca dulu
     if (!notif.isRead) await _markAsRead(notif.id);
 
     if (!mounted) return;
@@ -132,7 +121,6 @@ class _NotificationPageState extends State<NotificationPage> {
       case 'completed':
       case 'review':
         if (notif.referenceId != null) {
-          // Fetch dulu apakah user ini talent atau client di order tersebut
           final userId = _supabase.auth.currentUser?.id;
           final orderData = await _supabase
               .from('orders')
@@ -164,7 +152,6 @@ class _NotificationPageState extends State<NotificationPage> {
 
       case 'chat':
         if (notif.referenceId != null) {
-          // Fetch nama chat partner dari order
           final userId = _supabase.auth.currentUser?.id;
           final orderData = await _supabase
               .from('orders')
@@ -175,14 +162,12 @@ class _NotificationPageState extends State<NotificationPage> {
           if (!mounted) return;
 
           if (orderData != null) {
-            // Kalau user adalah talent, chat partner adalah client dan sebaliknya
             final isTalent = orderData['talent_id'] == userId;
             final partnerId =
                 isTalent ? orderData['client_id'] : orderData['talent_id'];
 
-            // Fetch nama partner dari profiles/users
             final partnerData = await _supabase
-                .from('profiles')  // sesuaikan nama tabel profil kamu
+                .from('profiles')
                 .select('name, full_name')
                 .eq('id', partnerId)
                 .maybeSingle();
@@ -197,7 +182,10 @@ class _NotificationPageState extends State<NotificationPage> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ChatPage(name: partnerName, receiverId: partnerId.toString(),),
+                builder: (_) => ChatPage(
+                  name: partnerName,
+                  receiverId: partnerId.toString(),
+                ),
               ),
             );
           } else {
@@ -207,7 +195,6 @@ class _NotificationPageState extends State<NotificationPage> {
         break;
 
       default:
-        // Type tidak dikenal, tidak navigate
         break;
     }
   }
@@ -217,7 +204,6 @@ class _NotificationPageState extends State<NotificationPage> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  // ── Helpers icon & warna ─────────────────────────────────────
   IconData _iconFromType(String type) {
     switch (type) {
       case 'order':
@@ -248,7 +234,6 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  // ── Grouping berdasarkan tanggal ─────────────────────────────
   String _dateLabel(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
@@ -280,7 +265,6 @@ class _NotificationPageState extends State<NotificationPage> {
     return widgets;
   }
 
-  // ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     final unreadCount = _notifications.where((n) => !n.isRead).length;
@@ -346,7 +330,6 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  // ── Widget: empty state ──────────────────────────────────────
   Widget _buildEmpty() {
     return Center(
       child: Column(
@@ -370,7 +353,6 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  // ── Widget: date label ───────────────────────────────────────
   Widget _buildDateLabel(String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -385,7 +367,6 @@ class _NotificationPageState extends State<NotificationPage> {
     );
   }
 
-  // ── Widget: notif item ───────────────────────────────────────
   Widget _buildNotifItem(NotificationModel notif) {
     final icon = _iconFromType(notif.type);
     final color = _colorFromType(notif.type);
@@ -393,7 +374,6 @@ class _NotificationPageState extends State<NotificationPage> {
     final timeStr =
         '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 
-    // Label tujuan navigasi
     String? navLabel;
     if (notif.referenceId != null) {
       switch (notif.type) {
@@ -423,7 +403,6 @@ class _NotificationPageState extends State<NotificationPage> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Icon
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
@@ -433,7 +412,6 @@ class _NotificationPageState extends State<NotificationPage> {
               child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 12),
-            // Text
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -453,7 +431,6 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      // Dot merah kalau belum dibaca
                       if (!notif.isRead)
                         Container(
                           margin: const EdgeInsets.only(top: 4),
@@ -478,7 +455,6 @@ class _NotificationPageState extends State<NotificationPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Label navigasi
                       if (navLabel != null)
                         Row(
                           children: [
@@ -495,7 +471,6 @@ class _NotificationPageState extends State<NotificationPage> {
                             ),
                           ],
                         ),
-                      // Waktu
                       Text(
                         timeStr,
                         style: TextStyle(
