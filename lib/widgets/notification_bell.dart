@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../pages/notification_page.dart';
+import '../state/notification_state.dart';
 
 class NotificationBell extends StatefulWidget {
   const NotificationBell({super.key});
@@ -12,23 +13,26 @@ class NotificationBell extends StatefulWidget {
 
 class _NotificationBellState extends State<NotificationBell> {
   final _supabase = Supabase.instance.client;
-  int _unreadCount = 0;
   StreamSubscription? _subscription;
 
   @override
   void initState() {
     super.initState();
     _subscribeRealtime();
+    notificationUnreadCount.addListener(_onCountChanged);
   }
 
   @override
   void dispose() {
     _subscription?.cancel();
+    notificationUnreadCount.removeListener(_onCountChanged);
     super.dispose();
   }
 
-  /// Realtime stream — sama persis seperti yang dipakai NotificationPage
-  /// sehingga badge langsung update ketika notif baru masuk atau dibaca
+  void _onCountChanged() {
+    if (mounted) setState(() {});
+  }
+
   void _subscribeRealtime() {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return;
@@ -38,15 +42,15 @@ class _NotificationBellState extends State<NotificationBell> {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .listen((data) {
-          if (mounted) {
-            final unread = data.where((n) => n['is_read'] == false).length;
-            setState(() => _unreadCount = unread);
-          }
+          final unread = data.where((n) => n['is_read'] == false).length;
+          notificationUnreadCount.value = unread;
         });
   }
 
   @override
   Widget build(BuildContext context) {
+    final unread = notificationUnreadCount.value;
+
     return InkWell(
       borderRadius: BorderRadius.circular(50),
       onTap: () async {
@@ -54,9 +58,6 @@ class _NotificationBellState extends State<NotificationBell> {
           context,
           MaterialPageRoute(builder: (_) => const NotificationPage()),
         );
-        // Setelah balik dari NotificationPage, stream otomatis update
-        // karena _markAsRead / _markAllAsRead di NotificationPage sudah
-        // mengubah is_read di Supabase — tidak perlu fetch manual lagi
       },
       child: Stack(
         clipBehavior: Clip.none,
@@ -73,7 +74,7 @@ class _NotificationBellState extends State<NotificationBell> {
               size: 22,
             ),
           ),
-          if (_unreadCount > 0)
+          if (unread > 0)
             Positioned(
               top: -3,
               right: -3,
@@ -84,12 +85,9 @@ class _NotificationBellState extends State<NotificationBell> {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 1.5),
                 ),
-                constraints: const BoxConstraints(
-                  minWidth: 18,
-                  minHeight: 18,
-                ),
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
                 child: Text(
-                  _unreadCount > 99 ? '99+' : '$_unreadCount',
+                  unread > 99 ? '99+' : '$unread',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 10,
