@@ -54,7 +54,7 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
           .from('services')
           .select('''
             id, title, description, image_url,
-            categories(name),
+            categories(id, name),
             service_packages(id, package_type, package_description, price),
             users(id, name, email, phone)
           ''')
@@ -131,6 +131,8 @@ class _CreateOrderPageState extends State<CreateOrderPage> {
       final response = await supabase.from('orders').insert({
         'client_id'     : clientId,
         'talent_id'     : talentId,
+        'service_id'    : widget.serviceId,                              // tambah ini
+        'category_id'   : serviceData!['categories']?['id']?.toString(), // tambah ini
         'service_name'  : '${serviceData!['title']} - Paket ${_capitalize(selectedPackageType)}',
         'description'   : _descCtrl.text.trim().isNotEmpty
             ? _descCtrl.text.trim()

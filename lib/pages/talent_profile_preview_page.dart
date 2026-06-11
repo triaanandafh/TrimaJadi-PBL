@@ -76,8 +76,16 @@ class _TalentProfilePreviewPageState extends State<TalentProfilePreviewPage> {
       });
     } catch (e, stackTrace) {
       debugPrint('ERROR LOAD PROFIL: $e');
-      debugPrint('STACK TRACE: $stackTrace');
-      setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            duration: const Duration(seconds: 10),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _loading = false);
+      }
     }
   }
 

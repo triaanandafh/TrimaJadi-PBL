@@ -36,7 +36,7 @@ class _OrderPageState extends State<OrderPage> {
 
       final response = await supabase
           .from('orders')
-          .select()
+          .select('*, categories(name)')
           .eq(isTalent ? 'talent_id' : 'client_id', userId)
           .order('created_at', ascending: false);
 
@@ -302,6 +302,7 @@ class _OrderPageState extends State<OrderPage> {
                                   subTitle:    subTitle,
                                   status:      resolved.label,
                                   statusColor: resolved.color,
+                                  category: (order['categories'] as Map?)?['name'] ?? '',
                                   onTap: () async {
                                     await Navigator.push(
                                       context,

@@ -5,6 +5,7 @@ class OrderCard extends StatelessWidget {
   final String subTitle; // Bisa tanggal atau nama user
   final String status;
   final Color statusColor;
+  final String? category;
   final VoidCallback? onTap;
 
   const OrderCard({
@@ -13,6 +14,7 @@ class OrderCard extends StatelessWidget {
     required this.subTitle,
     required this.status,
     this.statusColor = Colors.red,
+    this.category,
     this.onTap,
   });
 
@@ -85,7 +87,7 @@ class OrderCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              _buildCategoryIcon(title),
+              _buildCategoryIcon(category),
               
               const SizedBox(width: 15),
               Expanded(
