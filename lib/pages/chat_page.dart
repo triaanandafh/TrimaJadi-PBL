@@ -459,7 +459,14 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
                 );
                 } else if (msg['message_type'] == "offer") {
                   final offerData = jsonDecode(msg['message_content'] ?? '{}');
-                  bubbleWidget = _buildOfferCard(offerData,msg, isMe, isTalent);
+                  // bubbleWidget = _buildOfferCard(offerData,msg, isMe, isTalent);
+                  bubbleWidget = OfferCard(
+                    offer     : offerData,
+                    isMe      : isMe,
+                    isTalent  : isTalent,
+                    myId      : myId,
+                    receiverId: widget.receiverId,
+                  );
                 }
                 else {
                   bubbleWidget = chatBubble(msg['message_content'], isMe, timeStr: chatTime);
@@ -489,97 +496,9 @@ Future<void> _sendCustomOffer(String title, int price, String description) async
   }
 
 
-Widget _buildOfferCard(Map<String, dynamic> offer, Map<String, dynamic> msg, bool isMe, bool isTalent) {
-  // ✅ Handle int, double, dan string sekaligus
-  final int priceVal = (num.tryParse(offer['price'].toString()) ?? 0).toInt();
-  
-  return Align(
-    alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(16),
-      constraints: const BoxConstraints(maxWidth: 270),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE68C3A), width: 1.5),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6)],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text("KARTU PENAWARAN JASA", style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFFE68C3A))),
-          const SizedBox(height: 6),
-          Text(offer['title'] ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
-          const SizedBox(height: 4),
-          Text(_formatRupiah(priceVal), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A237E))),
-          const SizedBox(height: 6),
-          Text(offer['description'] ?? '', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-          const Divider(height: 16),
-          if (!isMe && !isTalent) // Muncul hanya di sisi Client penerima
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE68C3A)),
-                onPressed: () async {
-                  try {
-                    final String title = offer['title'] ?? 'Layanan Kustom';
-                    final myId = Supabase.instance.client.auth.currentUser?.id;
+// 
 
-                    if (myId == null) return;
 
-                    final talentId = offer['sender_id']?.toString();
-               
-                    if (talentId == null) return;
-
-                    final orderResult = await Supabase.instance.client.from('orders').insert({
-                      'client_id'     : myId,
-                      'talent_id'     : talentId,
-                      'service_name'  : '$title - Paket Kustom',
-                      'package_type'  : 'custom',
-                      'total_price'   : priceVal,
-                      'payment_status': 'unpaid',
-                      'work_status'   : 'pending',
-                      'order_date'    : DateTime.now().toIso8601String().split('T')[0],
-                      'description'   : offer['description'] ?? '',
-                      'duration'      : 7, 
-                    }).select().single();
-                    debugPrint('Order berhasil: $orderResult');
-
-                    final newOrderId = orderResult['id'].toString();
-
-                    if (context.mounted) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DetailOrderPage(
-                            orderId : newOrderId,
-                            isTalent: false,
-                            status  : 'pending',
-                          ),
-                        ),
-                      );
-                    }
-                  } catch (e) {
-                    debugPrint('Gagal membuat order dari offer: $e');
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Gagal membuat order: $e'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
-                child: const Text("Terima & Bayar", style: TextStyle(color: Colors.white)),
-              ),
-            ),
-        ],
-      ),
-    ),
-  );
-}
   // --- CHAT BUBBLE ---
   Widget chatBubble(String text, bool isMe, {String? timeStr}) {
     final displayTime = timeStr ?? "08:26";
@@ -930,3 +849,393 @@ String getInitials(String name) {
     );
   }
 }
+
+class OfferCard extends StatefulWidget {
+  final Map<String, dynamic> offer;
+  final bool isMe;
+  final bool isTalent;
+  final String myId;
+  final String receiverId;
+
+  const OfferCard({
+    super.key,
+    required this.offer,
+    required this.isMe,
+    required this.isTalent,
+    required this.myId,
+    required this.receiverId,
+  });
+
+  @override
+  State<OfferCard> createState() => _OfferCardState();
+}
+
+class _OfferCardState extends State<OfferCard> {
+  final supabase = Supabase.instance.client;
+  String? _paymentStatus; // null = belum ada order, 'unpaid', 'paid', 'cancelled', dll
+  String? _orderId;
+  bool _isLoading = true;
+  bool _isCreatingOrder = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchOrderStatus();
+  }
+
+  Future<void> _fetchOrderStatus() async {
+    try {
+      final talentId = widget.offer['sender_id']?.toString();
+      final clientId = widget.offer['receiver_id']?.toString();
+      final title    = widget.offer['title']?.toString() ?? '';
+
+      if (talentId == null || clientId == null) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final result = await supabase
+          .from('orders')
+          .select('id, payment_status, work_status')
+          .eq('talent_id', talentId)
+          .eq('client_id', clientId)
+          .eq('service_name', '$title - Paket Kustom')
+          .maybeSingle();
+
+      if (mounted) {
+        setState(() {
+          _paymentStatus = result?['payment_status']?.toString();
+          _orderId       = result?['id']?.toString();
+          _isLoading     = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatRupiah(dynamic value) {
+    if (value == null) return 'Rp 0';
+    final num amount = value is num ? value : num.tryParse(value.toString()) ?? 0;
+    final str    = amount.toInt().toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < str.length; i++) {
+      if (i > 0 && (str.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(str[i]);
+    }
+    return 'Rp $buffer';
+  }
+
+  // Badge status di bawah kartu
+  Widget _buildStatusBadge() {
+    if (_isLoading) {
+      return const Padding(
+        padding: EdgeInsets.only(top: 8),
+        child: LinearProgressIndicator(
+          backgroundColor: Color(0xFFFFE0B2),
+          color: Color(0xFFE68C3A),
+        ),
+      );
+    }
+
+    if (_paymentStatus == null) return const SizedBox(); // belum ada order
+
+    String   label;
+    Color    color;
+    Color    bgColor;
+    IconData icon;
+
+    switch (_paymentStatus) {
+      case 'unpaid':
+        label   = 'Menunggu Pembayaran';
+        color   = Colors.orange;
+        bgColor = Colors.orange.shade50;
+        icon    = Icons.hourglass_empty;
+        break;
+      case 'pending':
+        label   = 'Pembayaran Diproses';
+        color   = Colors.blue;
+        bgColor = Colors.blue.shade50;
+        icon    = Icons.pending_outlined;
+        break;
+      case 'paid':
+        label   = 'Sudah Dibayar ✓';
+        color   = Colors.green;
+        bgColor = Colors.green.shade50;
+        icon    = Icons.check_circle_outline;
+        break;
+      case 'cancelled':
+        label   = 'Dibatalkan';
+        color   = Colors.red;
+        bgColor = Colors.red.shade50;
+        icon    = Icons.cancel_outlined;
+        break;
+      case 'failed':
+        label   = 'Pembayaran Gagal';
+        color   = Colors.red;
+        bgColor = Colors.red.shade50;
+        icon    = Icons.error_outline;
+        break;
+      default:
+        label   = _paymentStatus!;
+        color   = Colors.grey;
+        bgColor = Colors.grey.shade50;
+        icon    = Icons.info_outline;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color       : bgColor,
+        borderRadius: BorderRadius.circular(8),
+        border      : Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize   : 11,
+                color      : color,
+                fontWeight : FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+Widget _buildActionButton(int priceVal) {
+    if (_isLoading) return const SizedBox();
+
+    // Sudah dibayar — tampilkan tombol lihat detail order
+    if (_paymentStatus == 'paid') {
+      return SizedBox(
+        width: double.infinity,
+        child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            side       : const BorderSide(color: Color(0xFF1A237E)),
+            shape      : RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+          onPressed: () {
+            if (_orderId != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DetailOrderPage(
+                    orderId : _orderId!,
+                    isTalent: false,
+                    status  : 'progress',
+                  ),
+                ),
+              );
+            }
+          },
+          icon : const Icon(Icons.receipt_long_outlined,
+              size: 16, color: Color(0xFF1A237E)),
+          label: const Text(
+            'Lihat Detail Order',
+            style: TextStyle(color: Color(0xFF1A237E), fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    // Menunggu pembayaran — tampilkan tombol lanjutkan bayar
+    if (_paymentStatus == 'unpaid' && !widget.isMe && !widget.isTalent) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.orange,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+          onPressed: () {
+            if (_orderId != null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => DetailOrderPage(
+                    orderId : _orderId!,
+                    isTalent: false,
+                    status  : 'pending',
+                  ),
+                ),
+              );
+            }
+          },
+          icon : const Icon(Icons.payment, size: 16, color: Colors.white),
+          label: const Text(
+            'Lanjutkan Pembayaran',
+            style: TextStyle(color: Colors.white, fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    // Belum ada order sama sekali — tampilkan tombol Terima & Bayar
+    if (_paymentStatus == null && !widget.isMe && !widget.isTalent) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFE68C3A),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10)),
+          ),
+          onPressed: _isCreatingOrder ? null : () => _handleTerimaAndBayar(priceVal),
+          child: _isCreatingOrder
+              ? const SizedBox(
+                  height: 18,
+                  width : 18,
+                  child : CircularProgressIndicator(
+                      color: Colors.white, strokeWidth: 2),
+                )
+              : const Text('Terima & Bayar',
+                  style: TextStyle(color: Colors.white)),
+        ),
+      );
+    }
+
+    return const SizedBox();
+  }
+
+  Future<void> _handleTerimaAndBayar(int priceVal) async {
+    setState(() => _isCreatingOrder = true);
+    try {
+      final myId     = supabase.auth.currentUser?.id;
+      if (myId == null) return;
+
+      final talentId = widget.offer['sender_id']?.toString() ?? widget.receiverId;
+      final title    = widget.offer['title'] ?? 'Layanan Kustom';
+      final now      = DateTime.now();
+      final deadline = now.add(const Duration(days: 7));
+
+      final orderResult = await supabase.from('orders').insert({
+        'client_id'     : myId,
+        'talent_id'     : talentId,
+        'service_name'  : '$title - Paket Kustom',
+        'package_type'  : 'custom',
+        'total_price'   : priceVal,
+        'payment_status': 'unpaid',
+        'work_status'   : 'pending',
+        'order_date'    : now.toIso8601String().substring(0, 10),
+        'deadline'      : deadline.toIso8601String().substring(0, 10),
+        'description'   : widget.offer['description'] ?? '',
+        'duration'      : 7,
+        'revision_count': 0,
+      }).select().single();
+
+      final newOrderId = orderResult['id'].toString();
+
+      // Update state lokal agar tombol langsung berubah
+      setState(() {
+        _paymentStatus = 'unpaid';
+        _orderId       = newOrderId;
+      });
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => DetailOrderPage(
+              orderId : newOrderId,
+              isTalent: false,
+              status  : 'pending',
+            ),
+          ),
+        ).then((_) => _fetchOrderStatus()); // refresh setelah kembali
+      }
+    } catch (e) {
+      debugPrint('Gagal membuat order: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content         : Text('Gagal membuat order: $e'),
+            backgroundColor : Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isCreatingOrder = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final int priceVal =
+        (num.tryParse(widget.offer['price'].toString()) ?? 0).toInt();
+
+    return Align(
+      alignment:
+          widget.isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin     : const EdgeInsets.symmetric(vertical: 8),
+        padding    : const EdgeInsets.all(16),
+        constraints: const BoxConstraints(maxWidth: 270),
+        decoration : BoxDecoration(
+          color        : Colors.white,
+          borderRadius : BorderRadius.circular(16),
+          border       : Border.all(color: const Color(0xFFE68C3A), width: 1.5),
+          boxShadow    : [
+            BoxShadow(
+              color    : Colors.black.withOpacity(0.05),
+              blurRadius: 6,
+            )
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "KARTU PENAWARAN JASA",
+              style: TextStyle(
+                fontSize  : 10,
+                fontWeight: FontWeight.bold,
+                color     : Color(0xFFE68C3A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.offer['title'] ?? '-',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _formatRupiah(priceVal),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize  : 14,
+                color     : Color(0xFF1A237E),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.offer['description'] ?? '',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const Divider(height: 16),
+
+            // Status badge
+            _buildStatusBadge(),
+
+            // Tombol aksi
+            if (!widget.isMe || _paymentStatus == 'paid') ...[
+              const SizedBox(height: 8),
+              _buildActionButton(priceVal),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
