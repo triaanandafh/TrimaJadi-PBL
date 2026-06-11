@@ -41,7 +41,6 @@ class _NotificationPageState extends State<NotificationPage> {
             (data as List).map((e) => NotificationModel.fromJson(e)).toList();
       });
 
-      // Sync ValueNotifier setelah fetch
       notificationUnreadCount.value =
           _notifications.where((n) => !n.isRead).length;
     } catch (e) {
@@ -152,44 +151,32 @@ class _NotificationPageState extends State<NotificationPage> {
 
       case 'chat':
         if (notif.referenceId != null) {
-          final userId = _supabase.auth.currentUser?.id;
-          final orderData = await _supabase
-              .from('orders')
-              .select('talent_id, client_id, service_name')
-              .eq('id', notif.referenceId!)
+          final senderId = notif.referenceId!;
+
+          final senderData = await _supabase
+              .from('users')
+              .select('name, email')
+              .eq('id', senderId)
               .maybeSingle();
 
           if (!mounted) return;
 
-          if (orderData != null) {
-            final isTalent = orderData['talent_id'] == userId;
-            final partnerId =
-                isTalent ? orderData['client_id'] : orderData['talent_id'];
-
-            final partnerData = await _supabase
-                .from('profiles')
-                .select('name, full_name')
-                .eq('id', partnerId)
-                .maybeSingle();
-
-            if (!mounted) return;
-
-            final partnerName = partnerData?['name'] ??
-                partnerData?['full_name'] ??
-                orderData['service_name'] ??
+          if (senderData != null) {
+            final senderName = senderData['name'] ??
+                senderData['email'] ??
                 'Chat';
 
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => ChatPage(
-                  name: partnerName,
-                  receiverId: partnerId.toString(),
+                  name: senderName,
+                  receiverId: senderId,
                 ),
               ),
             );
           } else {
-            _showSnackBar('Chat tidak ditemukan');
+            _showSnackBar('Pengguna tidak ditemukan');
           }
         }
         break;
