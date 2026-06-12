@@ -38,7 +38,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
     });
 
     try {
-      // Cari berdasarkan judul layanan
       final byTitle = await _supabase
           .from('services')
           .select('''
@@ -49,7 +48,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
           ''')
           .ilike('title', '%$query%');
 
-      // Cari berdasarkan nama talent
       final talentMatch = await _supabase
           .from('users')
           .select('id')
@@ -71,7 +69,6 @@ class _CariLayananPageState extends State<CariLayananPage> {
         byTalent = List<Map<String, dynamic>>.from(byTalentResponse);
       }
 
-      // Gabungkan hasil, hindari duplikat
       final Map<String, Map<String, dynamic>> combined = {};
       for (final s in [...byTitle, ...byTalent]) {
         combined[s['id']] = s;
@@ -106,19 +103,19 @@ class _CariLayananPageState extends State<CariLayananPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB), 
+      backgroundColor: const Color(0xFFF5F7FB),
       body: Stack(
         children: [
-          // 1. HEADER BIRU GRADASI SEPERTI MOCKUP KANAN
+          // HEADER BIRU GRADASI
           Container(
             height: 160,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF1A237E), // Deep Blue
-                  Color(0xFF283593), // Indigo
-                  Color(0xFF3949AB), // Light Indigo
+                  Color(0xFF1A237E),
+                  Color(0xFF283593),
+                  Color(0xFF3949AB),
                 ],
                 stops: [0.0, 0.5, 1.0],
                 begin: Alignment.topLeft,
@@ -152,7 +149,9 @@ class _CariLayananPageState extends State<CariLayananPage> {
                             const SizedBox(height: 4),
                             Text(
                               "Temukan jasa terbaik",
-                              style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                              style: TextStyle(
+                                  color: Colors.white.withOpacity(0.6),
+                                  fontSize: 13),
                             ),
                           ],
                         ),
@@ -164,70 +163,52 @@ class _CariLayananPageState extends State<CariLayananPage> {
             ),
           ),
 
-          // 2. AREA UTAMA
+          // AREA UTAMA
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 110), 
+                const SizedBox(height: 110),
 
-                // Floating Search Bar & Filter Button
+                // Floating Search Bar (tanpa tombol filter)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.06),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.06),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      onChanged: _search,
+                      decoration: InputDecoration(
+                        hintText: "Cari layanan...",
+                        hintStyle: TextStyle(
+                            color: Colors.grey.shade400, fontSize: 15),
+                        prefixIcon:
+                            const Icon(Icons.search, color: Colors.grey),
+                        suffixIcon: _isSearching
+                            ? IconButton(
+                                icon: const Icon(Icons.close,
+                                    color: Colors.grey),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  _search('');
+                                },
                               )
-                            ],
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            onChanged: _search,
-                            decoration: InputDecoration(
-                              hintText: "Cari layanan...",
-                              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 15),
-                              prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                              suffixIcon: _isSearching
-                                  ? IconButton(
-                                      icon: const Icon(Icons.close, color: Colors.grey),
-                                      onPressed: () {
-                                        _searchController.clear();
-                                        _search('');
-                                      },
-                                    )
-                                  : null,
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                            ),
-                          ),
-                        ),
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      const SizedBox(width: 12),
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            )
-                          ],  
-                        ),
-                        child: const Icon(Icons.tune, color: Color(0xFF1A237E), size: 26),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
 
@@ -261,7 +242,8 @@ class _CariLayananPageState extends State<CariLayananPage> {
         final service = _searchResults[index];
         final talentName = service['users']?['name'] ?? 'Talent';
         final categoryName = service['categories']?['name'] ?? '';
-        final packages = service['service_packages'] as List<dynamic>? ?? [];
+        final packages =
+            service['service_packages'] as List<dynamic>? ?? [];
         final minPrice = _getMinPrice(packages);
 
         return Container(
@@ -271,14 +253,16 @@ class _CariLayananPageState extends State<CariLayananPage> {
             borderRadius: BorderRadius.circular(15),
             border: Border.all(color: Colors.grey.shade200),
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10)
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.04), blurRadius: 10)
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(15)),
                 child: service['image_url'] != null
                     ? Image.network(
                         service['image_url'],
@@ -290,7 +274,8 @@ class _CariLayananPageState extends State<CariLayananPage> {
                         height: 150,
                         width: double.infinity,
                         color: const Color(0xFFE8F0FF),
-                        child: const Icon(Icons.image, size: 50, color: Color(0xFF1A43BF)),
+                        child: const Icon(Icons.image,
+                            size: 50, color: Color(0xFF1A43BF)),
                       ),
               ),
               Padding(
@@ -298,13 +283,23 @@ class _CariLayananPageState extends State<CariLayananPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(categoryName, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text(categoryName,
+                        style: TextStyle(
+                            color: Colors.grey[400], fontSize: 11)),
                     const SizedBox(height: 2),
-                    Text(service['title'] ?? '', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                    Text(service['title'] ?? '',
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15)),
                     const SizedBox(height: 2),
-                    Text(talentName, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    Text(talentName,
+                        style: TextStyle(
+                            color: Colors.grey[600], fontSize: 12)),
                     const SizedBox(height: 6),
-                    Text(minPrice, style: const TextStyle(color: Color(0xFFE68C3A), fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(minPrice,
+                        style: const TextStyle(
+                            color: Color(0xFFE68C3A),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13)),
                   ],
                 ),
               ),
@@ -328,16 +323,21 @@ class _CariLayananPageState extends State<CariLayananPage> {
               children: [
                 const Text(
                   "Kategori",
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black),
                 ),
                 Text(
                   "5 layanan",
-                  style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500),
                 ),
               ],
             ),
           ),
-          
           _buildCategoryCard(
             context,
             categoryId: '34b4a9b2-2b77-4ce3-afc9-7a119212d6b3',
@@ -395,7 +395,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
     required String title,
     required String subtitle,
     required IconData icon,
-    required Color iconBgColor, 
+    required Color iconBgColor,
     required Color iconColor,
   }) {
     return GestureDetector(
@@ -414,7 +414,7 @@ class _CariLayananPageState extends State<CariLayananPage> {
         margin: const EdgeInsets.only(bottom: 15),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white, 
+          color: Colors.white,
           borderRadius: BorderRadius.circular(18),
           boxShadow: [
             BoxShadow(
@@ -458,7 +458,8 @@ class _CariLayananPageState extends State<CariLayananPage> {
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey.shade400, size: 22),
+            Icon(Icons.chevron_right,
+                color: Colors.grey.shade400, size: 22),
           ],
         ),
       ),
