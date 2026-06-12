@@ -39,7 +39,7 @@ class _HomepageTalentState extends State<HomepageTalent> {
 
       final orders = await supabase
           .from('orders')
-          .select()
+          .select('*, categories(name)')
           .eq('talent_id', userId)
           .order('created_at', ascending: false);
 
@@ -524,6 +524,7 @@ class _HomepageTalentState extends State<HomepageTalent> {
           subTitle   : clientName,
           status     : statusLabel,
           statusColor: statusColor,
+          category   : (order['categories'] as Map?)?['name'] ?? '',
           onTap: () async {
             await Navigator.push(
               ctx,
